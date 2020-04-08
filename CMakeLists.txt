@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project (exe)
 #set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
-add_executable(exe src/config.h src/main.cpp src/config.cpp src/config.h)
+add_executable(exe jsonlib/json.hpp src/config.h src/main.cpp src/config.cpp src/config.h)
 find_package(PythonLibs ${PY_VERSION} REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 target_link_libraries(exe ${PYTHON_LIBRARIES})
