@@ -31,6 +31,7 @@
 *.exe
 *.out
 *.app
+exe
 
 #cmake files
 compile_commands.json
@@ -40,3 +41,5 @@ CMakeFiles/*
 CMakeFiles
 Build/*
 Build
+Makefile
+CMakeCache.txt
