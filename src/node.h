@@ -12,18 +12,47 @@ class alignas(32) Node
         int right;
         F feature;
         T threshold;
+    
     public:
         Node(): left(0), right(0){}
         Node(int l, int r, F feat, T thresh): left(l), right(r), feature(feat), threshold(thresh){};
 
-        bool isInternalNode();
-        int getLeft();
-        int setLeft(int ele);
-        int getRight();
-        void setRight(int ele);
-        int getClass();
-        int setClass(int ele);
-        int nextNode(T feature_val);
+        inline bool isInternalNode() {
+            return left;
+        }
+        
+        inline int getLeft() {
+            return left;
+        }
+
+        inline int setLeft(int ele) {
+            left = ele;
+        }
+
+        inline int getRight() {
+            return right;
+        }
+
+        inline void setRight(int ele) {
+            right = ele;
+        }
+
+        inline int getClass() {
+            return right;
+        }
+
+        inline int setClass(int ele) {
+            right = ele;
+        }
+
+        inline bool goLeft(T feature_val){
+			return feature_val <= threshold;
+		}
+
+        inline int nextNode(T feature_val) {
+            return (feature_val <= threshold) ? left : right;
+        }
+
         inline void virtual printNode() {
             if(isInternalNode())
                 std::cout<<"Internal Node ";

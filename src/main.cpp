@@ -10,6 +10,7 @@
 //TODO: Separate out into include dir
 //TODO: Namespace ?
 //TODO: setup Testing framework google test?
+//TODO: Allow the user to specify datatypes for feature and threshold ? 
 
 const int min_num_cmd_args = 6;
 
@@ -46,6 +47,6 @@ int main(int argc, char* argv[]) {
             showUsage();
             exit(-1);
         }
-        //TODO: check legality of the args
+        //TODO: check legality of the combination of args
     }
 }
