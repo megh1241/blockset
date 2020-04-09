@@ -50,3 +50,4 @@ int main(int argc, char* argv[]) {
         //TODO: check legality of the combination of args
     }
 }
+

@@ -9,7 +9,8 @@
 template <typename T, typename F>
 class PacsetBaseModel{
     //TODO: (Note) Upcaset to Node when serializing to file
-    std::vector<std::vector<StatNode<T, F>>> bins;
+    protected:
+        std::vector<std::vector<StatNode<T, F>>> bins;
     public:
         virtual void pack() = 0;
         virtual int predict(const std::vector<T, F> observations) = 0;
