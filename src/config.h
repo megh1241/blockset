@@ -11,7 +11,7 @@ class Config
 {
     public:
         static Config& getInstance();
-        std::string getValue(std::string key);
+        static std::string getValue(std::string key);
         static void setConfigItem(std::string item, std::string value);
         //TODO: set defaults
     private:
