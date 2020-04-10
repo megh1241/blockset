@@ -36,7 +36,6 @@ exe
 #cmake files
 compile_commands.json
 *.cmake
-CMake
 CMakeFiles/*
 CMakeFiles
 Build/*
