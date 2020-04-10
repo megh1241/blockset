@@ -5,6 +5,10 @@
 #include <cstring>
 #include <unordered_set>
 #include "config.h"
+#include "pacset_factory.h"
+#include "pacset_base_model.h"
+#include "pacset_rf_classifier.h"
+#include "pacset_factory.cpp"
 
 //TODO: Python Bindings
 //TODO: Separate out into include dir
@@ -49,5 +53,9 @@ int main(int argc, char* argv[]) {
         }
         //TODO: check legality of the combination of args
     }
+    PacsetFactory pf = PacsetFactory();
+    auto model = pf.getModel<float, float>();
+    PacsetRandomForestClassifier<float, float> *obj = dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
+    obj->loadModel();
 }
 

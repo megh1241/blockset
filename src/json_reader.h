@@ -11,7 +11,7 @@ class JSONReader{
     std::string package_name;
     public:
         JSONReader(): filename(Config::getValue("modelfilename")), package_name(Config::getValue("package")){}
-        std::vector<std::vector<StatNode<float, float>>> convertToBins();
+        void convertToBins(std::vector<std::vector<StatNode<float, float>>>&bins);
 };
 
 

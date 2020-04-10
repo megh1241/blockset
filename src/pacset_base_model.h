@@ -13,8 +13,8 @@ class PacsetBaseModel{
         std::vector<std::vector<StatNode<T, F>>> bins;
     public:
         virtual void pack() = 0;
-        virtual int predict(const std::vector<T, F> observations) = 0;
-        virtual int predict(const std::vector<std::vector<T, F>> observations) = 0;
+        virtual int predict(const std::vector<T> observations) = 0;
+        virtual int predict(const std::vector<std::vector<T>> observations) = 0;
         virtual void serialize() = 0;
         virtual void deserialize() = 0;
 };
