@@ -15,9 +15,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             packer_obj.pack(PacsetBaseModel<T, F>::bins);
         }
 
-        inline int predict(const std::vector<T, F> observation) {
+        inline int predict(const std::vector<T> observation) {
         }
-        inline int predict(const std::vector<std::vector<T, F>> observation) {
+        inline int predict(const std::vector<std::vector<T>> observation) {
         }
         inline void serialize() {
         }
