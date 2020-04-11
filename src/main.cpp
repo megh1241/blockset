@@ -24,7 +24,8 @@ static void showUsage(){
         "--datafilename <datafilename>"
         "--package <sklearn/lightgbm/xgboost/ranger>"
         "--algorithm <gbm/randomforest>"
-        "--task <classification/regression>\n";
+        "--task <classification/regression>"
+        "--numthreads <number of threads>\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -53,9 +54,13 @@ int main(int argc, char* argv[]) {
         }
         //TODO: check legality of the combination of args
     }
+
+    //TODO: change to num of cores
+    if (Config::getValue("numthreads") == std::string("notfound"))
+        Config::setConfigItem("numthreads", std::to_string("1"));
+    
     PacsetFactory pf = PacsetFactory();
     auto model = pf.getModel<float, float>();
     PacsetRandomForestClassifier<float, float> *obj = dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
     obj->loadModel();
 }
-

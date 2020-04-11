@@ -9,7 +9,9 @@ Config& Config::getInstance(){
 }
 
 std::string Config::getValue(std::string key){
-    return config_map[key];
+    if(config_map.find(key) != config_map.end())
+        return config_map[key];
+    return std::string("notfound");
 }
 
 void Config::setConfigItem(std::string item, std::string value){
