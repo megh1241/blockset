@@ -14,6 +14,7 @@ class StatNode: public Node<T, F>
     int left_child_cardinality;
     int right_child_cardinality;
 
+    public:
     StatNode(int l, int r, F feat, T thresh, int card): Node<T, F>(l, r, feat, thresh), cardinality(card) {}
     
     StatNode(int l, int r, F feat, T thresh, int card, int d): Node<T, F>(l, r, feat, thresh), cardinality(card), depth(d) {}

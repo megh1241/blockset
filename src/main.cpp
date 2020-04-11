@@ -15,6 +15,8 @@
 //TODO: Namespace ?
 //TODO: setup Testing framework google test?
 //TODO: Allow the user to specify datatypes for feature and threshold ? 
+//TODO: categorical features ?
+//TODO: convert classes to ints
 
 const int min_num_cmd_args = 6;
 

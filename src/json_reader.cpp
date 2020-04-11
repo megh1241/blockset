@@ -41,6 +41,8 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
 
     //Recursively walk through the json model until we get the nodes per estimator
     int tree_count = 0, bin_number = 0, place_in_bin = 0;
+    std::vector<StatNode<float,float>> temp_bin;
+
     for (auto ele: rf_json_model["estimators_"]){
         json estimator = json::parse(ele.dump());
         count = 0;
@@ -52,7 +54,7 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
                 for (auto node: nodes){
                     //TODO: create a statNode and append it to bins
                     int cnt = 0, left = 0, right = 0, feature = 0, cardinality = 0;
-                    float threshold;
+                    float threshold = 0.0;
                     for (auto attr: node){
                         switch(cnt){
                             case 0:
@@ -70,7 +72,15 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
                         }
                         cnt++;
                     }
-
+                    temp_bin.emplace_back(left, right, feature, threshold, cardinality);
+                }
+                place_in_bin++;
+                if(place_in_bin == bin_sizes[bin_number] - 1){
+                    bin_number++;
+                    place_in_bin = 0;
+                    bins.push_back(temp_bin); 
+                    temp_bin.clear();
+                    temp_bin.reserve(bin_sizes[bin_number]);
                 }
                 break;
             }

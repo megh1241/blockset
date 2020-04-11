@@ -3,6 +3,8 @@
 #include "pacset_rf_classifier.h"
 #include "pacset_rf_regressor.h"
 
+//TODO: replace GBM and regressors when done
+
 template<typename T, typename F> PacsetBaseModel<T, F> * PacsetFactory::getModel(){
     if (Config::getValue("algorithm") == "randomforest"){
         if( Config::getValue("task") == "classification")
