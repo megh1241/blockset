@@ -10,21 +10,23 @@ using json = nlohmann::json;
 
 void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> &bins){
     const int parse_num = 8; 
+    int count;
     //std::string model_filename = Config::getValue("modelfilename");
     std::ifstream ifs("/root/pacset/models/rf.json");
-    json o = json::parse(ifs); 
-    int count;
-    json temp2;
-    for (auto i: o["estimators_"]){
-        json temp = json::parse(i.dump());
+    json rf_json_model = json::parse(ifs); 
+    json node_json;
+
+    //Recursively walk through the json model until we get the nodes per estimator
+    for (auto ele: rf_json_model["estimators_"]){
+        json estimator = json::parse(ele.dump());
         count = 0;
-        for(auto j: temp){
+        for(auto item: estimator){
             if(count == parse_num){
-                temp2 = json::parse(j.dump());
-                auto a = temp2["nodes"];
-                for (auto b: a){
-                    for(auto c: b){
-                        std::cout<<c<<"\n";
+                node_json = json::parse(item.dump());
+                auto nodes = node_json["nodes"];
+                for (auto node: nodes){
+                    for(auto attr: node){
+                        std::cout<<attr<<"\n";
                     }
                 }
                 break;
