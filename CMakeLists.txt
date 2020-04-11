@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project (exe)
 #set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
-add_executable(exe jsonlib/json.hpp src/config.h  src/config.cpp src/config.h src/pacset_base_model.h src/pacset_rf_classifier.h src/pacset_factory.h src/pacset_factory.cpp src/json_reader.cpp src/json_reader.h src/stat_node.cpp src/stat_node.h src/node.h src/main.cpp)
+add_executable(exe src/config.h  src/config.cpp src/config.h src/pacset_base_model.h src/pacset_rf_classifier.h src/pacset_factory.h src/pacset_factory.cpp src/json_reader.cpp src/json_reader.h src/stat_node.cpp src/stat_node.h src/node.h src/main.cpp)
 find_package(PythonLibs ${PY_VERSION} REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
