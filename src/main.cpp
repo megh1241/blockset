@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
 
     //TODO: change to num of cores
     if (Config::getValue("numthreads") == std::string("notfound"))
-        Config::setConfigItem("numthreads", std::to_string("1"));
+        Config::setConfigItem("numthreads", std::string("1"));
     
     PacsetFactory pf = PacsetFactory();
     auto model = pf.getModel<float, float>();
