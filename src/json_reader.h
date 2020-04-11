@@ -3,8 +3,12 @@
 
 #include "config.h"
 #include "stat_node.h"
-#include"../jsonlib/json.hpp"
+
 #include <vector>
+#include <nlohmann/json.hpp>
+
+// for convenience
+using json = nlohmann::json;
 
 class JSONReader{
     std::string filename;
