@@ -22,7 +22,7 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
     int n_trees = param_j["n_estimators"];
     
     //Calculate Bin sizes from number of trees
-    
+    int num_bins = std::stoi(Config::getValue("numthreads")); 
 
     //Recursively walk through the json model until we get the nodes per estimator
     for (auto ele: rf_json_model["estimators_"]){
