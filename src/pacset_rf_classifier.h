@@ -13,7 +13,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void loadModel() {
             JSONReader J;
-            J.convertToBins(PacsetBaseModel<T, F>::bins);
+            J.convertToBins(PacsetBaseModel<T, F>::bins, PacsetBaseModel<T, F>::bin_sizes);
         }
         inline void pack(){
             std::string layout = Config::getValue("layout");

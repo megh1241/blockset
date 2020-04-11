@@ -11,6 +11,7 @@ class PacsetBaseModel{
     //TODO: (Note) Upcaset to Node when serializing to file
     protected:
         std::vector<std::vector<StatNode<T, F>>> bins;
+        std::vector<int> bin_sizes;
     public:
         virtual void pack() = 0;
         virtual int predict(const std::vector<T> observations) = 0;
