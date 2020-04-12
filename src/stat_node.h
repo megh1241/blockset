@@ -16,13 +16,16 @@ class StatNode: public Node<T, F>
     int right_child_cardinality;
 
     public:
-    StatNode(int l, int r, F feat, T thresh, int card): Node<T, F>(l, r, feat, thresh), cardinality(card) {}
+    StatNode(int l, int r, F feat, T thresh, int card): 
+        Node<T, F>(l, r, feat, thresh), cardinality(card) {}
     
-    StatNode(int l, int r, F feat, T thresh, int card, int d): Node<T, F>(l, r, feat, thresh),
-    cardinality(card), depth(d) {}
+    StatNode(int l, int r, F feat, T thresh, int card, int d): 
+        Node<T, F>(l, r, feat, thresh),
+        cardinality(card), depth(d) {}
     
-    StatNode(int l, int r, F feat, T thresh, int card, int d, int t): Node<T, F>(l, r, feat, thresh), 
-    cardinality(card), depth(d), tree(t) {}
+    StatNode(int l, int r, F feat, T thresh, int card, int d, int t): 
+        Node<T, F>(l, r, feat, thresh), 
+        cardinality(card), depth(d), tree(t) {}
 
     StatNode(int l, int r, F feat, T thresh, int card, int d, int t, int lc, int rc): 
         Node<T, F>(l, r, feat, thresh), cardinality(card), depth(d), tree(t), 
@@ -69,7 +72,9 @@ class StatNode: public Node<T, F>
     }
 
     inline void printNode(){
-         std::cout<<"Threshold: "<<Node<T, F>::threshold<<", left: "<<Node<T, F>::left<<" ,right: "<<Node<T, F>::right<<", cardinality: "<<cardinality<<"\n";
+         std::cout<<"feature: "<<Node<T, F>::feature<<" ,threshold: "<<Node<T, F>::threshold<<", left: "
+             <<Node<T, F>::left<<" ,right: "<<Node<T, F>::right
+             <<", cardinality: "<<cardinality<<"\n";
     }
 };
 
