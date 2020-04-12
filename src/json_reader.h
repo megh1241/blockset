@@ -10,12 +10,13 @@
 // for convenience
 using json = nlohmann::json;
 
+template<typename T, typename F>
 class JSONReader{
     std::string filename;
     std::string package_name;
     public:
         JSONReader(): filename(Config::getValue("modelfilename")), package_name(Config::getValue("package")){}
-        void convertToBins(std::vector<std::vector<StatNode<float, float>>>&bins, std::vector<int>&bin_sizes);
+        void convertToBins(std::vector<std::vector<StatNode<T, F>>>&bins, std::vector<int>&bin_sizes);
 };
 
 

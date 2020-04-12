@@ -12,7 +12,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
     public:
 
         inline void loadModel() {
-            JSONReader J;
+            JSONReader<T, F> J;
             J.convertToBins(PacsetBaseModel<T, F>::bins, PacsetBaseModel<T, F>::bin_sizes);
         }
         inline void pack(){
