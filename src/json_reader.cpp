@@ -42,14 +42,15 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
 
     //Recursively walk through the json model until we get the nodes per estimator
     int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
-    std::vector<StatNode<float,float>> temp_bin;
+    std::vector<StatNode<T, F>> temp_bin;
 
     //Note: temp_ensemble contains the leaf nodes as a separate node.
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
     //contain class nodes.
 
-    std::vector<std::vector<StatNode<float, float>>> temp_ensemble;
+    std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
     int left=0, right=0, cardinality=0, feature=0;
+    int id = 0;
     int node_counter = 0;
     int class_num = 0;
     float threshold = 0;
@@ -71,8 +72,9 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
             //Internal node
             if(left > -1){
                 feature = node.at(2);
+                id = temp_bin.size();
                 temp_bin.emplace_back(left + tree_offset, right + tree_offset, 
-                        feature, threshold, cardinality);
+                        feature, threshold, cardinality, id);
             }
 
             //This is a leaf node. Populate the feature attr with class
@@ -86,7 +88,8 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
                     }
                     ++class_num;
                 }
-                temp_bin.emplace_back(left, right, feature, threshold, cardinality);
+                id = temp_bin.size();
+                temp_bin.emplace_back(left, right, feature, threshold, cardinality, id);
             }
             ++node_counter;
         }
@@ -107,6 +110,29 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         for(auto node: i){
             node.printNode();
         }
+    }
+    
+    temp_bin.clear();
+    int classnum = 0;
+    for(auto bin: temp_ensemble) {
+        for(auto node: bin){
+            //If the current node's left child is a leaf
+            if(bin[node.getLeft()].getLeft() == -1){
+                classnum = bin[node.getLeft()].getFeature();
+                bin[node.getLeft()].setRight(classnum);
+            }
+            //If the current node's right child is a leaf
+            if(bin[node.getRight()].getLeft() == -1){
+                classnum = bin[node.getRight()].getFeature();
+                bin[node.getRight()].setRight(classnum);
+            }
+            //If the current node is not a leaf, append it to the actual bin
+            if(node.getLeft() != -1){
+                temp_bin.push_back(node);
+            }
+        }
+        bins.push_back(temp_bin);
+        temp_bin.clear();
     }
 }
 template class JSONReader<float, float>;
