@@ -83,7 +83,11 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
                         attr_index++;
                     }
                     //TODO: remove
-                    temp_bin.emplace_back(left + tree_offset, right + tree_offset, feature, threshold, cardinality);
+                    if(left > -1)
+                        temp_bin.emplace_back(left + tree_offset, right + tree_offset, feature, threshold, cardinality);
+                    else
+                        temp_bin.emplace_back(left, right, feature, threshold, cardinality);
+                    
                     bin_node_count++;
                 }
                 break;
