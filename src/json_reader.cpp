@@ -59,16 +59,21 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
                         switch(cnt){
                             case 0:
                                 left = attr;
+                                break;
                             case 1:
                                 right = attr;
+                                break;
                             case 2:
                                 feature = attr;
+                                break;
                             case 3:
                                 threshold = attr;
-                            case 6:
+                                break;
+                            case 5:
                                 cardinality = attr;
+                                break;
                             default:
-                                continue;
+                                break;
                         }
                         cnt++;
                     }
@@ -87,6 +92,7 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
             temp_bin.clear();
             temp_bin.reserve(bin_sizes[bin_number]);
         }
+
     }
     for(auto i: bins){
         for(auto node: i){
