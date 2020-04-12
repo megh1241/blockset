@@ -5,7 +5,7 @@ import pickle
 import sklearn_json as skljson
 
 ######## GLOBALS #########
-n_trees = 10
+n_trees = 11
 
 ###### BEGIN SCRIPT ######
 
@@ -15,15 +15,15 @@ X = iris.data
 y = iris.target
 
 #Train model
-#model = RandomForestClassifier(n_estimators = n_trees)
-model = DecisionTreeClassifier()
+model = RandomForestClassifier(n_estimators = n_trees)
+#model = DecisionTreeClassifier()
 
 model.fit(X, y)
 
 #Save model to pickle
-pickle.dump(model, open('../models/dtree.pkl', 'wb'))
+pickle.dump(model, open('../models/rf11.pkl', 'wb'))
 
 #Save model to json
-skljson.to_json(model, '../models/dtree.json')
+skljson.to_json(model, '../models/rf11.json')
 
 

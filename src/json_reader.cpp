@@ -40,23 +40,28 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
         bins[i].reserve(bin_sizes[i]);
 
     //Recursively walk through the json model until we get the nodes per estimator
-    int tree_count = 0, bin_number = 0, place_in_bin = 0;
+    int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
     std::vector<StatNode<float,float>> temp_bin;
-
+    
+    //Note: temp_ensemble contains the leaf nodes as a separate node.
+    //We want the leafs to point to the class nodes. temp_ensemble doesnot
+    //contain class nodes.
+    
+    std::vector<std::vector<StatNode<float, float>>> temp_ensemble;
     for (auto ele: rf_json_model["estimators_"]){
         json estimator = json::parse(ele.dump());
         count = 0;
-
+        int bin_node_count = 0;
         for(auto item: estimator){
             if(count == parse_num){
                 node_json = json::parse(item.dump());
                 auto nodes = node_json["nodes"];
                 for (auto node: nodes){
                     //TODO: create a statNode and append it to bins
-                    int cnt = 0, left = 0, right = 0, feature = 0, cardinality = 0;
+                    int attr_index = 0, left = 0, right = 0, feature = 0, cardinality = 0;
                     float threshold = 0.0;
                     for (auto attr: node){
-                        switch(cnt){
+                        switch(attr_index){
                             case 0:
                                 left = attr;
                                 break;
@@ -75,26 +80,32 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
                             default:
                                 break;
                         }
-                        cnt++;
+                        attr_index++;
                     }
-                    temp_bin.emplace_back(left, right, feature, threshold, cardinality);
+                    //TODO: remove
+                    temp_bin.emplace_back(left + tree_offset, right + tree_offset, feature, threshold, cardinality);
+                    bin_node_count++;
                 }
                 break;
             }
             ++count;
         }
-        ++place_in_bin;
-        ++tree_count;
-        if(place_in_bin == bin_sizes[bin_number] - 1){
-            bin_number++;
-            place_in_bin = 0;
-            bins.push_back(temp_bin); 
-            temp_bin.clear();
-            temp_bin.reserve(bin_sizes[bin_number]);
-        }
+        ++tree_num_in_bin;
 
+        //Move on to the next bin if the current bin reached full capacity
+        if(tree_num_in_bin == bin_sizes[bin_number]){
+            ++bin_number;
+            tree_num_in_bin = 0;
+            temp_ensemble.push_back(temp_bin); 
+            temp_bin.clear();
+            //temp_bin.reserve(bin_sizes[bin_number]);
+            bin_node_count = 0;
+        }
+        tree_offset = temp_bin.size();
     }
-    for(auto i: bins){
+
+    for(auto i: temp_ensemble){
+        std::cout<<"NEW BIN*********************\n";
         for(auto node: i){
             node.printNode();
         }

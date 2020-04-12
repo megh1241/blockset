@@ -18,9 +18,6 @@ class StatNode: public Node<T, F>
     public:
     StatNode(int l, int r, F feat, T thresh, int card): Node<T, F>(l, r, feat, thresh), cardinality(card) {}
     
-    StatNode(int l, int r, F feat, T thresh, int card, int selfid): Node<T, F>(l, r, feat, thresh), 
-    cardinality(card), id(selfid) {}
-    
     StatNode(int l, int r, F feat, T thresh, int card, int d): Node<T, F>(l, r, feat, thresh),
     cardinality(card), depth(d) {}
     
