@@ -65,6 +65,10 @@ class StatNode: public Node<T, F>
     inline void setRightCardinality(int lc){
         right_child_cardinality = lc;
     }
+
+    inline void printNode(){
+         std::cout<<"Threshold: "<<Node<T, F>::threshold<<", left: "<<Node<T, F>::left<<" ,right: "<<Node<T, F>::right<<", cardinality: "<<cardinality<<"\n";
+    }
 };
 
 #endif

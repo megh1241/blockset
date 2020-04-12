@@ -74,18 +74,23 @@ void JSONReader::convertToBins(std::vector<std::vector<StatNode<float, float>>> 
                     }
                     temp_bin.emplace_back(left, right, feature, threshold, cardinality);
                 }
-                place_in_bin++;
-                if(place_in_bin == bin_sizes[bin_number] - 1){
-                    bin_number++;
-                    place_in_bin = 0;
-                    bins.push_back(temp_bin); 
-                    temp_bin.clear();
-                    temp_bin.reserve(bin_sizes[bin_number]);
-                }
                 break;
             }
             ++count;
         }
+        ++place_in_bin;
         ++tree_count;
+        if(place_in_bin == bin_sizes[bin_number] - 1){
+            bin_number++;
+            place_in_bin = 0;
+            bins.push_back(temp_bin); 
+            temp_bin.clear();
+            temp_bin.reserve(bin_sizes[bin_number]);
+        }
+    }
+    for(auto i: bins){
+        for(auto node: i){
+            node.printNode();
+        }
     }
 }
