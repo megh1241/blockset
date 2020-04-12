@@ -38,6 +38,15 @@ class alignas(32) Node
             right = ele;
         }
 
+        inline void setFeature(F ele) {
+            feature = ele;
+        }
+
+        inline F getFeature(){
+            return feature;
+        }
+
+
         inline int getClass() {
             return right;
         }

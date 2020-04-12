@@ -19,17 +19,10 @@ class StatNode: public Node<T, F>
     StatNode(int l, int r, F feat, T thresh, int card): 
         Node<T, F>(l, r, feat, thresh), cardinality(card) {}
     
-    StatNode(int l, int r, F feat, T thresh, int card, int d): 
+    StatNode(int l, int r, F feat, T thresh, int card, int selfid): 
         Node<T, F>(l, r, feat, thresh),
-        cardinality(card), depth(d) {}
+        cardinality(card), id(selfid) {}
     
-    StatNode(int l, int r, F feat, T thresh, int card, int d, int t): 
-        Node<T, F>(l, r, feat, thresh), 
-        cardinality(card), depth(d), tree(t) {}
-
-    StatNode(int l, int r, F feat, T thresh, int card, int d, int t, int lc, int rc): 
-        Node<T, F>(l, r, feat, thresh), cardinality(card), depth(d), tree(t), 
-        left_child_cardinality(lc), right_child_cardinality(rc) {}
 
     inline int getCardinality(){
         return cardinality;
@@ -72,7 +65,8 @@ class StatNode: public Node<T, F>
     }
 
     inline void printNode(){
-         std::cout<<"feature: "<<Node<T, F>::feature<<" ,threshold: "<<Node<T, F>::threshold<<", left: "
+         std::cout<<"feature: "<<Node<T, F>::feature
+             <<" ,threshold: "<<Node<T, F>::threshold<<", left: "
              <<Node<T, F>::left<<" ,right: "<<Node<T, F>::right
              <<", cardinality: "<<cardinality<<"\n";
     }
