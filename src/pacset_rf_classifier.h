@@ -24,8 +24,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void predict(const std::vector<T> observation, std::vector<int>& preds) {
             int bin_counter = 0;
-            //TODO: change
-            int num_classes = 4;
+            int num_classes = std::stoi(Config::getValue("numclasses"));
+
             for(auto bin: PacsetBaseModel<T, F>::bins){
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;

@@ -74,16 +74,19 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
 }
 
 template<typename T, typename F>
-void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &bins, std::vector<int> &bin_sizes){
+void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &bins, 
+        std::vector<int> &bin_sizes){
     const int parse_num = 8; 
     int count;
-    //TODO: change
-    int num_classes = 4;
+    
     std::string model_filename = Config::getValue("modelfilename");
     std::ifstream ifs(model_filename);
     json rf_json_model = json::parse(ifs); 
     json node_json;
 
+    int num_classes = (int) rf_json_model["estimators_"].at(0)["n_classes_"];
+    Config::setConfigItem("numclasses", std::to_string(num_classes));
+    
     //Get the number of trees
     auto meta_params = rf_json_model["params"];
     json param_j = json::parse(meta_params.dump());
