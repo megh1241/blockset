@@ -21,6 +21,11 @@ class alignas(32) Node
         inline bool isInternalNode() {
             return left;
         }
+        
+        //TODO: change
+        inline bool isInternalNodeFront() {
+            return left;
+        }
 
         inline int getLeft() {
             return left;
