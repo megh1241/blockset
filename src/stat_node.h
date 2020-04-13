@@ -23,6 +23,13 @@ class StatNode: public Node<T, F>
         Node<T, F>(l, r, feat, thresh),
         cardinality(card), id(selfid) {}
     
+    inline int getID(){
+        return id;
+    }
+
+    inline void setID(int new_id){
+        id = new_id;
+    }
 
     inline int getCardinality(){
         return cardinality;
