@@ -100,7 +100,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     std::vector<StatNode<T, F>> temp_bin;
     
     for(int i=0; i<num_classes; ++i)
-        temp_bin.push_back(createBlankNode());
+        temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1));
 
     //Note: temp_ensemble contains the leaf nodes as a separate node.
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
@@ -157,9 +157,8 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
             tree_num_in_bin = 0;
             temp_ensemble.push_back(temp_bin); 
             temp_bin.clear();
-            for(int i=0; i<num_classes; ++i){
-                temp_bin.push_back(createBlankNode());
-            }
+            for(int i=0; i<num_classes; ++i)
+                temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1));
         }
         tree_offset = temp_bin.size();
         temp_bin.clear();
