@@ -24,7 +24,11 @@ class StatNode: public Node<T, F>
         Node<T, F>(l, r, feat, thresh),
         cardinality(card), id(selfid),
         depth(d){}
-    
+
+    inline bool isInternalNodeFront(){
+        return depth >=0 ;
+    }
+
     inline int getID(){
         return id;
     }
