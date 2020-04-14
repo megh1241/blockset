@@ -61,13 +61,18 @@ int main(int argc, char* argv[]) {
     }
 
     //TODO: change to num of cores
+    PacsetRandomForestClassifier<float, float> *obj ;
+
     if (Config::getValue("numthreads") == std::string("notfound"))
         Config::setConfigItem("numthreads", std::string("3"));
     PacsetFactory pf = PacsetFactory();
-    if(Config::getValue("mode") == std::string("pack")){
+    if(Config::getValue("mode") == std::string("pack") ||
+            Config::getValue("mode") == std::string("both")){
+       
         auto model = pf.getModel<float, float>();
-        PacsetRandomForestClassifier<float, float> *obj = 
-            dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
+        obj = dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
+
+        //Read the model from file, pack and save to file
         obj->loadModel();
     }
     
@@ -77,6 +82,11 @@ int main(int argc, char* argv[]) {
     if( (mode_string.compare(inf_string) == 0) || 
             (mode_string.compare(both_string) == 0) ){
         std::vector<std::vector<float>> test_vec;
+        std::vector<int> preds;
+        
         loadTestData(test_vec); 
+
+        //Perform prediction
+        obj->predict(test_vec, preds);
     }
 }

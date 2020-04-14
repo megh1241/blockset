@@ -15,7 +15,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             JSONReader<T, F> J;
             J.convertToBins(PacsetBaseModel<T, F>::bins, 
                     PacsetBaseModel<T, F>::bin_sizes, 
-                    PacsetBaseModel<T, F>::bin_start);
+                    PacsetBaseModel<T, F>::bin_start,
+                    PacsetBaseModel<T, F>::bin_node_sizes);
         }
 
         inline void pack(){
@@ -27,14 +28,21 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         inline void predict(const std::vector<T> observation, std::vector<int>& preds) {
             int bin_counter = 0;
             int num_classes = std::stoi(Config::getValue("numclasses"));
-
+            int binn = 0;
             for(auto bin: PacsetBaseModel<T, F>::bins){
-                std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_sizes[bin_counter]);
+                binn++;
+            }
+            for(auto bin: PacsetBaseModel<T, F>::bins){
+                std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
+                    std::cout<<"curr_node[i]: "<<curr_node[i]<<"\n";
+                    fflush(stdout);
+                    bin[curr_node[i]].printNode();
+                    fflush(stdout);
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
                 }
                 
@@ -42,6 +50,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     number_not_in_leaf = 0;
                     for( i=0; i<siz; ++i){
                         //TODO: add isInternalFront method to node class
+                        bin[curr_node[i]].printNode();
+                        fflush(stdout);
                         if(bin[curr_node[i]].isInternalNodeFront()){
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
@@ -51,14 +61,20 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                             ++number_not_in_leaf;
                         }
                     }
+                    //std::cout<<"stuck in loop\n"
                 }while(number_not_in_leaf);
-                
+               
+                std::cout<<"before preds thing\n";
+                fflush(stdout);
                 for(i=0; i<siz; ++i){
                     ++preds[bin[curr_node[i]].getClass()];
                 }
-            
+                std::cout<<"after preds thing\n";
+                fflush(stdout);
                 ++bin_counter;
             }
+            std::cout<<"Exiting predict\n";
+            fflush(stdout);
         }
 
         inline void predict(const std::vector<std::vector<T>> observation, 
