@@ -34,7 +34,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
                 for(i=0; i<siz; ++i){
-                    curr_node[i] = PacsetBaseModel<T, F>::bin_start[i];
+                    curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
                 }
                 
