@@ -9,6 +9,7 @@
 #include "pacset_base_model.h"
 #include "pacset_rf_classifier.h"
 #include "pacset_factory.cpp"
+#include "utils.h"
 
 //TODO: Python Bindings
 //TODO: Separate out into include dir
@@ -17,11 +18,13 @@
 //TODO: Allow the user to specify datatypes for feature and threshold ? 
 //TODO: categorical features ?
 //TODO: convert classes to ints
+//TODO: figure out template stuff
+
 
 const int min_num_cmd_args = 6;
 
 static void showUsage(){
-    std::cout<<"Usage: ./exe --mode <inference/pack>"
+    std::cout<<"Usage: ./exe --mode <inference/pack/both>"
         "--modelfilename <picklefilename>"
         "--datafilename <datafilename>"
         "--package <sklearn/lightgbm/xgboost/ranger>"
@@ -60,10 +63,21 @@ int main(int argc, char* argv[]) {
     //TODO: change to num of cores
     if (Config::getValue("numthreads") == std::string("notfound"))
         Config::setConfigItem("numthreads", std::string("3"));
-    
+/*    
     PacsetFactory pf = PacsetFactory();
-    auto model = pf.getModel<float, float>();
-    PacsetRandomForestClassifier<float, float> *obj = 
-        dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
-    obj->loadModel();
+    if(Config::getValue("mode") == std::string("pack")){
+        auto model = pf.getModel<float, float>();
+        PacsetRandomForestClassifier<float, float> *obj = 
+            dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
+        obj->loadModel();
+    }
+*/  
+    std::string mode_string = Config::getValue(std::string("mode"));
+    std::string inf_string = std::string("inference");
+    std::string both_string = std::string("both");
+    if( (mode_string.compare(inf_string) == 0) || 
+            (mode_string.compare(both_string) == 0) ){
+        std::vector<std::vector<float>> test_vec;
+        loadTestData(test_vec); 
+    }
 }

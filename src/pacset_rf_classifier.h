@@ -13,7 +13,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void loadModel() {
             JSONReader<T, F> J;
-            J.convertToBins(PacsetBaseModel<T, F>::bins, PacsetBaseModel<T, F>::bin_sizes);
+            J.convertToBins(PacsetBaseModel<T, F>::bins, 
+                    PacsetBaseModel<T, F>::bin_sizes, 
+                    PacsetBaseModel<T, F>::bin_start);
         }
 
         inline void pack(){
@@ -32,7 +34,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
                 for(i=0; i<siz; ++i){
-                    curr_node[i] = i + num_classes;
+                    curr_node[i] = PacsetBaseModel<T, F>::bin_start[i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
                 }
                 
@@ -59,7 +61,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             }
         }
 
-        inline void predict(const std::vector<std::vector<T>> observation, std::vector<int>& preds) {
+        inline void predict(const std::vector<std::vector<T>> observation, 
+                std::vector<int>& preds) {
+            for(auto single_obs : observation){
+                predict(single_obs, preds);
+            }
         }
 
         inline void serialize() {

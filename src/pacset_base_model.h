@@ -12,6 +12,7 @@ class PacsetBaseModel{
     protected:
         std::vector<std::vector<StatNode<T, F>>> bins;
         std::vector<int> bin_sizes;
+        std::vector<std::vector<int>> bin_start;
     public:
         virtual void pack() = 0;
         virtual void predict(const std::vector<T> observations, std::vector<int> &preds) = 0;

@@ -75,7 +75,7 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
 
 template<typename T, typename F>
 void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &bins, 
-        std::vector<int> &bin_sizes){
+        std::vector<int> &bin_sizes, std::vector<std::vector<int>> &bin_start){
     const int parse_num = 8; 
     int count;
     
@@ -93,6 +93,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     int num_trees = param_j["n_estimators"];
 
     int num_bins = populateBinSizes(bin_sizes, num_trees);
+    
     //reserve memory for bins
     bins.reserve(num_bins);
     for(int i=0; i<num_bins; ++i)
@@ -115,12 +116,12 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     int node_counter = 0;
     int class_num = 0;
     float threshold = 0;
-
+    std::vector<int> tree_starts;
     for (auto tree: rf_json_model["estimators_"]){
         json tree_estimator = json::parse(tree.dump());
         auto nodes = tree_estimator["tree_"]["nodes"];
         auto values = tree_estimator["tree_"]["values"];
-
+        tree_starts.push_back(temp_bin.size());
         for (auto node: nodes){
             left = node.at(0);
             right = node.at(1);
@@ -162,6 +163,8 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
             temp_bin.clear();
             for(int i=0; i<num_classes; ++i)
                 temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1));
+            bin_start.push_back(tree_starts);
+            tree_starts.clear();
         }
         tree_offset = temp_bin.size();
         temp_bin.clear();
