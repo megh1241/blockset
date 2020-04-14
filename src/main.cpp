@@ -63,7 +63,6 @@ int main(int argc, char* argv[]) {
     //TODO: change to num of cores
     if (Config::getValue("numthreads") == std::string("notfound"))
         Config::setConfigItem("numthreads", std::string("3"));
-/*    
     PacsetFactory pf = PacsetFactory();
     if(Config::getValue("mode") == std::string("pack")){
         auto model = pf.getModel<float, float>();
@@ -71,7 +70,7 @@ int main(int argc, char* argv[]) {
             dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
         obj->loadModel();
     }
-*/  
+    
     std::string mode_string = Config::getValue(std::string("mode"));
     std::string inf_string = std::string("inference");
     std::string both_string = std::string("both");

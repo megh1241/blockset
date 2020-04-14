@@ -8,7 +8,7 @@
 
 
 void loadTestData(std::vector<std::vector<float>>& test_data){
-    std::string filename  = Config::getValue("datafilename");
+    std::string filename = Config::getValue("datafilename");
     std::fstream fin;
     fin.open(filename, std::ios::in);
     std::vector<std::string> row; 

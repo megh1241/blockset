@@ -11,6 +11,7 @@ using json = nlohmann::json;
 template<typename T, typename F>
 int JSONReader<T, F>::populateBinSizes( 
         std::vector<int> &bin_sizes, int num_trees){
+    
     //Calculate Bin sizes from number of trees
     int num_bins = std::stoi(Config::getValue("numthreads")); 
     int num_trees_per_bin = num_trees / num_bins;
@@ -59,6 +60,7 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
         bins.push_back(temp_bin);
         temp_bin.clear();
     }
+
     int bin_count = 0, left = 0, right = 0;
     for(auto &bin : bins){
         for(auto &node: bin){
@@ -104,7 +106,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     std::vector<StatNode<T, F>> temp_bin;
     
     for(int i=0; i<num_classes; ++i)
-        temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1));
+        temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
 
     //Note: temp_ensemble contains the leaf nodes as a separate node.
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
@@ -117,6 +119,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     int class_num = 0;
     float threshold = 0;
     std::vector<int> tree_starts;
+
     for (auto tree: rf_json_model["estimators_"]){
         json tree_estimator = json::parse(tree.dump());
         auto nodes = tree_estimator["tree_"]["nodes"];
@@ -133,7 +136,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
                 feature = node.at(2);
                 id = temp_bin.size();
                 temp_bin.emplace_back(left + tree_offset, right + tree_offset, 
-                        feature, threshold, cardinality, id);
+                        feature, threshold, cardinality, id, 1);
             }
 
             //This is a leaf node. Populate the feature attr with class
@@ -148,7 +151,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
                     ++class_num;
                 }
                 id = temp_bin.size();
-                temp_bin.emplace_back(left, right, feature, threshold, cardinality, id);
+                temp_bin.emplace_back(left, right, feature, threshold, cardinality, id, 1);
             }
             ++node_counter;
         }
@@ -162,7 +165,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
             temp_ensemble.push_back(temp_bin); 
             temp_bin.clear();
             for(int i=0; i<num_classes; ++i)
-                temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1));
+                temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
             bin_start.push_back(tree_starts);
             tree_starts.clear();
         }
