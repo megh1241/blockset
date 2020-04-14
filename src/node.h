@@ -22,9 +22,8 @@ class alignas(32) Node
             return left;
         }
         
-        //TODO: change
         inline bool isInternalNodeFront() {
-            return left;
+            return feature >= 0;
         }
 
         inline int getLeft() {
