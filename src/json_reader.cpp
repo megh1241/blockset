@@ -37,23 +37,26 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
     std::map<int, int> id_to_index;
     std::vector<StatNode<T, F>> temp_bin;
     int num_classes = std::stoi(Config::getValue("numclasses"));
-    for(auto bin: temp_ensemble) {
-        for(auto node: bin){
-            //If the current node's left child is a leaf
-            if(bin[node.getLeft()].getLeft() == -1){
-                classnum = bin[node.getLeft()].getFeature();
-                bin[node.getLeft()].setRight(classnum);
-            }
-            //If the current node's right child is a leaf
-            if(bin[node.getRight()].getLeft() == -1){
-                classnum = bin[node.getRight()].getFeature();
-                bin[node.getRight()].setRight(classnum);
-            }
-            //If the current node is not a leaf, append it to the actual bin
-            if(node.getLeft() != -1){
+    for(auto &bin: temp_ensemble) {
+        for(auto &node: bin){
+            if(node.getLeft() != -1 || node.getRight()!=-1){
+                //If the current node's left child is a leaf
+                if(bin[node.getLeft()].getLeft() == -1){
+                    //BUG ! this is wrong, bin should not be modified here
+                    classnum = bin[node.getLeft()].getFeature();
+                    bin[node.getLeft()].setRight(classnum);
+                }
+                //If the current node's right child is a leaf
+                if(bin[node.getRight()].getLeft() == -1){
+                    //BUG ! this is wrong, bin should not be modified here
+                    classnum = bin[node.getRight()].getFeature();
+                    bin[node.getRight()].setRight(classnum);
+                }
+
                 id_to_index[node.getID()] = temp_bin.size();
                 temp_bin.push_back(node);
             }
+
         }
         id_to_index_vec.push_back(id_to_index);
         id_to_index.clear();
@@ -147,7 +150,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
                     depth = 0;
                 else
                     depth = 1;
-                
+
                 temp_bin.emplace_back(left + tree_offset, right + tree_offset, 
                         feature, threshold, cardinality, id, depth);
             }
@@ -183,7 +186,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         tree_offset = temp_bin.size();
     }
     removeLeafNodes(bins, temp_ensemble);
-    
+
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
     int counter = 0;
@@ -192,7 +195,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
             //root node
             if(node.getDepth() == 0)
                 tree_starts.push_back(counter);
-            
+
             counter++;
         }
         counter = 0;
@@ -200,19 +203,6 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         bin_start.push_back(tree_starts);
         tree_starts.clear();
     }
-    /*
-    std::cout<<"Printing starts: \n";
-    for(auto i: bin_start){
-        for(auto j: i){
-            std::cout<<j<<"\n";
-        }
-        std::cout<<"**************************\n";
-    }
-    std::cout<<"Printing sizes: \n";
-    for(auto i: bin_sizes){
-            std::cout<<i<<"\n";
-    }
-    */
 }
 template class JSONReader<float, float>;
 template class JSONReader<int, float>;
