@@ -28,7 +28,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         inline void predict(const std::vector<T>& observation, std::vector<int>& preds) {
             int bin_counter = 0;
             int num_classes = std::stoi(Config::getValue("numclasses"));
-            std::cout<<"enter predict!\n";
+            //std::cout<<"enter predict!\n";
             /*for(auto bin: PacsetBaseModel<T, F>::bins){
                 std::cout<<"******************************************\n";
                 fflush(stdout);
@@ -52,7 +52,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     number_not_in_leaf = 0;
                     for( i=0; i<siz; ++i){
                         //TODO: add isInternalFront method to node class
-                        //bin[curr_node[i]].printNode();
+                        std::cout<<"i: "<<i<<"\n";
+                        bin[curr_node[i]].printNode();
                         if(bin[curr_node[i]].isInternalNodeFront()){
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
@@ -85,8 +86,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 obs_number++;
                 predict(single_obs, preds);
             }
-            std::cout<<"Exit predict!\n";
-            fflush(stdout);
+            //std::cout<<"Exit predict!\n";
+            //fflush(stdout);
         }
 
         inline void serialize() {

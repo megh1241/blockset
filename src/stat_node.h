@@ -25,9 +25,6 @@ class StatNode: public Node<T, F>
         cardinality(card), id(selfid),
         depth(d){}
 
-    inline bool isInternalNodeFront(){
-        return depth >=0 ;
-    }
 
     inline int getID(){
         return id;
@@ -78,7 +75,7 @@ class StatNode: public Node<T, F>
     }
 
     inline void printNode(){
-         std::cout<<"feature: "<<Node<T, F>::feature
+         std::cout<<"id: "<<id<<"feature: "<<Node<T, F>::feature
              <<" ,threshold: "<<Node<T, F>::threshold<<", left: "
              <<Node<T, F>::left<<" ,right: "<<Node<T, F>::right
              <<", cardinality: "<<cardinality<<"\n";

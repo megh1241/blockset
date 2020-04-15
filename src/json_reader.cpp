@@ -41,6 +41,16 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
     int bin_size = 0;
     int classn;
     int num_bins = temp_ensemble.size();
+
+
+    std::cout<<"BEFORE!!!\n**************\n";
+    for (auto bin: temp_ensemble){
+        for(auto node: bin){
+            node.printNode();
+        }
+    }
+        std::cout<<"******************\n";
+
     for(int i=0; i<num_bins; ++i){
         bin_size = temp_ensemble[i].size();
         for(int j=0; j<num_classes; ++j){
@@ -110,7 +120,6 @@ id_to_index.clear();
 bins.push_back(temp_bin);
 temp_bin.clear();
 }
-*/
 
 int node_count = 0, bin_count = 0, left = 0, right = 0;
 for(auto &bin : bins){
@@ -132,6 +141,27 @@ for(auto &bin : bins){
     node_count = 0;
     ++bin_count;
 }
+*/
+    int nbins = bins.size();
+    for(int i=0; i<nbins; ++i){
+        for(int j=num_classes; j<bins[i].size(); ++j){
+            int left = bins[i][j].getLeft();
+            int right = bins[i][j].getRight();
+            if(left >= num_classes){
+                bins[i][j].setLeft(id_to_index_vec[i][bins[i][left].getID()]);
+            }
+            if(right >= num_classes){
+                bins[i][j].setRight(id_to_index_vec[i][bins[i][right].getID()]);
+            }
+        }
+    }
+    std::cout<<"AFTER!!!\n**************\n";
+    for (auto bin: bins){
+        for(auto node: bin){
+            node.printNode();
+        }
+        std::cout<<"******************\n";
+    }
 }
 
 template<typename T, typename F>
@@ -169,6 +199,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     for(int i=0; i<num_classes; ++i)
         temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
 
+    tree_offset = temp_bin.size();
     //Note: temp_ensemble contains the leaf nodes as a separate node.
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
     //contain class nodes.
@@ -235,15 +266,16 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         }
         tree_offset = temp_bin.size();
     }
+    std::cout<<"FIRST TIME!!!!\n";
+    std::cout<<"******************************************\n";
     for (auto bin: temp_ensemble){
         for(auto node: bin){
             node.printNode();
-
         }
         std::cout<<"******************\n";
     }
-    removeLeafNodes(bins, temp_ensemble );
 
+    removeLeafNodes(bins, temp_ensemble );
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
     int counter = 0;

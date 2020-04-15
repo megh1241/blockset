@@ -23,7 +23,8 @@ class alignas(32) Node
         }
         
         inline bool isInternalNodeFront() {
-            return left > 0;
+            std::cout<<"Left: "<<left<<"\n";
+            return left > -1;
         }
 
         inline int getLeft() {
