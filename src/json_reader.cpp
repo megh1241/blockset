@@ -35,35 +35,22 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
     int classnum = 0;
     std::vector<std::map<int, int>> id_to_index_vec;
     std::map<int, int> id_to_index;
+    std::vector<std::map<int, int>> oldidx_to_newidx_vec;
+    std::map<int, int> oldidx_to_newidx;
     std::vector<StatNode<T, F>> temp_bin;
     int num_classes = std::stoi(Config::getValue("numclasses"));
     int node_counter = 0;
     int bin_size = 0;
-    int classn;
+    int classn, left, right, newleft, newright;
     int num_bins = temp_ensemble.size();
-
-
-    std::cout<<"BEFORE!!!\n**************\n";
-    for (auto bin: temp_ensemble){
-        for(auto node: bin){
-            node.printNode();
-        }
-    }
-        std::cout<<"******************\n";
 
     for(int i=0; i<num_bins; ++i){
         bin_size = temp_ensemble[i].size();
         for(int j=0; j<num_classes; ++j){
             temp_bin.push_back(temp_ensemble[i][j]);
         }
-        std::cout<<"h3\n";
-        fflush(stdout);
         for(int j=num_classes; j<bin_size; ++j){
             if(temp_ensemble[i][j].getLeft() != -1 && temp_ensemble[i][j].getRight() != -1){
-                std::cout<<"left: "<<temp_ensemble[i][j].getLeft()<<"\n";
-                fflush(stdout);
-                std::cout<<"size: "<< bin_size <<"\n";
-                fflush(stdout);
                 if(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getLeft() == -1){
                     classn = temp_ensemble[i][temp_ensemble[i][j].getLeft()].getFeature();
                     temp_ensemble[i][j].setLeft(classn);
@@ -74,93 +61,32 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
                 }
                 id_to_index[temp_ensemble[i][j].getID()] = temp_bin.size();
                 temp_bin.push_back(temp_ensemble[i][j]);
+                oldidx_to_newidx[j] = temp_bin.size()-1 ;
             }
         }
-        std::cout<<"h4\n";
-        fflush(stdout);
+        
         id_to_index_vec.push_back(id_to_index);
         id_to_index.clear();
+        oldidx_to_newidx_vec.push_back(oldidx_to_newidx);
+        oldidx_to_newidx.clear();
         bins.push_back(temp_bin);
         temp_bin.clear();
-        std::cout<<"h5\n";
-        fflush(stdout);
     }
-    std::cout<<"here here here\n";
-    fflush(stdout);
-    /*
-       for(auto &bin: temp_ensemble) {
-       for(auto &node: bin){
-       if(node_counter < num_classes){
-       temp_bin.push_back(node);
-       node_counter++;
-       continue;
-       }
-       if(node.getLeft() != -1 && node.getRight()!=-1){
-//If the current node's left child is a leaf
-if(bin[node.getLeft()].getLeft() == -1){
-//BUG ! this is wrong, bin should not be modified here
-classnum = bin[node.getLeft()].getFeature();
-bin[node.getLeft()].setRight(classnum);
-}
-//If the current node's right child is a leaf
-if(bin[node.getRight()].getLeft() == -1){
-//BUG ! this is wrong, bin should not be modified here
-classnum = bin[node.getRight()].getFeature();
-bin[node.getRight()].setRight(classnum);
-}
 
-id_to_index[node.getID()] = temp_bin.size();
-temp_bin.push_back(node);
-}
-node_counter++;
-}
-node_counter = 0;
-id_to_index_vec.push_back(id_to_index);
-id_to_index.clear();
-bins.push_back(temp_bin);
-temp_bin.clear();
-}
-
-int node_count = 0, bin_count = 0, left = 0, right = 0;
-for(auto &bin : bins){
-    for(auto &node: bin){
-        if(node_count < num_classes){
-            node_count++;
-            continue;
-        }
-        left = node.getLeft();
-        right = node.getRight();
-        if(node.getLeft() >= num_classes){
-            node.setLeft(id_to_index_vec[bin_count][bin[left].getID()]);
-        }
-        if(node.getRight() >= num_classes){
-            node.setRight(id_to_index_vec[bin_count][bin[right].getID()]);
-        }
-        node_count++;
-    }
-    node_count = 0;
-    ++bin_count;
-}
-*/
     int nbins = bins.size();
     for(int i=0; i<nbins; ++i){
         for(int j=num_classes; j<bins[i].size(); ++j){
-            int left = bins[i][j].getLeft();
-            int right = bins[i][j].getRight();
+            left = bins[i][j].getLeft();
+            right = bins[i][j].getRight();
             if(left >= num_classes){
-                bins[i][j].setLeft(id_to_index_vec[i][bins[i][left].getID()]);
+                newleft = id_to_index_vec[i][left];
+                bins[i][j].setLeft(newleft);
             }
             if(right >= num_classes){
-                bins[i][j].setRight(id_to_index_vec[i][bins[i][right].getID()]);
+                newright = id_to_index_vec[i][right];
+                bins[i][j].setRight(newright);
             }
         }
-    }
-    std::cout<<"AFTER!!!\n**************\n";
-    for (auto bin: bins){
-        for(auto node: bin){
-            node.printNode();
-        }
-        std::cout<<"******************\n";
     }
 }
 
@@ -266,15 +192,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         }
         tree_offset = temp_bin.size();
     }
-    std::cout<<"FIRST TIME!!!!\n";
-    std::cout<<"******************************************\n";
-    for (auto bin: temp_ensemble){
-        for(auto node: bin){
-            node.printNode();
-        }
-        std::cout<<"******************\n";
-    }
-
+    
     removeLeafNodes(bins, temp_ensemble );
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!

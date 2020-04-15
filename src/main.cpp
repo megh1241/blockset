@@ -19,6 +19,7 @@
 //TODO: categorical features ?
 //TODO: convert classes to ints
 //TODO: figure out template stuff
+//TODO: check legality of the combination of args
 
 
 const int min_num_cmd_args = 6;
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]) {
     
     const std::unordered_set<std::string> cmdline_args = {"--help", "--mode", 
         "--datafilename", "--modelfilename", "--package", 
-        "--algorithm", "--task"};
+        "--algorithm", "--task", "--numthreads"};
 
     if (argc < min_num_cmd_args){
         std::cerr<<"Invalid set of commandline args!\n";
@@ -57,62 +58,50 @@ int main(int argc, char* argv[]) {
             showUsage();
             exit(-1);
         }
-        //TODO: check legality of the combination of args
     }
-
-    //TODO: change to num of cores
-
-    PacsetFactory pf = PacsetFactory();
     
-    std::cout<<"point 1\n";
-    fflush(stdout);
-
-    Config::setConfigItem("numthreads", std::string("3"));
-    PacsetRandomForestClassifier<float, float>* obj = (PacsetRandomForestClassifier<float, float> *)pf.getModel<float, float>();
-    std::cout<<"point 2\n";
-    fflush(stdout);
-    //PacsetRandomForestClassifier<float, float> *obj ;
-    std::cout<<"point 3\n";
-    fflush(stdout);
-    //obj = dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
-    std::cout<<"point 4\n";
-    fflush(stdout);
-    //Read the model from file, pack and save to file
-    obj->loadModel();
-    std::cout<<"point 5\n";
-    fflush(stdout);
-    std::vector<std::vector<float>> test_vec;
-    std::cout<<"point 6\n";
-    fflush(stdout);
     std::vector<int> preds;
-    loadTestData(test_vec); 
-    std::cout<<"point 7\n";
-    fflush(stdout);
-    //Perform prediction
-    obj->predict(test_vec, preds);
-    std::cout<<"point 8\n";
-    fflush(stdout);
-    /*
-    if (Config::getValue("numthreads") == std::string("notfound"))
-    if(Config::getValue("mode") == std::string("pack") ||
-            Config::getValue("mode") == std::string("both")){
-       
-        //auto model = pf.getModel<float, float>();
-        //Read the model from file, pack and save to file
-        //obj->loadModel();
+    std::vector<int> lab;
+    std::vector<int> predi;    
+    PacsetFactory pf = PacsetFactory();
+
+    PacsetBaseModel<float, float> *obj;
+    if(Config::getValue("algorithm") == std::string("randomforest") && Config::getValue("task") == std::string("classification")) {
+        obj = (PacsetRandomForestClassifier<float, float> *)pf.getModel<float, float>();
     }
-    
-    std::string mode_string = Config::getValue(std::string("mode"));
-    std::string inf_string = std::string("inference");
-    std::string both_string = std::string("both");
-    if( (mode_string.compare(inf_string) == 0) || 
-            (mode_string.compare(both_string) == 0) ){
+
+    //Read the model from file, pack and save to file
+    if(Config::getValue("mode") == std::string("both")){
+        
+        //load json model from disk    
+        obj->loadModel();
+
+        //Load test data from file
         std::vector<std::vector<float>> test_vec;
-        std::vector<int> preds;
-        loadTestData(test_vec); 
+        loadTestData(test_vec, lab); 
+    
         //Perform prediction
-        obj->predict(test_vec, preds);
-        //delete obj;
+        obj->predict(test_vec, preds, predi);
+   
+        //Compute accuracy
+        double acc = getAccuracy(predi, lab);
+        std::cout<<"Accuracy: "<<acc<<"\n";
+        
+        //save packed model to file
+        obj->serialize();
+   
     }
-    */
+    else if (Config::getValue("mode") == std::string("pack")){
+        
+        //Read the model from file, pack and save to file
+        obj->loadModel();
+        
+        //save packed model to file
+        obj->serialize();
+    }
+    else if (Config::getValue("mode") == std::string("inference")){
+        //TODO: fill
+        obj->deserialize();
+    }
+
 }
