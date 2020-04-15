@@ -25,10 +25,19 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             packer_obj.pack(PacsetBaseModel<T, F>::bins);
         }
 
-        inline void predict(const std::vector<T> observation, std::vector<int>& preds) {
+        inline void predict(const std::vector<T>& observation, std::vector<int>& preds) {
             int bin_counter = 0;
             int num_classes = std::stoi(Config::getValue("numclasses"));
+            std::cout<<"enter predict!\n";
+            /*for(auto bin: PacsetBaseModel<T, F>::bins){
+                std::cout<<"******************************************\n";
+                fflush(stdout);
+                for(auto node: bin){
+                    node.printNode();
+                    fflush(stdout);
+                }
             
+            }*/
             for(auto bin: PacsetBaseModel<T, F>::bins){
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;
@@ -43,6 +52,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     number_not_in_leaf = 0;
                     for( i=0; i<siz; ++i){
                         //TODO: add isInternalFront method to node class
+                        //bin[curr_node[i]].printNode();
                         if(bin[curr_node[i]].isInternalNodeFront()){
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
@@ -53,23 +63,30 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                         }
                     }
                 }while(number_not_in_leaf);
-               
-                std::cout<<"before preds thing\n";
-                fflush(stdout);
                 for(i=0; i<siz; ++i){
+                    //std::cout<< "class: "<<bin[curr_node[i]].getClass()<<"\n";
                     ++preds[bin[curr_node[i]].getClass()];
                 }
-                std::cout<<"after preds thing\n";
-                fflush(stdout);
+               
                 ++bin_counter;
             }
         }
 
-        inline void predict(const std::vector<std::vector<T>> observation, 
+        inline void predict(const std::vector<std::vector<T>>& observation, 
                 std::vector<int>& preds) {
+            int num_classes = std::stoi(Config::getValue("numclasses"));
+            for(int i=0; i<num_classes; ++i){
+                preds.push_back(0);
+            }
+            
+            int obs_number = 0;
             for(auto single_obs : observation){
+                std::cout<<"obs: "<<obs_number<<"\n";
+                obs_number++;
                 predict(single_obs, preds);
             }
+            std::cout<<"Exit predict!\n";
+            fflush(stdout);
         }
 
         inline void serialize() {

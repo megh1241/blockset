@@ -61,19 +61,45 @@ int main(int argc, char* argv[]) {
     }
 
     //TODO: change to num of cores
-    PacsetRandomForestClassifier<float, float> *obj ;
 
-    if (Config::getValue("numthreads") == std::string("notfound"))
-        Config::setConfigItem("numthreads", std::string("3"));
     PacsetFactory pf = PacsetFactory();
+    
+    std::cout<<"point 1\n";
+    fflush(stdout);
+
+    Config::setConfigItem("numthreads", std::string("3"));
+    PacsetRandomForestClassifier<float, float>* obj = (PacsetRandomForestClassifier<float, float> *)pf.getModel<float, float>();
+    std::cout<<"point 2\n";
+    fflush(stdout);
+    //PacsetRandomForestClassifier<float, float> *obj ;
+    std::cout<<"point 3\n";
+    fflush(stdout);
+    //obj = dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
+    std::cout<<"point 4\n";
+    fflush(stdout);
+    //Read the model from file, pack and save to file
+    obj->loadModel();
+    std::cout<<"point 5\n";
+    fflush(stdout);
+    std::vector<std::vector<float>> test_vec;
+    std::cout<<"point 6\n";
+    fflush(stdout);
+    std::vector<int> preds;
+    loadTestData(test_vec); 
+    std::cout<<"point 7\n";
+    fflush(stdout);
+    //Perform prediction
+    obj->predict(test_vec, preds);
+    std::cout<<"point 8\n";
+    fflush(stdout);
+    /*
+    if (Config::getValue("numthreads") == std::string("notfound"))
     if(Config::getValue("mode") == std::string("pack") ||
             Config::getValue("mode") == std::string("both")){
        
-        auto model = pf.getModel<float, float>();
-        obj = dynamic_cast<PacsetRandomForestClassifier<float, float> *>(model);
-
+        //auto model = pf.getModel<float, float>();
         //Read the model from file, pack and save to file
-        obj->loadModel();
+        //obj->loadModel();
     }
     
     std::string mode_string = Config::getValue(std::string("mode"));
@@ -83,10 +109,10 @@ int main(int argc, char* argv[]) {
             (mode_string.compare(both_string) == 0) ){
         std::vector<std::vector<float>> test_vec;
         std::vector<int> preds;
-        
         loadTestData(test_vec); 
-
         //Perform prediction
         obj->predict(test_vec, preds);
+        //delete obj;
     }
+    */
 }

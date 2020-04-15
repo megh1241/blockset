@@ -31,57 +31,107 @@ int JSONReader<T, F>::populateBinSizes(
 
 template<typename T, typename F>
 void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins, 
-        std::vector<std::vector<StatNode<T, F>>> temp_ensemble){
+        std::vector<std::vector<StatNode<T, F>>> temp_ensemble ){
     int classnum = 0;
     std::vector<std::map<int, int>> id_to_index_vec;
     std::map<int, int> id_to_index;
     std::vector<StatNode<T, F>> temp_bin;
     int num_classes = std::stoi(Config::getValue("numclasses"));
-    for(auto &bin: temp_ensemble) {
-        for(auto &node: bin){
-            if(node.getLeft() != -1 || node.getRight()!=-1){
-                //If the current node's left child is a leaf
-                if(bin[node.getLeft()].getLeft() == -1){
-                    //BUG ! this is wrong, bin should not be modified here
-                    classnum = bin[node.getLeft()].getFeature();
-                    bin[node.getLeft()].setRight(classnum);
-                }
-                //If the current node's right child is a leaf
-                if(bin[node.getRight()].getLeft() == -1){
-                    //BUG ! this is wrong, bin should not be modified here
-                    classnum = bin[node.getRight()].getFeature();
-                    bin[node.getRight()].setRight(classnum);
-                }
-
-                id_to_index[node.getID()] = temp_bin.size();
-                temp_bin.push_back(node);
-            }
-
+    int node_counter = 0;
+    int bin_size = 0;
+    int classn;
+    int num_bins = temp_ensemble.size();
+    for(int i=0; i<num_bins; ++i){
+        bin_size = temp_ensemble[i].size();
+        for(int j=0; j<num_classes; ++j){
+            temp_bin.push_back(temp_ensemble[i][j]);
         }
+        std::cout<<"h3\n";
+        fflush(stdout);
+        for(int j=num_classes; j<bin_size; ++j){
+            if(temp_ensemble[i][j].getLeft() != -1 && temp_ensemble[i][j].getRight() != -1){
+                std::cout<<"left: "<<temp_ensemble[i][j].getLeft()<<"\n";
+                fflush(stdout);
+                std::cout<<"size: "<< bin_size <<"\n";
+                fflush(stdout);
+                if(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getLeft() == -1){
+                    classn = temp_ensemble[i][temp_ensemble[i][j].getLeft()].getFeature();
+                    temp_ensemble[i][j].setLeft(classn);
+                }
+                if(temp_ensemble[i][temp_ensemble[i][j].getRight()].getLeft() == -1){
+                    classn = temp_ensemble[i][temp_ensemble[i][j].getRight()].getFeature();
+                    temp_ensemble[i][j].setRight(classn);
+                }
+                id_to_index[temp_ensemble[i][j].getID()] = temp_bin.size();
+                temp_bin.push_back(temp_ensemble[i][j]);
+            }
+        }
+        std::cout<<"h4\n";
+        fflush(stdout);
         id_to_index_vec.push_back(id_to_index);
         id_to_index.clear();
         bins.push_back(temp_bin);
         temp_bin.clear();
+        std::cout<<"h5\n";
+        fflush(stdout);
     }
+    std::cout<<"here here here\n";
+    fflush(stdout);
+    /*
+       for(auto &bin: temp_ensemble) {
+       for(auto &node: bin){
+       if(node_counter < num_classes){
+       temp_bin.push_back(node);
+       node_counter++;
+       continue;
+       }
+       if(node.getLeft() != -1 && node.getRight()!=-1){
+//If the current node's left child is a leaf
+if(bin[node.getLeft()].getLeft() == -1){
+//BUG ! this is wrong, bin should not be modified here
+classnum = bin[node.getLeft()].getFeature();
+bin[node.getLeft()].setRight(classnum);
+}
+//If the current node's right child is a leaf
+if(bin[node.getRight()].getLeft() == -1){
+//BUG ! this is wrong, bin should not be modified here
+classnum = bin[node.getRight()].getFeature();
+bin[node.getRight()].setRight(classnum);
+}
 
-    int node_count = 0, bin_count = 0, left = 0, right = 0;
-    for(auto &bin : bins){
-        for(auto &node: bin){
-            if(node_count < num_classes)
-                continue;
-            left = node.getLeft();
-            right = node.getRight();
-            if(node.getID() > -1){
-                if(node.getLeft() > -1){
-                    node.setLeft(id_to_index_vec[bin_count][bin[left].getID()]);
-                    node.setRight(id_to_index_vec[bin_count][bin[right].getID()]);
-                }
-            }
+id_to_index[node.getID()] = temp_bin.size();
+temp_bin.push_back(node);
+}
+node_counter++;
+}
+node_counter = 0;
+id_to_index_vec.push_back(id_to_index);
+id_to_index.clear();
+bins.push_back(temp_bin);
+temp_bin.clear();
+}
+*/
+
+int node_count = 0, bin_count = 0, left = 0, right = 0;
+for(auto &bin : bins){
+    for(auto &node: bin){
+        if(node_count < num_classes){
             node_count++;
+            continue;
         }
-        node_count = 0;
-        ++bin_count;
+        left = node.getLeft();
+        right = node.getRight();
+        if(node.getLeft() >= num_classes){
+            node.setLeft(id_to_index_vec[bin_count][bin[left].getID()]);
+        }
+        if(node.getRight() >= num_classes){
+            node.setRight(id_to_index_vec[bin_count][bin[right].getID()]);
+        }
+        node_count++;
     }
+    node_count = 0;
+    ++bin_count;
+}
 }
 
 template<typename T, typename F>
@@ -151,7 +201,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
                 else
                     depth = 1;
 
-                temp_bin.emplace_back(left + tree_offset, right + tree_offset, 
+                temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
                         feature, threshold, cardinality, id, depth);
             }
 
@@ -185,7 +235,14 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         }
         tree_offset = temp_bin.size();
     }
-    removeLeafNodes(bins, temp_ensemble);
+    for (auto bin: temp_ensemble){
+        for(auto node: bin){
+            node.printNode();
+
+        }
+        std::cout<<"******************\n";
+    }
+    removeLeafNodes(bins, temp_ensemble );
 
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
