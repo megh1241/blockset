@@ -8,13 +8,12 @@ from mmappickle import mmapdict
 import pickle, csv, time, io
 from sklearn.tree import *
 from sklearn import tree
+from csv import *
 import csv
 
 #GLOBAL VARIABLES
 #data_filename = 'cifar-100.csv'
-data_filename = 'cifar-10.csv'
-model_filename = '/data4/tree_poker'
-random_filename = '/data4/random.bin'
+data_filename = '/root/pacset/data/cifar-10.csv'
 
 random_file_size = 900000
 num_files = 40
