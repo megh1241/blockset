@@ -65,14 +65,26 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             for(int i=0; i<num_classes; ++i){
                 preds.push_back(0);
             }
-
+            int times_max = 0;
+            int obs_num = 0;
             int predict_value;
+            int max = -1;
+            int maxid = -1;
             for(auto single_obs : observation){
                 predict(single_obs, preds);
-                predict_value = static_cast<int>(std::distance(preds.begin(), 
-                            max_element(preds.begin(), preds.end())));
-                results.push_back(predict_value); 
+                //TODO: change
+                for(int i=0; i<num_classes; ++i){
+                    if(preds[i]>max){
+                        maxid = i;
+                        max = preds[i];
+                    }
+                }
+                int count = std::count(std::begin(preds), std::end(preds), max);
+                results.push_back(maxid); 
+                maxid = -1;
+                max = -1;
                 std::fill(preds.begin(), preds.end(), 0);
+                obs_num++;
             }
         }
 

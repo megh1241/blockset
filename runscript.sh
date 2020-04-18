@@ -1,1 +1,1 @@
-./exe --mode both --modelfilename /root/pacset/models/rf128.json --datafilename /root/pacset/data/iris.csv --numthreads 3 --package sklearn --algorithm randomforest --task classification
+./exe --mode both --modelfilename /root/pacset/models/cifar128.json --datafilename /root/pacset/data/cifar-10.csv --numthreads 1 --package sklearn --algorithm randomforest --task classification

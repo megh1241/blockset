@@ -14,6 +14,16 @@ from sklearn.tree import *
 from sklearn import tree
 from csv import *
 import csv
+from sklearn.datasets import fetch_openml
+import time
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import fetch_openml
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
 n_trees = 128
@@ -35,12 +45,11 @@ def load_csv(filename):
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             row_int = [int(item) for item in row]
-            row_int.pop(0)
+            last_ele = row_int.pop()
             X_train.append(row_int)
-            X_test.append(int(row[0]))
+            print(last_ele)
+            X_test.append(last_ele)
             num+=1
-            if num > 10000:
-                break
     return X_train, X_test, X_train, X_test
 
 
@@ -52,17 +61,38 @@ iris = load_iris()
 X = iris.data
 y = iris.target
 '''
+
+# Load data from https://www.openml.org/d/554
+#X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+#train_samples = 60000
+#t0 = time.time()
+#random_state = check_random_state(0)
+#permutation = random_state.permutation(X.shape[0])
+#X = X[permutation]
+#y = y[permutation]
+#X = X.reshape((X.shape[0], -1))
+
+#X_train, X_test, y_train, y_test = train_test_split(
+#    X, y, train_size=train_samples, test_size=10000)
+
+#scaler = StandardScaler()
+#X_train = scaler.fit_transform(X_train)
+#X_test = scaler.transform(X_test)
+#X = X_train
+
 X, y, a, b = load_csv(data_filename)
 #Train model
-model = RandomForestClassifier(n_estimators = n_trees)
-#model = DecisionTreeClassifier()
+model1 = RandomForestClassifier(n_estimators = n_trees)
+model1.fit(X,  y)
+#model = Decis_set_oob_scoreionTreeClassifier()
 
-model.fit(X, y)
+#model._loadX, y)
+
+#model = pickle.load('../models/rf128.pkl')
+print(model1.score(X, y))
 
 #Save model to pickle
-pickle.dump(model, open('../models/rf128.pkl', 'wb'))
+#pickle.dump(model, open('../models/rf128.pkl', 'wb'))
 
 #Save model to json
-skljson.to_json(model, '../models/rf128.json')
-
-
+skljson.to_json(model1, '../models/cifar128.json')
