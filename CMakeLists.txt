@@ -5,4 +5,9 @@ add_executable(exe src/config.h  src/config.cpp src/config.h src/utils.h src/uti
 find_package(PythonLibs ${PY_VERSION} REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(exe PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 target_link_libraries(exe PRIVATE ${PYTHON_LIBRARIES}  nlohmann_json::nlohmann_json)

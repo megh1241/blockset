@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <unordered_set>
+#include <omp.h>
 #include "config.h"
 #include "pacset_factory.h"
 #include "pacset_base_model.h"
@@ -25,7 +26,8 @@
 const int min_num_cmd_args = 6;
 
 static void showUsage(){
-    std::cout<<"Usage: ./exe --mode <inference/pack/both>"
+    std::cout<<"Usage: "
+        "./exe --mode <inference/pack/both>"
         "--modelfilename <picklefilename>"
         "--datafilename <datafilename>"
         "--package <sklearn/lightgbm/xgboost/ranger>"
@@ -34,9 +36,9 @@ static void showUsage(){
         "--numthreads <number of threads>\n";
 }
 
-int main(int argc, char* argv[]) {
-    
-    const std::unordered_set<std::string> cmdline_args = {"--help", "--mode", 
+static void parseArgs(int argc, char* argv[]){
+    const std::unordered_set<std::string> cmdline_args =
+        {"--help", "--mode", 
         "--datafilename", "--modelfilename", "--package", 
         "--algorithm", "--task", "--numthreads"};
 
@@ -59,20 +61,31 @@ int main(int argc, char* argv[]) {
             exit(-1);
         }
     }
-    
+
+    //Set number of threads openmp
+    if(Config::getValue("numthreads") != std::string("notfound")){
+        omp_set_dynamic(0);
+        omp_set_num_threads(std::atoi(Config::getValue("numthreads").c_str()));
+    }
+}
+
+int main(int argc, char* argv[]) {
+    parseArgs(argc, argv);
+
     std::vector<int> preds;
     std::vector<int> lab;
     std::vector<int> predi;    
     PacsetFactory pf = PacsetFactory();
 
     PacsetBaseModel<float, float> *obj;
-    if(Config::getValue("algorithm") == std::string("randomforest") && Config::getValue("task") == std::string("classification")) {
-        obj = (PacsetRandomForestClassifier<float, float> *)pf.getModel<float, float>();
+    if(Config::getValue("algorithm") == std::string("randomforest") 
+            && Config::getValue("task") == std::string("classification")) {
+        obj = (PacsetRandomForestClassifier<float, float> *)
+            pf.getModel<float, float>();
     }
 
     //Read the model from file, pack and save to file
     if(Config::getValue("mode") == std::string("both")){
-        
         //load json model from disk    
         obj->loadModel();
         std::cout<<"model loaded\n";
