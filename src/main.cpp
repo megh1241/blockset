@@ -108,7 +108,10 @@ int main(int argc, char* argv[]) {
         
         //Read the model from file, pack and save to file
         obj->loadModel();
-        
+
+        //pack model
+        obj->pack();
+
         //save packed model to file
         obj->serialize();
     }

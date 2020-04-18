@@ -26,9 +26,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         }
 
         inline void predict(const std::vector<T>& observation, std::vector<int>& preds) {
-            int bin_counter = 0;
             int num_classes = std::stoi(Config::getValue("numclasses"));
+            int num_threads = std::stoi(Config::getValue("numthreads"));
 
+#pragma omp parallel for num_threads(num_threads)
             for(auto bin: PacsetBaseModel<T, F>::bins){
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;
@@ -53,9 +54,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 }while(number_not_in_leaf);
 
                 for(i=0; i<siz; ++i){
+
+#pragma omp atomic update
                     ++preds[bin[curr_node[i]].getClass()];
                 }
-                ++bin_counter;
             }
         }
 
