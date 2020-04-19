@@ -22,15 +22,25 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         inline void pack(){
             std::string layout = Config::getValue("layout");
             Packer<T, F> packer_obj(layout);
-            packer_obj.pack(PacsetBaseModel<T, F>::bins);
+            int num_bins = std::stoi(Config::getValue("numthreads"));
+
+            for(int i=0; i<num_bins; ++i){
+                //should pack in place
+                packer_obj.pack(PacsetBaseModel<T, F>::bins[i], 
+                        PacsetBaseModel<T, F>::bin_sizes[i],
+                        PacsetBaseModel<T, F>::bin_start[i] 
+                );
+            }
         }
 
         inline void predict(const std::vector<T>& observation, std::vector<int>& preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
-
+            
 #pragma omp parallel for num_threads(num_threads)
-            for(auto bin: PacsetBaseModel<T, F>::bins){
+            for(int bin_counter=0; bin_counter<num_threads; ++bin_counter){
+                auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
+                //for(auto bin: PacsetBaseModel<T, F>::bins){
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
