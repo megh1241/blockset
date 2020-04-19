@@ -19,7 +19,8 @@ class Packer{
     std::vector<StatNode<T, F>> finalbin;
     std::map<int, int> node_to_index;
 
-    private: //Note: contains helper functions (i.e common routines used for packing)
+    private:
+    //Note: contains helper functions (i.e common routines used for packing)
 
     //Returns a queue containing the roots of subtrees below the BIN
     //after packing the BIN in an interleaved fashion
@@ -135,8 +136,10 @@ class Packer{
                 auto ele = bin_st.front();
                 bin_st.pop_front(); 
                 finalbin.push_back(ele);
-                node_to_index.insert(std::pair<int, int>(ele.getID(), finalbin.size()-1));
-                if((ele.getLeft() < num_classes) && (ele.getRight() < num_classes))
+                node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                            finalbin.size()-1));
+                if((ele.getLeft() < num_classes) && 
+                        (ele.getRight() < num_classes))
                     continue;
 
                 else if(ele.getLeft() < num_classes)
@@ -193,7 +196,8 @@ class Packer{
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         
         //Interleaved BIN
-        std::deque<StatNode<T, F>> bin_q = packBinHelper(bin, num_trees_in_bin, bin_start);
+        std::deque<StatNode<T, F>> bin_q =
+            packBinHelper(bin, num_trees_in_bin, bin_start);
 
         // STAT per (sub)tree layout 
         if(layout.find(std::string("bfs")) != std::string::npos){
