@@ -38,7 +38,7 @@ static void showUsage(){
 
 static void parseArgs(int argc, char* argv[]){
     const std::unordered_set<std::string> cmdline_args =
-        {"--help", "--mode", 
+        {"--help", "--mode", "--layout", "--intertwine", 
         "--datafilename", "--modelfilename", "--package", 
         "--algorithm", "--task", "--numthreads"};
 
@@ -89,6 +89,9 @@ int main(int argc, char* argv[]) {
         //load json model from disk    
         obj->loadModel();
         std::cout<<"model loaded\n";
+        //pack model
+        obj->pack();
+        std::cout<<"model packed \n";
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
         loadTestData(test_vec, lab); 
@@ -119,5 +122,4 @@ int main(int argc, char* argv[]) {
         //TODO: fill
         obj->deserialize();
     }
-
 }

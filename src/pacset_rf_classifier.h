@@ -21,10 +21,14 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void pack(){
             std::string layout = Config::getValue("layout");
-            Packer<T, F> packer_obj(layout);
+            
+                auto bin = PacsetBaseModel<T, F>::bins[0];
             int num_bins = std::stoi(Config::getValue("numthreads"));
-
             for(int i=0; i<num_bins; ++i){
+                Packer<T, F> packer_obj(layout);
+
+                if(Config::getValue("intertwine") != std::string("notfound"))
+                    packer_obj.setDepthIntertwined(std::atoi(Config::getValue("intertwine").c_str()));
                 //should pack in place
                 packer_obj.pack(PacsetBaseModel<T, F>::bins[i], 
                         PacsetBaseModel<T, F>::bin_sizes[i],
@@ -40,11 +44,12 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_threads; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
-                //for(auto bin: PacsetBaseModel<T, F>::bins){
+                
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
+               
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
@@ -96,6 +101,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 maxid = -1;
                 max = -1;
                 std::fill(preds.begin(), preds.end(), 0);
+                std::cout<<"Obs: "<<obs_num<<"\n";
                 obs_num++;
             }
         }

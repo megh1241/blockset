@@ -33,13 +33,16 @@ class Packer{
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         std::deque <StatNode<T, F>> temp_q;
         std::deque <StatNode<T, F>> bin_q;
-        std::deque<StatNode<T, F>> bin_q_left;
-        std::deque<StatNode<T, F>> bin_q_right;
+        std::deque <StatNode<T, F>> bin_q_left;
+        std::deque <StatNode<T, F>> bin_q_right;
 
         for(int i=0; i<num_trees_in_bin; ++i){
-            finalbin.push_back(bin[bin_start[i]]);
+            temp_q.push_back(bin[bin_start[i]]);
+            //finalbin.push_back(bin[bin_start[i]]);
+            //node_to_index.insert(std::pair<int, int>(bin[bin_start[i]].getID(), finalbin.size()-1));
             //trees are interleaved so the starting nodes are adjacent
-            bin_start[i] = i;
+            //but after the class nodes
+            bin_start[i] = i+num_classes;
         }
 
         // Intertwined levels
@@ -48,8 +51,9 @@ class Packer{
 
         while(curr_level < num_nodes_process * num_trees_in_bin) {
             auto ele = temp_q.front();
+            ele.printNode();
             temp_q.pop_front();
-            if(ele.getID()>= num_classes) {
+            if(ele.getID()>= 0) {
                 finalbin.push_back(ele);
                 node_to_index.insert(std::pair<int, int>(ele.getID(), finalbin.size()-1));
                 bin_q_left.push_back(bin[ele.getLeft()]); 
@@ -81,14 +85,14 @@ class Packer{
 
         while(!temp_q.empty()){
             auto ele = temp_q.front();
-            if(ele.getID() >= num_classes)
+            if(ele.getID() >= 0)
                 bin_q.push_back(ele);
             temp_q.pop_front();
         }
         return bin_q;
     }
 
-    inline std::deque<StatNode<T, F>> packSubtreeBFSHelper(
+    inline void packSubtreeBFSHelper(
             std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
             std::vector<int> &bin_start, 
             std::deque<StatNode<T, F>> bin_q) { 
@@ -121,7 +125,7 @@ class Packer{
         }		
     }
     
-    inline std::deque<StatNode<T, F>> packSubtreeDFSHelper(
+    inline void packSubtreeDFSHelper(
             std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
             std::vector<int> &bin_start, 
             std::deque<StatNode<T, F>> bin_q) { 
@@ -178,10 +182,18 @@ class Packer{
     Packer(int depth, std::string layout_str): 
         depth_intertwined(depth), layout(layout_str){}
 
+    inline void setDepthIntertwined(int depth){
+        depth_intertwined = depth;
+    }
+
     inline void pack(std::vector<StatNode<T, F>>&bin, 
             int num_trees_in_bin, std::vector<int> &bin_start){
 
         const std::string bin_string = "bin";
+        int num_classes = std::atoi(Config::getValue("numclasses").c_str());
+        for(int i=0; i<num_classes; ++i){
+                finalbin.push_back(bin[i]);
+        }
         if(layout.find(bin_string) != std::string::npos){
             PackLayoutWithBin(bin, num_trees_in_bin, bin_start);
         }
@@ -210,10 +222,11 @@ class Packer{
         // set new IDs
         int siz = finalbin.size();
         for (auto i=num_classes; i<siz; i++){
-            finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
-            finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
+            if(finalbin[i].getLeft() >= num_classes)
+                finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
+            if(finalbin[i].getRight() >= num_classes)
+                finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
         }
-
         //replace bin with final bin
         std::copy(finalbin.begin(), finalbin.end(), bin.begin());
     }
@@ -240,8 +253,10 @@ class Packer{
         // set new IDs
         int siz = finalbin.size();
         for (auto i=num_classes; i<siz; i++){
-            finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
-            finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
+            if(finalbin[i].getLeft() >= num_classes)
+                finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
+            if(finalbin[i].getRight() >= num_classes)
+                finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
         }
 
         //replace bin with final bin
