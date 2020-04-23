@@ -26,8 +26,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
-n_trees = 128
-data_filename = '/root/pacset/data/cifar-10.csv'
+n_trees = 10
+#data_filename = '/root/pacset/data/cifar-10.csv'
+data_filename = '/root/pacset/data/iris.csv'
 def load_csv(filename):
     """
     Loads a csv file containin the data, parses it
@@ -44,7 +45,7 @@ def load_csv(filename):
     with open(filename,'rt')as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
-            row_int = [int(item) for item in row]
+            row_int = [float(item) for item in row]
             last_ele = row_int.pop()
             X_train.append(row_int)
             print(last_ele)
@@ -63,18 +64,19 @@ y = iris.target
 '''
 
 # Load data from https://www.openml.org/d/554
-#X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
-#train_samples = 60000
-#t0 = time.time()
-#random_state = check_random_state(0)
-#permutation = random_state.permutation(X.shape[0])
-#X = X[permutation]
-#y = y[permutation]
-#X = X.reshape((X.shape[0], -1))
-
-#X_train, X_test, y_train, y_test = train_test_split(
-#    X, y, train_size=train_samples, test_size=10000)
-
+'''
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+train_samples = 60000
+t0 = time.time()
+random_state = check_random_state(0)
+permutation = random_state.permutation(X.shape[0])
+X = X[permutation]
+y = y[permutation]
+X = X.reshape((X.shape[0], -1))
+train_size = X.shape[0]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=train_samples)
+'''
 #scaler = StandardScaler()
 #X_train = scaler.fit_transform(X_train)
 #X_test = scaler.transform(X_test)
@@ -95,4 +97,5 @@ print(model1.score(X, y))
 #pickle.dump(model, open('../models/rf128.pkl', 'wb'))
 
 #Save model to json
-skljson.to_json(model1, '../models/cifar128.json')
+#skljson.to_json(model1, '../models/cifar128.json')
+skljson.to_json(model1, '../models/iris10.json')
