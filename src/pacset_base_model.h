@@ -17,12 +17,12 @@ class PacsetBaseModel{
     public:
         virtual void pack() = 0;
         virtual void loadModel() = 0;
-        virtual void predict(const std::vector<T> &observations, std::vector<int> &preds) = 0;
-        virtual void predict(const std::vector<std::vector<T>> &observations, std::vector<int> &preds
-                , std::vector<int> &result) = 0;
+        virtual int predict(const std::vector<T> &observations, 
+                std::vector<int> &preds) = 0;
+        virtual void predict(const std::vector<std::vector<T>> &observations, 
+                std::vector<int> &preds, std::vector<int> &result) = 0;
         virtual void serialize() = 0;
         virtual void deserialize() = 0;
 };
-
 
 #endif
