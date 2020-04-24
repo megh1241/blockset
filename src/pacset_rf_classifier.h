@@ -48,10 +48,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         inline int predict(const std::vector<T>& observation, std::vector<int>& preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
-            int num_bins = bins.size();
+            int num_bins = PacsetBaseModel<T, F>::bins.size();
 
             std::unordered_set<int> blocks_accessed;
             int block_offset = 0;
+
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
@@ -108,8 +109,14 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void predict(const std::vector<std::vector<T>>& observation, 
                 std::vector<int>& preds, std::vector<int>&results) {
+
+            //Predicts the class for a vector of observations
+            //By calling predict for a single observation and 
+            //tallying the observations
+            //
+
             int num_classes = std::stoi(Config::getValue("numclasses"));
-            int num_bins 
+            int num_bins; 
             std::string layout = Config::getValue("layout");
             std::string num_threads = Config::getValue("numthreads");
             std::string dataset = Config::getValue("datafilename");
@@ -162,7 +169,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             
             std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
             std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
-            std::vector<int> bin_start  = PacsetBaseModel<T, F>::bin_start;
+            std::vector<std::vector<int>> bin_start  = PacsetBaseModel<T, F>::bin_start;
 
 
             std::string format = Config::getValue("format");
@@ -180,7 +187,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 //Write the nodes
                 std::fstream fout;
                 fout.open(filename, std::ios::binary | std::ios::out | std::ios::app);
-                Node* node_to_write;
+                Node<T, F>* node_to_write;
                 for(auto bin: bins){
                     for(auto node: bin){
                         node_to_write = &node;
@@ -212,8 +219,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 }
 
                 //start position of each bin
-                for(auto i: bin_start){
-                    fout<<i<<"\n";
+                for(auto bin: bin_start){
+                    for(auto tree_start: bin){
+                        fout<<tree_start<<"\n";
+                    }
                 }
                  
             }
