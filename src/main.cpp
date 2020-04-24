@@ -20,7 +20,6 @@
 //TODO: categorical features ?
 //TODO: convert classes to ints
 //TODO: figure out template stuff
-//TODO: check legality of the combination of args
 
 
 const int min_num_cmd_args = 6;
@@ -37,6 +36,7 @@ static void showUsage(){
 }
 
 static void parseArgs(int argc, char* argv[]){
+    //TODO: check legality of the combination of args
     const std::unordered_set<std::string> cmdline_args =
         {"--help", "--mode", "--layout", "--intertwine", 
         "--datafilename", "--modelfilename", "--package", 

@@ -3,13 +3,17 @@
 
 #include <vector>
 #include <unordered_set>
+#include <fstream>
 
 #include "pacset_base_model.h"
 #include "packer.h"
 #include "config.h"
 #include "json_reader.h"
 #include "utils.h"
+#include "node.h"
+
 #define BLOCK_LOGGING 1
+
 #define BLOCK_SIZE 128
 
 template <typename T, typename F>
@@ -44,10 +48,12 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         inline int predict(const std::vector<T>& observation, std::vector<int>& preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
+            int num_bins = bins.size();
+
             std::unordered_set<int> blocks_accessed;
             int block_offset = 0;
 #pragma omp parallel for num_threads(num_threads)
-            for(int bin_counter=0; bin_counter<num_threads; ++bin_counter){
+            for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
                 
             
@@ -103,16 +109,25 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         inline void predict(const std::vector<std::vector<T>>& observation, 
                 std::vector<int>& preds, std::vector<int>&results) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
+            int num_bins 
+            std::string layout = Config::getValue("layout");
+            std::string num_threads = Config::getValue("numthreads");
+            std::string dataset = Config::getValue("datafilename");
+
             for(int i=0; i<num_classes; ++i){
                 preds.push_back(0);
             }
+
             int times_max = 0;
             int obs_num = 0;
             int predict_value;
             int max = -1;
             int maxid = -1;
+            int blocks;
+            std::vector<int> num_blocks;
             for(auto single_obs : observation){
-                int blocks = predict(single_obs, preds);
+                blocks = predict(single_obs, preds);
+                num_blocks.push_back(blocks);
                 //TODO: change
                 for(int i=0; i<num_classes; ++i){
                     if(preds[i]>max){
@@ -125,12 +140,86 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 maxid = -1;
                 max = -1;
                 std::fill(preds.begin(), preds.end(), 0);
-                //std::cout<<"Obs: "<<obs_num<<"\n";
                 obs_num++;
             }
+
+#ifdef BLOCK_LOGGING 
+            std::fstream fout;
+            std::string filename = "/root/pacset/logs/Blocks_" + 
+                layout + "threads_" + num_threads +".csv";
+            fout.open(filename, std::ios::out | std::ios::app);
+            for(auto i: num_blocks){
+                fout<<i<<",";
+            }
+            fout.close();
+#endif
         }
 
         inline void serialize() {
+            auto bins = PacsetBaseModel<T, F>::bins;
+            int num_classes = std::stoi(Config::getValue("numclasses"));
+            int num_bins = bins.size();
+            
+            std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
+            std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
+            std::vector<int> bin_start  = PacsetBaseModel<T, F>::bin_start;
+
+
+            std::string format = Config::getValue("format");
+            if(format == std::string("notfound") ||
+                    format == std::string("binary")){
+                
+                std::string modelfname = Config::getValue("modelfilename");
+                std::string filename;
+
+                if(modelfname != std::string("notfound"))
+                    filename = modelfname;
+                else
+                    filename = "/root/pacset/models/packedmodel.bin";
+                
+                //Write the nodes
+                std::fstream fout;
+                fout.open(filename, std::ios::binary | std::ios::out | std::ios::app);
+                Node* node_to_write;
+                for(auto bin: bins){
+                    for(auto node: bin){
+                        node_to_write = &node;
+                        fout.write((char*)&node_to_write, sizeof(node_to_write));
+                    }
+                }
+                fout.close();
+
+                //Write the metadata needed to reconstruct bins and for prediction
+                
+                //TODO: change filename
+                filename = "/root/pacset/models/metadata.txt";
+                fout.open(filename, std::ios::out | std::ios::app);
+                
+                //Number of classes
+                fout<<num_classes<<"\n";
+
+                //Number of bins
+                fout<<num_bins<<"\n";
+
+                //Number of trees in each bin
+                for(auto i: bin_sizes){
+                    fout<<i<<"\n";
+                }
+
+                //Number of nodes in each bin
+                for(auto i: bin_node_sizes){
+                    fout<<i<<"\n";
+                }
+
+                //start position of each bin
+                for(auto i: bin_start){
+                    fout<<i<<"\n";
+                }
+                 
+            }
+            else{
+                
+            }
         }
 
         inline void deserialize() {

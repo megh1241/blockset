@@ -24,9 +24,6 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
         int last_ele = (int)(temp_vector.at(siz-1));
         labels.push_back(last_ele);
         temp_vector.pop_back();
-        //std::cout<< last_ele <<"\n";
-       //labels.push_back(temp_vector.front());
-        //temp_vector.erase(temp_vector.begin());
         test_data.push_back(temp_vector);
         temp_vector.clear();
    }
