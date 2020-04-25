@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) {
         std::cout<<"Accuracy: "<<acc<<"\n";
         
         //save packed model to file
-        obj->serialize();
-   
+        //obj->serialize();
+        
     }
     else if (Config::getValue("mode") == std::string("pack")){
         
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
         obj->pack();
 
         //save packed model to file
-        obj->serialize();
+        //obj->serialize();
     }
     else if (Config::getValue("mode") == std::string("inference")){
         //TODO: fill

@@ -225,6 +225,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                         fout<<tree_start<<"\n";
                     }
                 }
+                fout.close();
                  
             }
             else{
