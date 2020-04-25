@@ -30,7 +30,7 @@ class alignas(32) Node
             return left;
         }
 
-        inline int setLeft(int ele) {
+        inline void setLeft(int ele) {
             left = ele;
         }
 
@@ -55,7 +55,7 @@ class alignas(32) Node
             return right;
         }
 
-        inline int setClass(int ele) {
+        inline void setClass(int ele) {
             right = ele;
         }
 
