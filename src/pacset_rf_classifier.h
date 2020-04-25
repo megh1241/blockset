@@ -120,7 +120,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             std::string layout = Config::getValue("layout");
             std::string num_threads = Config::getValue("numthreads");
             std::string dataset = Config::getValue("datafilename");
-
+            std::string intertwine = Config::getValue("intertwine");
             for(int i=0; i<num_classes; ++i){
                 preds.push_back(0);
             }
@@ -153,7 +153,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #ifdef BLOCK_LOGGING 
             std::fstream fout;
             std::string filename = "/root/pacset/logs/Blocks_" + 
-                layout + "threads_" + num_threads +".csv";
+                layout + "threads_" + num_threads +
+                + "intertwine_"  + intertwine + ".csv";
             fout.open(filename, std::ios::out | std::ios::app);
             for(auto i: num_blocks){
                 fout<<i<<",";

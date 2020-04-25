@@ -20,7 +20,7 @@
 //TODO: categorical features ?
 //TODO: convert classes to ints
 //TODO: figure out template stuff
-
+//TODO: Feature: Allow mmemory mapping of observations
 
 const int min_num_cmd_args = 6;
 
