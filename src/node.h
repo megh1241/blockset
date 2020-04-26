@@ -49,7 +49,14 @@ class alignas(32) Node
         inline F getFeature(){
             return feature;
         }
+        
+        inline void setThreshold(T ele) {
+            threshold = ele;
+        }
 
+        inline F getThreshold(){
+            return threshold;
+        }
 
         inline int getClass() {
             return right;

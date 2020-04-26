@@ -29,7 +29,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void pack(){
             std::string layout = Config::getValue("layout");
-            
+
             auto bin = PacsetBaseModel<T, F>::bins[0];
             int num_bins = std::stoi(Config::getValue("numthreads"));
             for(int i=0; i<num_bins; ++i){
@@ -41,7 +41,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 packer_obj.pack(PacsetBaseModel<T, F>::bins[i], 
                         PacsetBaseModel<T, F>::bin_sizes[i],
                         PacsetBaseModel<T, F>::bin_start[i] 
-                );
+                        );
             }
         }
 
@@ -56,13 +56,13 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
-                
-            
+
+
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i=0, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
-               
+
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
@@ -78,9 +78,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     for( i=0; i<siz; ++i){
                         if(bin[curr_node[i]].isInternalNodeFront()){
 #ifdef BLOCK_LOGGING 
-                    int block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
-    #pragma omp critical
-                    blocks_accessed.insert(block_number);
+                            int block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
+#pragma omp critical
+                            blocks_accessed.insert(block_number);
 #endif
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
@@ -152,7 +152,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
 #ifdef BLOCK_LOGGING 
             std::fstream fout;
-            std::string filename = "/root/pacset/logs/Blocks_" + 
+            std::string filename = "logs/Blocks_" + 
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout.open(filename, std::ios::out | std::ios::app);
@@ -167,27 +167,56 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             auto bins = PacsetBaseModel<T, F>::bins;
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_bins = bins.size();
-            
+
             std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
             std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
             std::vector<std::vector<int>> bin_start  = PacsetBaseModel<T, F>::bin_start;
 
-
             std::string format = Config::getValue("format");
+            
+
+            //Write the metadata needed to reconstruct bins and for prediction
+            //TODO: change filename
+            std::string filename = "metadata.txt";
+            std::fstream fout;
+            fout.open(filename, std::ios::out );
+
+            //Number of classes
+            fout<<num_classes<<"\n";
+
+            //Number of bins
+            fout<<num_bins<<"\n";
+
+            //Number of trees in each bin
+            for(auto i: bin_sizes){
+                fout<<i<<"\n";
+            }
+
+            //Number of nodes in each bin
+            for(auto i: bin_node_sizes){
+                fout<<i<<"\n";
+            }
+
+            //start position of each bin
+            for(auto bin: bin_start){
+                for(auto tree_start: bin){
+                    fout<<tree_start<<"\n";
+                }
+            }
+            fout.close();
             if(format == std::string("notfound") ||
                     format == std::string("binary")){
-                
+
                 std::string modelfname = Config::getValue("modelfilename");
                 std::string filename;
 
                 if(modelfname != std::string("notfound"))
                     filename = modelfname;
                 else
-                    filename = "/root/pacset/models/packedmodel.bin";
-                
+                    filename = "packedmodel.bin";
+
                 //Write the nodes
-                std::fstream fout;
-                fout.open(filename, std::ios::binary | std::ios::out | std::ios::app);
+                fout.open(filename, std::ios::binary | std::ios::out );
                 Node<T, F>* node_to_write;
                 for(auto bin: bins){
                     for(auto node: bin){
@@ -197,39 +226,27 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 }
                 fout.close();
 
-                //Write the metadata needed to reconstruct bins and for prediction
-                
-                //TODO: change filename
-                filename = "/root/pacset/models/metadata.txt";
-                fout.open(filename, std::ios::out | std::ios::app);
-                
-                //Number of classes
-                fout<<num_classes<<"\n";
+            }
+            else{
+                //Write the nodes
+                std::string modelfname = Config::getValue("packfilename");
+                std::string filename;
 
-                //Number of bins
-                fout<<num_bins<<"\n";
+                std::cout<<"modelfname: "<<modelfname<<"\n";
 
-                //Number of trees in each bin
-                for(auto i: bin_sizes){
-                    fout<<i<<"\n";
-                }
+                if(modelfname != std::string("notfound"))
+                    filename = modelfname;
+                else
+                    filename = "packedmodel.txt";
 
-                //Number of nodes in each bin
-                for(auto i: bin_node_sizes){
-                    fout<<i<<"\n";
-                }
-
-                //start position of each bin
-                for(auto bin: bin_start){
-                    for(auto tree_start: bin){
-                        fout<<tree_start<<"\n";
+                std::cout<<"filename: "<<filename <<"\n";
+                fout.open(filename,  std::ios::out );
+                for(auto bin: bins){
+                    for(auto node: bin){
+                        fout<<node.getLeft()<<", "<<node.getRight()<<", "<<node.getFeature()<<", "<<node.getThreshold()<<"\n";
                     }
                 }
                 fout.close();
-                 
-            }
-            else{
-                
             }
         }
 

@@ -39,8 +39,9 @@ static void parseArgs(int argc, char* argv[]){
     //TODO: check legality of the combination of args
     const std::unordered_set<std::string> cmdline_args =
         {"--help", "--mode", "--layout", "--intertwine", 
-        "--datafilename", "--modelfilename", "--package", 
-        "--algorithm", "--task", "--numthreads"};
+        "--packfilename", "--datafilename", 
+        "--modelfilename", "--package","--algorithm", 
+        "--task", "--numthreads", "--format"};
 
     if (argc < min_num_cmd_args){
         std::cerr<<"Invalid set of commandline args!\n";
@@ -104,7 +105,7 @@ int main(int argc, char* argv[]) {
         std::cout<<"Accuracy: "<<acc<<"\n";
         
         //save packed model to file
-        //obj->serialize();
+        obj->serialize();
         
     }
     else if (Config::getValue("mode") == std::string("pack")){
@@ -116,7 +117,7 @@ int main(int argc, char* argv[]) {
         obj->pack();
 
         //save packed model to file
-        //obj->serialize();
+        obj->serialize();
     }
     else if (Config::getValue("mode") == std::string("inference")){
         //TODO: fill
