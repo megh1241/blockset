@@ -77,14 +77,12 @@ def createForestRedisDB(forest):
                                         port=6379,
                                         db=0)
 
-    print('done1')
     #Store the nodes in a redis hash table
     #Key = nodeid / blocksize
     #Fields = left, right, threshold, feature
     for counter, node in enumerate(forest):
         for field, value in zip(fields, node): 
             redisClient.hset(counter, field, value)
-            print('done2')
     return redisClient
 
 
@@ -104,6 +102,32 @@ def createObservationRedisDB(X_test):
     for index, row in enumerate(X_test):
         redisClient.rpush(index, *row)
     
+    return redisClient
+
+
+def createLabelRedisDB(y):
+    #Create Redis client
+    redisClient = redis.StrictRedis(host=aws_dns_endpoint,
+                                        port=6379,
+                                        db=2)
+    for index, value in enumerate(y):
+        redisClient.set(index, value)
+
+    return redisClient
+
+
+def createMetaRedisDB(X):
+    #Create Redis client
+    redisClient = redis.StrictRedis(host=aws_dns_endpoint,
+                                        port=6379,
+                                        db=3)
+
+    redisClient.set("num_features", len(X[0]))
+    redisClient.set("num_observations", len(X))
+    redisClient.set("num_classes", num_classes)
+    redisClient.set("num_trees", num_trees)
+    redisClient.set("num_bins", num_bins)
+
     return redisClient
 
 
@@ -170,15 +194,16 @@ def validatePredictions(predicted, y):
 forest = readModelFromFile(model_filepath)
 
 #create the redis DB to store the nodes in the forest
-redisClientForest = createForestRedisDB(forest)
+#redisClientForest = createForestRedisDB(forest)
 
 #Read observation data from file
 X, y, combined = loadObsFromFile(obs_filepath)
 
 #Create the redis DB
-redisClientObservation = createObservationRedisDB(X)
+#redisClientObservation = createObservationRedisDB(X)
 
 #Predict
+'''
 num_observations = len(X)
 num_features = len(X[0])
 predicted = []
@@ -192,7 +217,13 @@ for j in range(num_observations):
 accuracy = validatePredictions(predicted, y)
 print("Accuracy: ")
 print(accuracy)
-
+'''
+#create the redis DB to store labels
+redisClientLabel = createLabelRedisDB(y)
+#create the redis DB to store metadata
+redisClientMetadata = createMetaRedisDB(X)
 #Flush the DBs
 #redisClientForest.flushdb()
 #redisClientObservation.flushdb()
+#redisClientLabel.flushdb()
+#redisClientMetadata.flushdb()
