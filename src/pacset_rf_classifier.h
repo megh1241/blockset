@@ -204,10 +204,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 }
             }
             fout.close();
-            if(format == std::string("notfound") ||
+            if(format != std::string("notfound") ||
                     format == std::string("binary")){
 
-                std::string modelfname = Config::getValue("modelfilename");
+                std::string modelfname = Config::getValue("modelfilename2");
                 std::string filename;
 
                 if(modelfname != std::string("notfound"))
@@ -221,7 +221,15 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 for(auto bin: bins){
                     for(auto node: bin){
                         node_to_write = &node;
-                        fout.write((char*)&node_to_write, sizeof(node_to_write));
+                        int left = node.getLeft();
+                        int right = node.getRight();
+                        int feature = node.getFeature();
+                        float threshold = node.getThreshold();
+                        fout.write (reinterpret_cast<char*>(&left),sizeof(int));
+                        fout.write (reinterpret_cast<char*>(&right),sizeof(int));
+                        fout.write (reinterpret_cast<char*>(&feature),sizeof(int));
+                        fout.write (reinterpret_cast<char*>(&threshold),sizeof(float));
+                        //fout.write((char*)&node_to_write, sizeof(node_to_write));
                     }
                 }
                 fout.close();
@@ -234,10 +242,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
                 std::cout<<"modelfname: "<<modelfname<<"\n";
 
-                if(modelfname != std::string("notfound"))
-                    filename = modelfname;
-                else
-                    filename = "packedmodel.txt";
+                filename = "packedmodel.txt";
 
                 std::cout<<"filename: "<<filename <<"\n";
                 fout.open(filename,  std::ios::out );
