@@ -68,6 +68,11 @@ static void parseArgs(int argc, char* argv[]){
         omp_set_dynamic(0);
         omp_set_num_threads(std::atoi(Config::getValue("numthreads").c_str()));
     }
+
+    //set default block size
+    if(Config::getValue("blocksize") == std::string("notfound")){
+        Config::setConfigItem(std::string("blocksize"), std::string("128"));
+    }
 }
 
 int main(int argc, char* argv[]) {
