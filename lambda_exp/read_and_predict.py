@@ -12,7 +12,7 @@ model_filepath = "packedmodel.txt"
 obs_filepath = "/data/cifar-10.csv"
 metadata_filepath = "metadata.txt"
 aws_dns_endpoint "your-dns-endpoint"
-blocksize = 128
+blocksize = 64
 
 #TODO: Do not hardcode, read from file
 num_trees = 128
