@@ -45,3 +45,4 @@ CMakeCache.txt
 
 #external lib
 json/
+json/DartConfiguration.tcl
