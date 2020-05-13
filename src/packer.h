@@ -26,7 +26,8 @@ class Packer{
     //after packing the BIN in an interleaved fashion
 
     inline std::deque<StatNode<T, F>> packBinHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start) {
 
         int num_nodes_process = std::pow(2, depth_intertwined) - 1;
@@ -93,9 +94,10 @@ class Packer{
     }
 
     inline void packSubtreeBFSHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> bin_q) { 
+            const std::deque<StatNode<T, F>> bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         while(!bin_q.empty()){
@@ -126,9 +128,10 @@ class Packer{
     }
 
     inline void packSubtreeDFSHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> bin_q) { 
+            const std::deque<StatNode<T, F>> bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         while(!bin_q.empty()){
@@ -194,9 +197,10 @@ class Packer{
     }
 
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> bin_q) { 
+            const std::deque<StatNode<T, F>> bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
@@ -257,7 +261,7 @@ class Packer{
     Packer(int depth, std::string layout_str): 
         depth_intertwined(depth), layout(layout_str){}
 
-    inline void setDepthIntertwined(int depth){
+    inline void setDepthIntertwined(const int depth){
         depth_intertwined = depth;
     }
 
@@ -278,7 +282,7 @@ class Packer{
     }
 
     inline void PackLayoutWithBin(std::vector<StatNode<T, F>> &bin,
-            int num_trees_in_bin, std::vector<int> &bin_start){
+            const int num_trees_in_bin, std::vector<int> &bin_start){
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
 
@@ -311,7 +315,7 @@ class Packer{
     }
 
     inline void PackRegularLayout(std::vector<StatNode<T, F>> &bin,
-            int num_trees_in_bin, std::vector<int> &bin_start){
+            const int num_trees_in_bin, std::vector<int> &bin_start){
 
         std::deque<StatNode<T, F>> bin_q;
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
