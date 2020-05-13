@@ -127,5 +127,18 @@ int main(int argc, char* argv[]) {
     else if (Config::getValue("mode") == std::string("inference")){
         //TODO: fill
         obj->deserialize();
+        
+        //Load test data from file
+        std::vector<std::vector<float>> test_vec;
+        loadTestData(test_vec, lab); 
+        std::cout<<"test data loaded\n";
+        
+        //Perform prediction
+        obj->predict(test_vec, preds, predi);
+        std::cout<<"predicted\n"; 
+        
+        //Compute accuracy
+        double acc = getAccuracy(predi, lab);
+        std::cout<<"Accuracy: "<<acc<<"\n";
     }
 }

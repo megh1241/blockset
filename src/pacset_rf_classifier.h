@@ -11,6 +11,7 @@
 #include "json_reader.h"
 #include "utils.h"
 #include "node.h"
+#include "MemoryMapped.h"
 
 #define BLOCK_LOGGING 1
 
@@ -37,6 +38,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
                 if(Config::getValue("intertwine") != std::string("notfound"))
                     packer_obj.setDepthIntertwined(std::atoi(Config::getValue("intertwine").c_str()));
+               
                 //should pack in place
                 packer_obj.pack(PacsetBaseModel<T, F>::bins[i], 
                         PacsetBaseModel<T, F>::bin_sizes[i],
@@ -52,14 +54,13 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
             std::unordered_set<int> blocks_accessed;
             int block_offset = 0;
-
+            int block_number = 0;
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
 
-
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
-                int i=0, feature_num=0, number_not_in_leaf=0;
+                int feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
 
@@ -67,7 +68,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
 #ifdef BLOCK_LOGGING 
-                    int block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
+                    block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
 #pragma omp critical
                     blocks_accessed.insert(block_number);
 #endif
@@ -78,7 +79,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     for( i=0; i<siz; ++i){
                         if(bin[curr_node[i]].isInternalNodeFront()){
 #ifdef BLOCK_LOGGING 
-                            int block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
+                            block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
 #pragma omp critical
                             blocks_accessed.insert(block_number);
 #endif
@@ -121,13 +122,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             std::string num_threads = Config::getValue("numthreads");
             std::string dataset = Config::getValue("datafilename");
             std::string intertwine = Config::getValue("intertwine");
+            
             for(int i=0; i<num_classes; ++i){
                 preds.push_back(0);
             }
 
-            int times_max = 0;
-            int obs_num = 0;
-            int predict_value;
             int max = -1;
             int maxid = -1;
             int blocks;
@@ -144,10 +143,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 }
                 int count = std::count(std::begin(preds), std::end(preds), max);
                 results.push_back(maxid); 
-                maxid = -1;
-                max = -1;
                 std::fill(preds.begin(), preds.end(), 0);
-                obs_num++;
             }
 
 #ifdef BLOCK_LOGGING 
@@ -163,18 +159,18 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #endif
         }
 
+        inline void deserialize() {
+        }
+
         inline void serialize() {
             auto bins = PacsetBaseModel<T, F>::bins;
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_bins = bins.size();
-
             std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
             std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
             std::vector<std::vector<int>> bin_start  = PacsetBaseModel<T, F>::bin_start;
-
             std::string format = Config::getValue("format");
             
-
             //Write the metadata needed to reconstruct bins and for prediction
             //TODO: change filename
             std::string filename = "metadata.txt";
@@ -204,6 +200,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 }
             }
             fout.close();
+            
             if(format != std::string("notfound") ||
                     format == std::string("binary")){
 
@@ -221,15 +218,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 for(auto bin: bins){
                     for(auto node: bin){
                         node_to_write = &node;
-                        int left = node.getLeft();
-                        int right = node.getRight();
-                        int feature = node.getFeature();
-                        float threshold = node.getThreshold();
-                        fout.write (reinterpret_cast<char*>(&left),sizeof(int));
-                        fout.write (reinterpret_cast<char*>(&right),sizeof(int));
-                        fout.write (reinterpret_cast<char*>(&feature),sizeof(int));
-                        fout.write (reinterpret_cast<char*>(&threshold),sizeof(float));
-                        //fout.write((char*)&node_to_write, sizeof(node_to_write));
+                        fout.write((char*)&node_to_write, sizeof(node_to_write));
                     }
                 }
                 fout.close();
@@ -255,7 +244,46 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             }
         }
 
+        inline void readMetadata(){
+            //Write the metadata needed to reconstruct bins and for prediction
+            //TODO: change filename
+            int num_classes, num_bins;
+            std::string filename = "metadata.txt";
+            std::fstream f;
+            f.open(filename, std::ios::in );
+
+            //Number of classes
+            f>>num_classes;
+            Config::setValue("numclasses", std::to_string(num_classes));
+            //Number of bins
+            f>>num_bins;
+            Config::setValue("numthreads", std::to_string(num_bins))
+
+            //Number of trees in each bin
+            for(int=i=0; i<num_bins; ++i){
+                f>>;
+            }
+
+            //Number of nodes in each bin
+            for(int=i=0; i<num_bins; ++i){
+                f>>i;
+            }
+
+            //start position of each bin
+            for(auto bin: bin_start){
+                for(auto tree_start: bin){
+                    fout<<tree_start<<"\n";
+                }
+            }
+            fout.close();
+            
+        }
+
         inline void deserialize() {
+            readMetadata();
+            std::string modelfname = Config::getValue("modelfilename");
+            MemoryMapped mmapped_obj(modelfname, 0);
+            Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
         }
 };
 
