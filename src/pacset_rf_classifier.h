@@ -129,10 +129,18 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             
             std::unordered_set<int> blocks_accessed;
             int block_offset = 0;
-            int block_number = 0;
+            int offset = 0;
+            std::vector<int> offsets;
+            int curr_offset = 0;
+            for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
+                offsets.push_back(curr_offset);
+                curr_offset += val;
+            }
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
-                Node<T, F> *bin = data + (PacsetBaseModel<T, F>::bin_start[bin_counter][0] - num_classes);
+                int block_number = 0;
+                Node<T, F> *bin  = data + offsets[bin_counter];
+
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
