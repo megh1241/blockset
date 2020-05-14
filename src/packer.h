@@ -97,7 +97,7 @@ class Packer{
             std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            const std::deque<StatNode<T, F>> bin_q) { 
+            std::deque<StatNode<T, F>> &bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         while(!bin_q.empty()){
@@ -131,7 +131,7 @@ class Packer{
             std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            const std::deque<StatNode<T, F>> bin_q) { 
+            std::deque<StatNode<T, F>> &bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         while(!bin_q.empty()){
@@ -200,7 +200,7 @@ class Packer{
             std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            const std::deque<StatNode<T, F>> bin_q) { 
+            std::deque<StatNode<T, F>> &bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
@@ -266,7 +266,7 @@ class Packer{
     }
 
     inline void pack(std::vector<StatNode<T, F>>&bin, 
-            int num_trees_in_bin, std::vector<int> &bin_start){
+            const int num_trees_in_bin, std::vector<int> &bin_start){
 
         const std::string bin_string = "bin";
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());

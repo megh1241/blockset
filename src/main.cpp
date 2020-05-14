@@ -38,7 +38,7 @@ static void showUsage(){
 static void parseArgs(int argc, char* argv[]){
     //TODO: check legality of the combination of args
     const std::unordered_set<std::string> cmdline_args =
-        {"--help", "--mode", "--layout", "--intertwine", 
+    {"--help", "--mode", "--layout", "--intertwine", 
         "--packfilename", "--datafilename", 
         "--modelfilename", "--package","--algorithm", 
         "--task", "--numthreads", "--format"};
@@ -103,18 +103,18 @@ int main(int argc, char* argv[]) {
         loadTestData(test_vec, lab); 
         std::cout<<"test data loaded\n";
         //Perform prediction
-        obj->predict(test_vec, preds, predi);
+        obj->predict(test_vec, preds, predi, false);
         std::cout<<"predicted\n"; 
         //Compute accuracy
         double acc = getAccuracy(predi, lab);
         std::cout<<"Accuracy: "<<acc<<"\n";
-        
+
         //save packed model to file
         obj->serialize();
-        
+
     }
     else if (Config::getValue("mode") == std::string("pack")){
-        
+
         //Read the model from file, pack and save to file
         obj->loadModel();
 
@@ -127,16 +127,16 @@ int main(int argc, char* argv[]) {
     else if (Config::getValue("mode") == std::string("inference")){
         //TODO: fill
         obj->deserialize();
-        
+
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
         loadTestData(test_vec, lab); 
         std::cout<<"test data loaded\n";
-        
+
         //Perform prediction
-        obj->predict(test_vec, preds, predi);
+        obj->predict(test_vec, preds, predi, true);
         std::cout<<"predicted\n"; 
-        
+
         //Compute accuracy
         double acc = getAccuracy(predi, lab);
         std::cout<<"Accuracy: "<<acc<<"\n";

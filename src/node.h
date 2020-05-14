@@ -74,7 +74,7 @@ class alignas(32) Node
             return (feature_val <= threshold) ? left : right;
         }
 
-        inline void virtual printNode() {
+        inline void printNode() {
             if(isInternalNode())
                 std::cout<<"Internal Node ";
             else
