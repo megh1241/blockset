@@ -26,8 +26,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
-n_trees = 64
-#n_trees = 128
+n_trees = 128
 data_filename = '../data/cifar-10.csv'
 #data_filename = '../data/iris.csv'
 def load_csv(filename):

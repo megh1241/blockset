@@ -246,9 +246,11 @@ class Packer{
         if(layout.find(std::string("bfs")) != std::string::npos){
             packSubtreeBFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
-        else{
+	else if(layout.find(std::string("dfs")) != std::string::npos){
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
+	else{
+	}
 
         // set new IDs
         int siz = finalbin.size();
