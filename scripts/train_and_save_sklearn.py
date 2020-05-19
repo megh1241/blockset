@@ -1,7 +1,9 @@
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 import pickle
+from sklearn import datasets
 import sklearn_json as skljson
 import numpy as np
 from pprint import pprint
@@ -81,9 +83,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 #X_test = scaler.transform(X_test)
 #X = X_train
 
-X, y, a, b = load_csv(data_filename)
+#X, y, a, b = load_csv(data_filename)
+X, y = datasets.load_diabetes(return_X_y=True)
 #Train model
-model1 = RandomForestClassifier(n_estimators = n_trees)
+model1 = RandomForestRegressor(n_estimators = n_trees)
 model1.fit(X,  y)
 #model = Decis_set_oob_scoreionTreeClassifier()
 
@@ -96,5 +99,5 @@ model1.fit(X,  y)
 #pickle.dump(model, open('../models/rf128.pkl', 'wb'))
 
 #Save model to json
-skljson.to_json(model1, '../models/cifar128.json')
+skljson.to_json(model1, '../models/reg.json')
 #skljson.to_json(model1, '../models/iris10.json')
