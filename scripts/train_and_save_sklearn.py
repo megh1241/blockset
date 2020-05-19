@@ -28,9 +28,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
-n_trees = 128
-data_filename = '/root/pacset/data/cifar-10.csv'
-#data_filename = '/root/pacset/data/iris.csv'
+n_trees = 64
+#n_trees = 128
+#data_filename = '../data/cifar-10.csv'
+data_filename = '../data/iris.csv'
 def load_csv(filename):
     """
     Loads a csv file containin the data, parses it
@@ -47,11 +48,12 @@ def load_csv(filename):
     with open(filename,'rt')as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
-            row_int = [int(item) for item in row]
-            last_ele = row_int.pop()
+            row_int = [float(item) for item in row]
+            last_ele = row_int.pop(-1)
             X_train.append(row_int)
             X_test.append(int(last_ele))
             num+=1
+            print (int(last_ele))
     return X_train, X_test, X_train, X_test
 
 

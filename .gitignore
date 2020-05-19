@@ -42,3 +42,7 @@ Build/*
 Build
 Makefile
 CMakeCache.txt
+
+#external lib
+json/
+json/DartConfiguration.tcl

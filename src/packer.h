@@ -26,7 +26,8 @@ class Packer{
     //after packing the BIN in an interleaved fashion
 
     inline std::deque<StatNode<T, F>> packBinHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start) {
 
         int num_nodes_process = std::pow(2, depth_intertwined) - 1;
@@ -93,9 +94,10 @@ class Packer{
     }
 
     inline void packSubtreeBFSHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> bin_q) { 
+            std::deque<StatNode<T, F>> &bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         while(!bin_q.empty()){
@@ -124,11 +126,12 @@ class Packer{
             }
         }		
     }
-    
+
     inline void packSubtreeDFSHelper(
-            std::vector<StatNode<T, F>>&bin, int num_trees_in_bin, 
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> bin_q) { 
+            std::deque<StatNode<T, F>> &bin_q) { 
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         while(!bin_q.empty()){
@@ -154,8 +157,8 @@ class Packer{
 
                 else {
                     if(layout.find(std::string("stat")) != std::string::npos ||
-                        layout.find(std::string("weighted")) != std::string::npos){
-                    
+                            layout.find(std::string("weighted")) != std::string::npos){
+
                         if(bin[ele.getLeft()].getCardinality() < 
                                 bin[ele.getRight()].getCardinality()){
                             bin_st.push_front(bin[ele.getLeft()]); 
@@ -175,6 +178,82 @@ class Packer{
         }		
     }
 
+    StatNode<T, F> popMaxCardEle(std::deque<StatNode<T, F>> &bin_st){
+        int max = -1;
+        int positer = 0;
+        int ecount = 0;
+
+        StatNode<T, F> ele;
+        for(auto ii: bin_st) {
+            if((ii.getCardinality() > max) || (ii.getCardinality() == max && ii.getDepth() < ele.getDepth())){
+                max = ii.getCardinality();
+                positer = ecount;
+                ele = ii;
+            }
+            ecount++;
+        }
+        bin_st.erase(bin_st.begin() + positer, bin_st.begin() + positer +1);
+        return ele;
+    }
+
+    inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
+            std::vector<int> &bin_start, 
+            std::deque<StatNode<T, F>> &bin_q) { 
+
+        int num_classes = std::atoi(Config::getValue("numclasses").c_str());
+        int block_size = std::atoi(Config::getValue("blocksize").c_str());
+        int pos_in_block = (finalbin.size()-1) % block_size;
+
+        while(!bin_q.empty()){
+            auto ele = bin_q.front();
+            if(pos_in_block != block_size - 1){
+                bin_q.pop_front();
+            }
+            else{
+                ele = popMaxCardEle(bin_q);
+            }
+
+            finalbin.push_back(ele);
+            node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                        finalbin.size()-1));
+
+            pos_in_block = (pos_in_block + 1) % block_size;
+
+            if((ele.getLeft() < num_classes) && 
+                    (ele.getRight() < num_classes))
+                continue;
+
+            else if(ele.getLeft() < num_classes)
+                bin_q.push_front(bin[ele.getRight()]);
+
+            else if(ele.getRight() < num_classes)
+                bin_q.push_front(bin[ele.getLeft()]); 
+
+            else {
+                if(layout.find(std::string("stat")) != std::string::npos ||
+                        layout.find(std::string("weighted")) != std::string::npos){
+
+                    if(bin[ele.getLeft()].getCardinality() < 
+                            bin[ele.getRight()].getCardinality()){
+                        bin_q.push_front(bin[ele.getLeft()]); 
+                        bin_q.push_front(bin[ele.getRight()]);
+                    }
+                    else{
+                        bin_q.push_front(bin[ele.getRight()]);
+                        bin_q.push_front(bin[ele.getLeft()]); 
+                    }
+                }
+                else{
+                    bin_q.push_front(bin[ele.getLeft()]); 
+                    bin_q.push_front(bin[ele.getRight()]);
+                }
+            }
+        }
+    }		
+
+
     public:
 
     Packer(): layout(std::string("bfs")) {depth_intertwined = 0;};
@@ -182,17 +261,17 @@ class Packer{
     Packer(int depth, std::string layout_str): 
         depth_intertwined(depth), layout(layout_str){}
 
-    inline void setDepthIntertwined(int depth){
+    inline void setDepthIntertwined(const int depth){
         depth_intertwined = depth;
     }
 
     inline void pack(std::vector<StatNode<T, F>>&bin, 
-            int num_trees_in_bin, std::vector<int> &bin_start){
+            const int num_trees_in_bin, std::vector<int> &bin_start){
 
         const std::string bin_string = "bin";
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         for(int i=0; i<num_classes; ++i){
-                finalbin.push_back(bin[i]);
+            finalbin.push_back(bin[i]);
         }
         if(layout.find(bin_string) != std::string::npos){
             PackLayoutWithBin(bin, num_trees_in_bin, bin_start);
@@ -203,10 +282,10 @@ class Packer{
     }
 
     inline void PackLayoutWithBin(std::vector<StatNode<T, F>> &bin,
-            int num_trees_in_bin, std::vector<int> &bin_start){
+            const int num_trees_in_bin, std::vector<int> &bin_start){
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
-        
+
         //Interleaved BIN
         std::deque<StatNode<T, F>> bin_q =
             packBinHelper(bin, num_trees_in_bin, bin_start);
@@ -215,8 +294,11 @@ class Packer{
         if(layout.find(std::string("bfs")) != std::string::npos){
             packSubtreeBFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
-        else{
+        else if(layout.find(std::string("dfs")) != std::string::npos){
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
+        }
+        else{
+            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
 
         // set new IDs
@@ -227,16 +309,17 @@ class Packer{
             if(finalbin[i].getRight() >= num_classes)
                 finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
         }
+
         //replace bin with final bin
         std::copy(finalbin.begin(), finalbin.end(), bin.begin());
     }
 
     inline void PackRegularLayout(std::vector<StatNode<T, F>> &bin,
-            int num_trees_in_bin, std::vector<int> &bin_start){
-       
+            const int num_trees_in_bin, std::vector<int> &bin_start){
+
         std::deque<StatNode<T, F>> bin_q;
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
-        
+
         //initialize queue with root node of each tree
         for(int i=0; i<num_trees_in_bin; ++i){
             bin_q.push_back(bin[bin_start[i]]);
@@ -246,8 +329,11 @@ class Packer{
         if(layout.find(std::string("bfs")) != std::string::npos){
             packSubtreeBFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
-        else{
+        else if(layout.find(std::string("dfs")) != std::string::npos){
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
+        }
+        else{
+            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
 
         // set new IDs

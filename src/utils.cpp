@@ -18,7 +18,7 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
         std::istringstream templine(line);
         std::string data;
         while(getline(templine, data, ',')){
-            temp_vector.push_back(std::atoi(data.c_str()));
+            temp_vector.push_back(std::atof(data.c_str()));
         }
         int siz = temp_vector.size();
         int last_ele = (int)(temp_vector.at(siz-1));
@@ -30,12 +30,15 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
     fin.close();
 }
 
-double getAccuracy(std::vector<int> predicted, std::vector<int> labels){
+double getAccuracy(const std::vector<int> &predicted, const std::vector<int> &labels){
     int wrong = 0;
     int siz = predicted.size();
     for(int i=0; i<siz; ++i){
-        if(labels[i] != predicted[i])
+        if(labels[i] != predicted[i]){
+            std::cout<<"labels[i]: "<<labels[i]<<"\n";
+            std::cout<<"predicted[i]: "<<predicted[i]<<"\n";
             wrong++;
+        }
     }
     std::cout<<"Number wrong!: "<<wrong<<"\n";
     std::cout<<"total num: "<<predicted.size()<<"\n";

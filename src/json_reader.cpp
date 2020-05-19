@@ -221,6 +221,7 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         bin_start.push_back(tree_starts);
         tree_starts.clear();
     }
+    ifs.close();
 }
 template class JSONReader<float, float>;
 template class JSONReader<int, float>;
