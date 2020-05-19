@@ -91,22 +91,19 @@ void JSONReader<T, F>::removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> 
 }
 
 template<typename T, typename F>
-void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &bins, 
+void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>> &bins, 
         std::vector<int> &bin_sizes, 
         std::vector<std::vector<int>> &bin_start,
         std::vector<int> &bin_node_sizes){
     const int parse_num = 8; 
     int count;
-    std::cout<<"point1\n";
     std::string model_filename = Config::getValue("modelfilename");
     std::ifstream ifs(model_filename);
     json rf_json_model = json::parse(ifs); 
     json node_json;
 
-    std::cout<<"point 2\n";
     int num_classes = (int) rf_json_model["estimators_"].at(0)["n_classes_"];
     Config::setConfigItem("numclasses", std::to_string(num_classes));
-    std::cout<<"point3\n";
 
     //Get the number of trees
     auto meta_params = rf_json_model["params"];
@@ -115,13 +112,11 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
 
     int num_bins = populateBinSizes(bin_sizes, num_trees);
 
-    std::cout<<"point4\n";
     //reserve memory for bins
     bins.reserve(num_bins);
     for(int i=0; i<num_bins; ++i)
         bins[i].reserve(bin_sizes[i]);
 
-    std::cout<<"point5\n";
     //Recursively walk through the json model until we get the nodes per estimator
     int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
     std::vector<StatNode<T, F>> temp_bin;
@@ -145,7 +140,6 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
     int max_idx;
     std::vector<int> tree_starts;
 
-    std::cout<<"point6\n";
     for (auto tree: rf_json_model["estimators_"]){
         json tree_estimator = json::parse(tree.dump());
         auto nodes = tree_estimator["tree_"]["nodes"];
@@ -201,10 +195,8 @@ void JSONReader<T, F>::convertToBins(std::vector<std::vector<StatNode<T, F>>> &b
         }
         tree_offset = temp_bin.size();
     }
-    std::cout<<"point7\n";
     
     removeLeafNodes(bins, temp_ensemble );
-    std::cout<<"point8\n";
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
     int counter = 0;

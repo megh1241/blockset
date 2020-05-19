@@ -21,7 +21,7 @@ class JSONReader{
         JSONReader(): filename(Config::getValue("modelfilename")), 
             package_name(Config::getValue("package")){}
 
-        void convertToBins(std::vector<std::vector<StatNode<T, F>>>&bins, 
+        void convertSklToBins(std::vector<std::vector<StatNode<T, F>>>&bins, 
                 std::vector<int>&bin_sizes, 
                 std::vector<std::vector<int>>&bin_start,
                 std::vector<int>&bin_node_sizes); 
