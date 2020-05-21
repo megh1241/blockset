@@ -44,15 +44,17 @@ void JSONReader<T, F>::removeRegLeafNode(std::vector<std::vector<StatNode<T, F>>
 
     for(int i=0; i<num_bins; ++i){
         bin_size = temp_ensemble[i].size();
-        for(int j=0; j<bin_size; ++j){
+        //placeholder leaf node
+        temp_bin.push_back(temp_ensemble[i][0]);
+        for(int j=1; j<bin_size; ++j){
             if(temp_ensemble[i][j].getLeft() != -1 && temp_ensemble[i][j].getRight() != -1){
                 if(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getLeft() == -1){
-                    classn = temp_ensemble[i][temp_ensemble[i][j].getLeft()].getFeature();
-                    temp_ensemble[i][j].setLeft(classn);
+                    //set to leaf node
+                    temp_ensemble[i][j].setLeft(0);
                 }
                 if(temp_ensemble[i][temp_ensemble[i][j].getRight()].getLeft() == -1){
-                    classn = temp_ensemble[i][temp_ensemble[i][j].getRight()].getFeature();
-                    temp_ensemble[i][j].setRight(classn);
+                    //set to leaf node
+                    temp_ensemble[i][j].setRight(0);
                 }
                 id_to_index[temp_ensemble[i][j].getID()] = temp_bin.size();
                 temp_bin.push_back(temp_ensemble[i][j]);
@@ -70,14 +72,14 @@ void JSONReader<T, F>::removeRegLeafNode(std::vector<std::vector<StatNode<T, F>>
 
     int nbins = bins.size();
     for(int i=0; i<nbins; ++i){
-        for(int j=num_classes; j<bins[i].size(); ++j){
+        for(int j=1; j<bins[i].size(); ++j){
             left = bins[i][j].getLeft();
             right = bins[i][j].getRight();
-            if(left >= num_classes){
+            if(left >= 1){
                 newleft = id_to_index_vec[i][left];
                 bins[i][j].setLeft(newleft);
             }
-            if(right >= num_classes){
+            if(right >= 1){
                 newright = id_to_index_vec[i][right];
                 bins[i][j].setRight(newright);
             }
@@ -182,9 +184,10 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
         for(int i=0; i<num_classes; ++i)
             temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
     }
-    else
-            temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
-
+    else {
+        Config::setConfigItem("numclasses", std::to_string(1));
+        temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
+    }
     tree_offset = temp_bin.size();
     //Note: temp_ensemble contains the leaf nodes as a separate node.
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
