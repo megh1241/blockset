@@ -106,9 +106,10 @@ int main(int argc, char* argv[]) {
         obj->predict(test_vec, preds, predi, false);
         std::cout<<"predicted\n"; 
         //Compute accuracy
-        double acc = getAccuracy(predi, lab);
-        std::cout<<"Accuracy: "<<acc<<"\n";
-
+        if (Config::getValue("task") == std::string("classification")){
+            double acc = getAccuracy(predi, lab);
+            std::cout<<"Accuracy: "<<acc<<"\n";
+        }
         //save packed model to file
         obj->serialize();
 
@@ -137,8 +138,10 @@ int main(int argc, char* argv[]) {
         obj->predict(test_vec, preds, predi, true);
         std::cout<<"predicted\n"; 
 
-        //Compute accuracy
-        double acc = getAccuracy(predi, lab);
-        std::cout<<"Accuracy: "<<acc<<"\n";
+        if (Config::getValue("task") == std::string("classification")){
+            //Compute accuracy
+            double acc = getAccuracy(predi, lab);
+            std::cout<<"Accuracy: "<<acc<<"\n";
+        }
     }
 }

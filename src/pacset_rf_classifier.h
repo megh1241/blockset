@@ -34,7 +34,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void loadModel() {
             JSONReader<T, F> J;
-            J.convertToBins(PacsetBaseModel<T, F>::bins, 
+            J.convertSklToBins(PacsetBaseModel<T, F>::bins, 
                     PacsetBaseModel<T, F>::bin_sizes, 
                     PacsetBaseModel<T, F>::bin_start,
                     PacsetBaseModel<T, F>::bin_node_sizes);
