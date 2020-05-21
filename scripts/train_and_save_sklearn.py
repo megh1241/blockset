@@ -32,6 +32,31 @@ n_trees = 64
 #n_trees = 128
 #data_filename = '../data/cifar-10.csv'
 data_filename = '../data/iris.csv'
+
+
+def save_dataset_csv(X, y, filename):
+    """
+    Saves training data to filename.csv
+
+    :param filename: Name of file to save it to
+    :param X: training data (features)
+    :param y: training data (labels)
+    :return: null
+    """
+    concat = np.concatenate((np.array(X), np.reshape(np.array(y).T, (-1, 1))), axis = 1)
+
+    print('X size: ', end=' ')
+    print(np.array(X).shape)
+
+    print('y size: ', end=' ')
+    print(np.reshape(np.array(y).T, (-1, 1)).shape)
+
+    print('concat size: ', end=' ')
+    print(concat.shape)
+
+    np.savetxt(filename, concat, delimiter=",")
+
+
 def load_csv(filename):
     """
     Loads a csv file containin the data, parses it
@@ -87,19 +112,17 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 #X, y, a, b = load_csv(data_filename)
 X, y = datasets.load_diabetes(return_X_y=True)
+
 #Train model
 model1 = RandomForestRegressor(n_estimators = n_trees)
 model1.fit(X,  y)
-#model = Decis_set_oob_scoreionTreeClassifier()
 
-#model._loadX, y)
-
-#model = pickle.load('../models/rf128.pkl')
-#print(model1.score(X, y))
+#Save dataset to csv
+save_dataset_csv(X, y, '../data/reg.csv')
 
 #Save model to pickle
 #pickle.dump(model, open('../models/rf128.pkl', 'wb'))
 
 #Save model to json
-skljson.to_json(model1, '../models/reg.json')
+#skljson.to_json(model1, '../models/reg.json')
 #skljson.to_json(model1, '../models/iris10.json')
