@@ -15,7 +15,9 @@ class JSONReader{
     std::string filename;
     std::string package_name;
     int populateBinSizes(std::vector<int>&bin_sizes, int num_trees);
-    void removeLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins,
+    void removeClassLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins,
+        std::vector<std::vector<StatNode<T, F>>> temp_ensemble);
+    void removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins,
         std::vector<std::vector<StatNode<T, F>>> temp_ensemble);
     public:
         JSONReader(): filename(Config::getValue("modelfilename")), 

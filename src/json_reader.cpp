@@ -30,7 +30,7 @@ int JSONReader<T, F>::populateBinSizes(
 
 
 template<typename T, typename F>
-void JSONReader<T, F>::removeRegLeafNode(std::vector<std::vector<StatNode<T, F>>> &bins, 
+void JSONReader<T, F>::removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins, 
         std::vector<std::vector<StatNode<T, F>>> temp_ensemble ){
     std::vector<std::map<int, int>> id_to_index_vec;
     std::map<int, int> id_to_index;
@@ -262,7 +262,8 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
             temp_ensemble.push_back(temp_bin); 
             temp_bin.clear();
             if (task.compare(std::string("classification")) == 0) {
-                for(int i=0; i<num_classes; ++i)
+                
+                for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
                     temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
             }
             else {
