@@ -118,6 +118,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #endif
         }
         
+        void predict(const std::vector<std::vector<T>> &observations,
+                        std::vector<int> &preds, std::vector<double> &result, bool mmap) {}
 
         inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));

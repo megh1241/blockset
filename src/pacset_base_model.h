@@ -24,6 +24,8 @@ class PacsetBaseModel{
                 std::vector<int> &preds) = 0;
         virtual void predict(const std::vector<std::vector<T>> &observations, 
                 std::vector<int> &preds, std::vector<int> &result, bool mmap) = 0;
+        virtual void predict(const std::vector<std::vector<T>> &observations, 
+                std::vector<int> &preds, std::vector<double> &result, bool mmap) = 0;
         virtual void serialize() = 0;
         virtual void deserialize() = 0;
 };

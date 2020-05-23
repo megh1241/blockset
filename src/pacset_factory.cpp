@@ -10,15 +10,12 @@ template<typename T, typename F> PacsetBaseModel<T, F> * PacsetFactory::getModel
         if( Config::getValue("task") == "classification")
             return new PacsetRandomForestClassifier<float, float>();
         else
-            return new PacsetRandomForestClassifier<float, float>();
-            //return new PacsetRandomForestRegressor<float, float>();
+            return new PacsetRandomForestRegressor<float, float>();
     }
     else {
         if( Config::getValue("task") == "classification")
             return new PacsetRandomForestClassifier<float, float>();
-            //return new PacsetGradientBoostedClassifier<float, float>();
         else
-            return new PacsetRandomForestClassifier<float, float>();
-            //return new PacsetGradientBoostedRegressor<float, float>();
+            return new PacsetRandomForestRegressor<float, float>();
     }
-};
+}

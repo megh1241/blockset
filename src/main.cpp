@@ -1,4 +1,4 @@
-// main.cpp
+// main.cppEE
 
 #include <iostream>
 #include <string>
@@ -9,6 +9,7 @@
 #include "pacset_factory.h"
 #include "pacset_base_model.h"
 #include "pacset_rf_classifier.h"
+#include "pacset_rf_regressor.h"
 #include "pacset_factory.cpp"
 #include "utils.h"
 
@@ -78,15 +79,17 @@ static void parseArgs(int argc, char* argv[]){
 int main(int argc, char* argv[]) {
     parseArgs(argc, argv);
 
-    std::vector<int> preds;
-    std::vector<int> lab;
-    std::vector<int> predi;    
     PacsetFactory pf = PacsetFactory();
 
     PacsetBaseModel<float, float> *obj;
     if(Config::getValue("algorithm") == std::string("randomforest") 
             && Config::getValue("task") == std::string("classification")) {
         obj = (PacsetRandomForestClassifier<float, float> *)
+            pf.getModel<float, float>();
+    }
+    else if(Config::getValue("algorithm") == std::string("randomforest") 
+            && Config::getValue("task") == std::string("regression")) {
+        obj = (PacsetRandomForestRegressor<float, float> *)
             pf.getModel<float, float>();
     }
 
@@ -100,16 +103,31 @@ int main(int argc, char* argv[]) {
         std::cout<<"model packed \n";
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
-        loadTestData(test_vec, lab); 
         std::cout<<"test data loaded\n";
-        //Perform prediction
-        obj->predict(test_vec, preds, predi, false);
-        std::cout<<"predicted\n"; 
-        //Compute accuracy
         if (Config::getValue("task") == std::string("classification")){
+            std::vector<int> lab;
+            std::vector<int> preds;
+            std::vector<int> predi;    
+            loadTestData(test_vec, lab); 
+            //Perform prediction
+            obj->predict(test_vec, preds, predi, false);
+            std::cout<<"predicted\n"; 
+            //Compute accuracy
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";
         }
+        else {
+            //Perform prediction
+            std::vector<int> preds;
+            std::vector<double> predi;    
+            std::vector<double> lab;
+            loadTestData(test_vec, lab); 
+            //obj->predict(test_vec, preds, predi, false);
+            std::cout<<"predicted\n"; 
+            double acc = getAccuracy(predi, lab);
+            std::cout<<"Accuracy: "<<acc<<"\n";
+        }
+        
         //save packed model to file
         obj->serialize();
 
@@ -131,14 +149,29 @@ int main(int argc, char* argv[]) {
 
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
-        loadTestData(test_vec, lab); 
         std::cout<<"test data loaded\n";
 
-        //Perform prediction
-        obj->predict(test_vec, preds, predi, true);
-        std::cout<<"predicted\n"; 
 
         if (Config::getValue("task") == std::string("classification")){
+            std::vector<int> preds;
+            std::vector<int> predi;    
+            std::vector<int> lab;
+            //Perform prediction
+            loadTestData(test_vec, lab); 
+            obj->predict(test_vec, preds, predi, true);
+            std::cout<<"predicted\n"; 
+            //Compute accuracy
+            double acc = getAccuracy(predi, lab);
+            std::cout<<"Accuracy: "<<acc<<"\n";
+        }
+        else{
+            std::vector<int> preds;
+            std::vector<double> predi;    
+            std::vector<double> lab;
+            //Perform prediction
+            loadTestData(test_vec, lab); 
+            //obj->predict(test_vec, preds, predi, true);
+            std::cout<<"predicted\n"; 
             //Compute accuracy
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";

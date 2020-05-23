@@ -1,5 +1,5 @@
-#ifndef PACSET_RF_CLASS
-#define PACSET_RF_CLASS
+#ifndef PACSET_RF_REG
+#define PACSET_RF_REG
 
 #include <vector>
 #include <unordered_set>
@@ -34,7 +34,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 
         inline void loadModel() {
             JSONReader<T, F> J;
-            J.convertToBins(PacsetBaseModel<T, F>::bins, 
+            J.convertSklToBins(PacsetBaseModel<T, F>::bins, 
                     PacsetBaseModel<T, F>::bin_sizes, 
                     PacsetBaseModel<T, F>::bin_start,
                     PacsetBaseModel<T, F>::bin_node_sizes);
@@ -110,15 +110,17 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                         }
                     }
                 }while(number_not_in_leaf);
-
-#pragma omp parallel for shared(sum, a) reduction(+: sum)
+                
+                int sum=0;
                 for(i=0; i<siz; ++i){
-#pragma omp atomic update
-                    leaf_sum += curr_node[i];
+                    sum += curr_node[i];
                 }
 
 #pragma omp critical
+                {
+                leaf_sum +=sum;
                 block_offset += bin.size();
+                }
             }
             preds.push_back(leaf_sum);
             preds.push_back(total_num_trees);
@@ -130,7 +132,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
         }
         
 
-        inline int mmapAndPredict(const std::vector<T>& observation, float& preds) {
+        inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int> &preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
             int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
@@ -143,8 +145,10 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             int next_node = 0;
             int block_offset = 0;
             int offset = 0;
+            int leaf_sum = 0;
             std::vector<int> offsets;
             int curr_offset = 0;
+            int total_num_trees = 0;
             for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
                 offsets.push_back(curr_offset);
                 curr_offset += val;
@@ -158,7 +162,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 int i, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
-
+                total_num_trees += siz;
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
@@ -190,11 +194,13 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                     }
                 }while(number_not_in_leaf);
 
-#pragma omp parallel for shared(sum, a) reduction(+: sum)
+                int sum=0;
                 for(i=0; i<siz; ++i){
-#pragma omp atomic update
-                    leaf_sum += curr_node[i];
+                    sum += curr_node[i];
                 }
+
+#pragma omp critical
+                leaf_sum += sum;
 
 #pragma omp critical
                 block_offset += PacsetBaseModel<T, F>::bin_node_sizes[bin_counter];
@@ -209,12 +215,12 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
         }
 
         inline void predict(const std::vector<std::vector<T>>& observation, 
-                std::vector<int>& preds, std::vector<int>&results, bool mmap) {
+                std::vector<int>& preds, std::vector<int>&results,  bool mmap) {
 
         }
 
         inline void predict(const std::vector<std::vector<T>>& observation, 
-                std::vector<int>& preds, std::vector<float>&results, bool mmap) {
+               std::vector<int>& preds, std::vector<double>&results, bool mmap) {
 
             //Predicts the class for a vector of observations
             //By calling predict for a single observation and 
