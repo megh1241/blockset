@@ -59,12 +59,12 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             }
         }
 
-        inline int predict(const std::vector<T>& observation, std::vector<int> &preds) {
+        inline int predict(const std::vector<T>& observation, std::vector<double> &preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
             int num_bins = PacsetBaseModel<T, F>::bins.size();
             int total_num_trees = 0;
-            int leaf_sum = 0;
+            double leaf_sum = 0;
             std::unordered_set<int> blocks_accessed;
             
             int block_offset = 0;
@@ -75,6 +75,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
 
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
+                std::vector<double> last_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
@@ -101,20 +102,26 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
                             next_node = bin[curr_node[i]].nextNode(feature_val);
-                            if (next_node == 0)
+                            if (next_node == 0){
+                                bin[curr_node[i]].printNode();
                                 curr_node[i] = bin[curr_node[i]].getThreshold();
-                            else
-                                curr_node[i] = next_node;
+                            }
+                            else{
+                                last_node[i] = bin[curr_node[i]].getThreshold();
+                                curr_node[i] = 0;
+                            }
                             __builtin_prefetch(&bin[curr_node[i]], 0, 3);
                             ++number_not_in_leaf;
                         }
                     }
                 }while(number_not_in_leaf);
                 
-                int sum=0;
+                double sum=0;
                 for(i=0; i<siz; ++i){
-                    sum += curr_node[i];
+                    std::cout<<"last_node[i]"<<last_node[i]<<"\n";
+                    sum += last_node[i];
                 }
+                std::cout<<"sum: "<<sum<<"\n";
 
 #pragma omp critical
                 {
@@ -132,7 +139,8 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
         }
         
 
-        inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int> &preds) {
+        inline int predict(const std::vector<T>& observation, std::vector<int> &preds) {}
+        inline int mmapAndPredict(const std::vector<T>& observation, std::vector<double> &preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
             int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
@@ -145,7 +153,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             int next_node = 0;
             int block_offset = 0;
             int offset = 0;
-            int leaf_sum = 0;
+            double leaf_sum = 0;
             std::vector<int> offsets;
             int curr_offset = 0;
             int total_num_trees = 0;
@@ -159,6 +167,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 Node<T, F> *bin  = data + offsets[bin_counter];
 
                 std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
+                std::vector<double> last_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
                 int i, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
@@ -186,17 +195,19 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                             next_node = bin[curr_node[i]].nextNode(feature_val);
                             if (next_node == 0)
                                 curr_node[i] = bin[curr_node[i]].getThreshold();
-                            else
-                                curr_node[i] = next_node;
+                            else {
+                                last_node[i]  = bin[curr_node[i]].getThreshold();
+                                curr_node[i] = 0;
+                            }
                             __builtin_prefetch(&bin[curr_node[i]], 0, 3);
                             ++number_not_in_leaf;
                         }
                     }
                 }while(number_not_in_leaf);
 
-                int sum=0;
+                double sum=0;
                 for(i=0; i<siz; ++i){
-                    sum += curr_node[i];
+                    sum += last_node[i];
                 }
 
 #pragma omp critical
@@ -220,7 +231,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
         }
 
         inline void predict(const std::vector<std::vector<T>>& observation, 
-               std::vector<int>& preds, std::vector<double>&results, bool mmap) {
+               std::vector<double>& preds, std::vector<double>&results, bool mmap) {
 
             //Predicts the class for a vector of observations
             //By calling predict for a single observation and 
@@ -239,10 +250,15 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             for(auto single_obs : observation){
                 if (mmap)
                     blocks = mmapAndPredict(single_obs, preds);
-                else
+                else{
+                    for (auto j: single_obs){
+                        std::cout<<j<<", ";
+                    }
+                    std::cout<<"\n";
                     blocks = predict(single_obs, preds);
+                }
                 num_blocks.push_back(blocks);
-                results.push_back((float)preds[0] / (float)preds[1] );    
+                results.push_back((double)preds[0] / (double)preds[1] );    
             
             }
 

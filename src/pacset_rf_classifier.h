@@ -59,6 +59,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             }
         }
 
+        inline int predict(const std::vector<T>& observation, std::vector<double>& preds) {}
+        
+            
         inline int predict(const std::vector<T>& observation, std::vector<int>& preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
@@ -119,7 +122,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         }
         
         void predict(const std::vector<std::vector<T>> &observations,
-                        std::vector<int> &preds, std::vector<double> &result, bool mmap) {}
+                        std::vector<double> &preds, std::vector<double> &result, bool mmap) {}
 
         inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds) {
             int num_classes = std::stoi(Config::getValue("numclasses"));

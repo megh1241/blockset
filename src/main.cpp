@@ -118,11 +118,11 @@ int main(int argc, char* argv[]) {
         }
         else {
             //Perform prediction
-            std::vector<int> preds;
+            std::vector<double> preds;
             std::vector<double> predi;    
             std::vector<double> lab;
             loadTestData(test_vec, lab); 
-            //obj->predict(test_vec, preds, predi, false);
+            obj->predict(test_vec, preds, predi, false);
             std::cout<<"predicted\n"; 
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
         obj->pack();
 
         //save packed model to file
-        //obj->serialize();
+        obj->serialize();
     }
     else if (Config::getValue("mode") == std::string("inference")){
         //TODO: fill
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
             std::cout<<"Accuracy: "<<acc<<"\n";
         }
         else{
-            std::vector<int> preds;
+            std::vector<double> preds;
             std::vector<double> predi;    
             std::vector<double> lab;
             //Perform prediction

@@ -54,7 +54,7 @@ def save_dataset_csv(X, y, filename):
     print('concat size: ', end=' ')
     print(concat.shape)
 
-    np.savetxt(filename, concat, delimiter=",")
+    np.savetxt(filename, concat, delimiter=",", fmt='%1.4f')
 
 
 def load_csv(filename):

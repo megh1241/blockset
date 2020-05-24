@@ -31,6 +31,7 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
 }
 
 void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<double>& labels){
+    std::cout<<"loading test data\n";
     std::string filename = Config::getValue("datafilename");
     std::fstream fin;
     fin.open(filename, std::ios::in);
@@ -44,12 +45,13 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<double
             temp_vector.push_back(std::atof(data.c_str()));
         }
         int siz = temp_vector.size();
-        int last_ele = (int)(temp_vector.at(siz-1));
+        double last_ele = (double)(temp_vector.at(siz-1));
         labels.push_back(last_ele);
         temp_vector.pop_back();
         test_data.push_back(temp_vector);
         temp_vector.clear();
     }
+    std::cout<<"size of test data: "<<test_data.size()<<"\n";
     fin.close();
 }
 
@@ -72,7 +74,10 @@ double getAccuracy(const std::vector<double> &predicted, const std::vector<doubl
     int wrong = 0;
     int siz = predicted.size();
     double diff, sum;
+    std::cout<<"Size of predicted: "<<predicted.size()<<"\n";
+    std::cout<<"Size of labels: "<<labels.size()<<"\n";
     for(int i=0; i<siz; ++i){
+//std::cout<<"predicted[i]: " << predicted[i] <<", labels[i] "<<labels[i]<<"\n";
         diff = std::sqrt(predicted[i] - labels[i]);
         sum += diff;
     }
