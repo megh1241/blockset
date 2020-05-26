@@ -92,6 +92,8 @@ int main(int argc, char* argv[]) {
         std::cout<<"model loaded\n";
         //pack model
         obj->pack();
+        //save packed model to file
+        obj->serialize();
         std::cout<<"model packed \n";
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
@@ -104,8 +106,6 @@ int main(int argc, char* argv[]) {
         double acc = getAccuracy(predi, lab);
         std::cout<<"Accuracy: "<<acc<<"\n";
         
-        //save packed model to file
-        obj->serialize();
         
     }
     else if (Config::getValue("mode") == std::string("pack")){

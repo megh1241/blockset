@@ -64,8 +64,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
 
                 for(i=0; i<siz; ++i){
+
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
-                    __builtin_prefetch(&bin[curr_node[i]], 0, 3);
+		    __builtin_prefetch(&bin[curr_node[i]], 0, 3);
 #ifdef BLOCK_LOGGING 
                     int block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
 #pragma omp critical
@@ -170,7 +171,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
             std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
             std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
-            std::vector<std::vector<int>> bin_start  = PacsetBaseModel<T, F>::bin_start;
+            //std::vector<std::vector<int>> bin_start = PacsetBaseModel<T, F>::bin_start;
 
             std::string format = Config::getValue("format");
             
@@ -198,9 +199,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             }
 
             //start position of each bin
-            for(auto bin: bin_start){
-                for(auto tree_start: bin){
-                    fout<<tree_start<<"\n";
+            for(auto aa: PacsetBaseModel<T, F>::bin_start){
+                for(auto bb: aa){
+                    fout<<bb<<"\n";
                 }
             }
             fout.close();
@@ -240,11 +241,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
 
-                std::cout<<"modelfname: "<<modelfname<<"\n";
 
                 filename = "packedmodel.txt";
 
-                std::cout<<"filename: "<<filename <<"\n";
                 fout.open(filename,  std::ios::out );
                 for(auto bin: bins){
                     for(auto node: bin){
