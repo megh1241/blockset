@@ -74,13 +74,13 @@ double getAccuracy(const std::vector<double> &predicted, const std::vector<doubl
     int wrong = 0;
     int siz = predicted.size();
     double diff, sum;
-    std::cout<<"Size of predicted: "<<predicted.size()<<"\n";
-    std::cout<<"Size of labels: "<<labels.size()<<"\n";
+    sum = 0;
+    std::cout<<"Label size: "<<labels.size()<<"\n";
+    std::cout<<"Size: "<<siz<<"\n";
     for(int i=0; i<siz; ++i){
-//std::cout<<"predicted[i]: " << predicted[i] <<", labels[i] "<<labels[i]<<"\n";
-        diff = std::sqrt(predicted[i] - labels[i]);
+        diff = std::pow(predicted[i] - labels[i], 2);
         sum += diff;
     }
-    double mean_square = sum / (double)(siz);
+    double mean_square = std::sqrt(sum) / (double)(siz);
     return mean_square;
 }

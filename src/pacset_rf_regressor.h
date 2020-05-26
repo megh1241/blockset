@@ -79,7 +79,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 int i, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
-                total_num_trees == siz;
+                total_num_trees = siz;
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);
@@ -103,12 +103,11 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                             feature_val = observation[feature_num];
                             next_node = bin[curr_node[i]].nextNode(feature_val);
                             if (next_node == 0){
-                                bin[curr_node[i]].printNode();
-                                curr_node[i] = bin[curr_node[i]].getThreshold();
-                            }
-                            else{
                                 last_node[i] = bin[curr_node[i]].getThreshold();
                                 curr_node[i] = 0;
+                            }
+                            else{
+                                curr_node[i] = next_node;
                             }
                             __builtin_prefetch(&bin[curr_node[i]], 0, 3);
                             ++number_not_in_leaf;
@@ -118,10 +117,8 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 
                 double sum=0;
                 for(i=0; i<siz; ++i){
-                    std::cout<<"last_node[i]"<<last_node[i]<<"\n";
                     sum += last_node[i];
                 }
-                std::cout<<"sum: "<<sum<<"\n";
 
 #pragma omp critical
                 {
@@ -129,8 +126,9 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 block_offset += bin.size();
                 }
             }
+            preds.clear();
             preds.push_back(leaf_sum);
-            preds.push_back(total_num_trees);
+            preds.push_back((double)total_num_trees);
 #ifdef BLOCK_LOGGING 
             return blocks_accessed.size();
 #else
@@ -251,10 +249,6 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 if (mmap)
                     blocks = mmapAndPredict(single_obs, preds);
                 else{
-                    for (auto j: single_obs){
-                        std::cout<<j<<", ";
-                    }
-                    std::cout<<"\n";
                     blocks = predict(single_obs, preds);
                 }
                 num_blocks.push_back(blocks);
@@ -342,7 +336,6 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
 
-                std::cout<<"modelfname: "<<modelfname<<"\n";
 
                 filename = "packedmodel.txt";
 

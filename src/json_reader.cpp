@@ -247,6 +247,7 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
                 //in case of regression, there are no "classes"
                 else {
                     feature = node.at(2);
+                    id = temp_bin.size();
                     temp_bin.emplace_back(left, right, feature, threshold, cardinality, id, 1);
                 }
             }
