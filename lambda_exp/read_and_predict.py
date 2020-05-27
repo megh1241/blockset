@@ -1,4 +1,4 @@
-#### GLOBAL IMPORTS #
+#### GLOBAL IMPORTS ###
 
 import sklearn 
 import numpy as np
@@ -12,17 +12,14 @@ model_filepath = "packedmodel.txt"
 obs_filepath = "/data/cifar-10.csv"
 metadata_filepath = "metadata.txt"
 aws_dns_endpoint "your-dns-endpoint"
-blocksize = 64
+blocksize = 16
 
 #TODO: Do not hardcode, read from file
-num_trees = 128
-num_bins = 1
-num_classes = 10
-cached_node_hash = {}
 bin_sizes = []
 bin_node_sizes = []
 tree_start = []
 
+cached_node_hash = []
 
 def loadModelMetadataFromFile(metadata_filepath):
     """
@@ -40,13 +37,10 @@ def loadModelMetadataFromFile(metadata_filepath):
 
     num_classes = metadata_int[0]
     num_bins = metadata_int[1]
-    print("num_classes: ")    
-    print(num_classes)
-    print("num_binss: ")    
-    print(num_bins)
+
     k = 2
     for i in range(num_bins):
-        bin_sizes.append(metadata_int[k])
+        bin_sizes.append(metadata_int[k]) 
         k+=1
 
     for i in range(num_bins):
@@ -54,9 +48,14 @@ def loadModelMetadataFromFile(metadata_filepath):
         k+=1
 
     for i in range(num_bins):
+        temp = []
         for j in range(bin_sizes[i]):
-            tree_start.append(metadata_int[k])
+            temp.append(metadata_int[k])
             k+=1
+        tree_start.append(temp)
+
+    
+    return num_bins, num_classes, bin_node_sizes
 
 
 def loadObsFromFile(filepath):
@@ -75,13 +74,15 @@ def loadObsFromFile(filepath):
     with open(filepath,'rt') as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
-            row_int = [int(item) for item in row]
+            row_int = [int(float(item)) for item in row]
             last_ele = row_int.pop(-1)
             X_train.append(row_int)
-            y_train.append(int(last_ele))
+            y_train.append(int(float(last_ele)))
+            '''
             if i >= 10000:
                 break
             i+=1
+            '''
     return X_train, y_train
 
 
@@ -125,11 +126,10 @@ def createForestRedisDB(forest):
         block_num = int(counter / blocksize)
         for field, value in zip(fields, node): 
             redisClient.hset(counter, field, value)
-        print (counter)
     return redisClient
 
 
-def createForestBlockNodesRedisDB(forest):
+def createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes):
     """
     Create a redis DB to store nodes of
     the forest in the form of hashes where
@@ -147,17 +147,23 @@ def createForestBlockNodesRedisDB(forest):
                                         db=0)
 
     redisClient.flushdb()
+    bin_num_curr = 0
+    count = 0
+    pos = 0
     #Store the nodes in a redis hash table
-    for counter, node in enumerate(forest):
-        block_num = int(counter / blocksize)
-        print(block_num)
-        redisClient.rpush(block_num, counter, 
+    for node in forest:
+        block_num = int(count / blocksize)
+        redisClient.rpush(str(bin_num_curr) + ':' + str(block_num), count, 
                 node[0], node[1], node[2], node[3])
-        print (counter)
+        count += 1
+        if count == bin_node_sizes[bin_num_curr]:
+            count = 0
+            bin_num_curr += 1
+
     return redisClient
 
 
-def createObservationRedisDB(X_test):
+def createObservationRedisDB(X_test, num_bins, num_classes):
     """
     Create a redis DB to store test data
     :param X_test
@@ -194,11 +200,26 @@ def createMetaRedisDB(X):
                                         db=3)
 
     redisClient.flushdb()
+
     redisClient.set("num_features", len(X[0]))
     redisClient.set("num_observations", len(X))
     redisClient.set("num_classes", num_classes)
-    redisClient.set("num_trees", num_trees)
+    #redisClient.set("num_trees", num_trees)
     redisClient.set("num_bins", num_bins)
+    redisClient.set("block_size", blocksize)
+
+    binnum = 0
+    for curr_bin in tree_start:
+        for start_pos in curr_bin:
+            redisClient.rpush("tree_start:"+ str(binnum), start_pos)
+        binnum += 1
+   
+    for node in bin_sizes:
+        redisClient.rpush("bin_sizes", node)
+
+    for node in bin_node_sizes:
+        redisClient.rpush("bin_node_sizes", node)
+
     return redisClient
 
 
@@ -210,51 +231,64 @@ def getNodeFromDB(client, node_id):
     return left, right, feature, threshold
 
 
-def getBlockNodeFromDB(client, node_id):
-    if node_id not in cached_node_hash:
+def test(client, num_bins):
+    for i in range(num_bins):
+        for j in range(bin_node_sizes[i]):
+            key_str = str(i) + ':' + str(int(j/blocksize))
+            nodes = client.lrange(key_str, 0, -1)
+            if len(nodes) == 0:
+                print('blocknum')
+                print(int(j/blocksize))
+                print('binnum')
+                print(i)
+    
+def getBlockNodeFromDB(client, node_id, bin_num):
+    if node_id not in cached_node_hash[bin_num]:
         block_num = int(node_id / blocksize)
-        nodes = client.lrange(block_num, 0, -1)
+        key_str = str(bin_num) + ':' + str(block_num)
+        nodes = client.lrange(key_str, 0, -1)
         siz = len(nodes)
         for i in range(0, siz, 5):
             node = ( int(float(nodes[i+1])), int(float(nodes[i+2])), 
-                    int(float(nodes[i+3])), int(float(nodes[i+4])) )
-            cached_node_hash[int(float(nodes[i]))] = node
+                    int(float(nodes[i+3])), float(nodes[i+4]) )
+            cached_node_hash[bin_num][int(float(nodes[i]))] = node
+    return cached_node_hash[bin_num][node_id] 
 
-    return cached_node_hash[node_id] 
 
-
-def predict(client, X):
+def predict(client, X, num_bins, num_classes):
     """
     Predicts label for a test observation
     one at a time
     :param redis client and X
     :returns predicted label
     """
-    
+   
     preds = [0] * num_classes
-    curr_node = tree_start
-    print(len(curr_node))
-    while True:
-        number_not_in_leaf = 0
-        for i in range(num_trees):
-            if curr_node[i] >= 0:
-                left, right, feature, threshold =\
-                        getBlockNodeFromDB(client, curr_node[i])
-                if left > -1:
-                    obs_feature_val = X[feature]
-                    if obs_feature_val <= threshold:
-                        curr_node[i] = left
-                    else:
-                        curr_node[i] = right
-                    number_not_in_leaf += 1
-        
-        if number_not_in_leaf <= 0:
-            break
 
-    for i in range(num_trees):
-        left, class_label, feature, threshold =\
-                        getBlockNodeFromDB(client, curr_node[i])
-        preds[class_label] += 1 
+    for bin_no in range(num_bins):
+        curr_node = [i for i in tree_start[bin_no]]
+
+        while True:
+            number_not_in_leaf = 0
+            for i in range(bin_sizes[bin_no]):
+                if curr_node[i] >= 0:
+                    left, right, feature, threshold =\
+                            getBlockNodeFromDB(client, curr_node[i], bin_no)
+                    if left > -1 :
+                        obs_feature_val = X[feature]
+                        if obs_feature_val <= threshold:
+                            curr_node[i] = left
+                        else:
+                            curr_node[i] = right
+                        number_not_in_leaf += 1
+        
+            if number_not_in_leaf <= 0:
+                break
+
+        for i in range(bin_sizes[bin_no]):
+            left, class_label, feature, threshold =\
+                            getBlockNodeFromDB(client, curr_node[i], bin_no)
+            preds[class_label] += 1 
     
     return np.argmax(preds)
 
@@ -274,30 +308,35 @@ def validatePredictions(predicted, y):
 ###############################
 ######## BEGIN SCRIPT #########
 ###############################
-#load metadata from file
-loadModelMetadataFromFile(metadata_filepath)
 
-'''
+
+#load metadata from file
+num_bins, num_classes, bin_node_sizes = loadModelMetadataFromFile(metadata_filepath)
+
+print("num bins outside meta: ")
+print(num_bins)
 #Read list from file
 forest = readModelFromFile(model_filepath)
 
 #create the redis DB to store the nodes in the forest
-redisClientForest = createForestBlockNodesRedisDB(forest)
+redisClientForest = createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes)
 
 #Read observation data from file
 X, y = loadObsFromFile(obs_filepath)
 
 #Create the redis DB
-redisClientObservation = createObservationRedisDB(X)
+redisClientObservation = createObservationRedisDB(X, num_bins, num_classes)
+print('obs created')
 
 #create the redis DB to store labels
 redisClientLabel = createLabelRedisDB(y)
+print('label created')
 
 #create the redis DB to store metadata
 redisClientMetadata = createMetaRedisDB(X)
-'''
+
+print('metadata created')
 #Predict
-X, y = loadObsFromFile(obs_filepath)
 num_observations = len(X)
 num_features = len(X[0])
 predicted = []
@@ -307,22 +346,26 @@ redisClientObservation = redis.StrictRedis(host=aws_dns_endpoint,
 redisClientForest = redis.StrictRedis(host=aws_dns_endpoint,
                                             port=6379,
                                             db=0)
-
+'''
+#ans = test(redisClientForest, num_bins)
 sum_1 = 0
 avg_1 = 0
-for j in range(num_observations):
+time_start_main = time.time()
+for j in range(100):
     row_db = redisClientObservation.lrange(j, 0, num_features)
-    row = [float(i) for i in row_db]
+    row = [int(float(i)) for i in row_db]
     time_start = time.time()
-    predict_value = predict(redisClientForest, row)
+    cached_node_hash = [{} for i in range(num_bins)]
+    predict_value = predict(redisClientForest, row, num_bins, num_classes)
     time_end = time.time()
+    print(time_end - time_start, end=",")
     sum_1 += time_end - time_start
     avg_1 = float(sum_1) / float(j+1)
-    print(avg_1)
     predicted.append(predict_value)
-
-
+print("DONE*********")
+print(time.time() - time_start_main)
 #Check if predicted values match actual labels
 accuracy = validatePredictions(predicted, y)
 print("Accuracy: ")
 print(accuracy)
+'''
