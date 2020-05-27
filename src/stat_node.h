@@ -15,6 +15,7 @@ class StatNode: public Node<T, F>
     int left_child_cardinality;
     int right_child_cardinality;
     int block_number;
+    int subtree_number;
 
     public:
     StatNode(){}
@@ -67,6 +68,15 @@ class StatNode: public Node<T, F>
     inline int getBlockNum(){
         return block_number;
     }
+    
+    inline void setSubtreeNum(int num){
+        subtree_number = num;
+    }
+
+    inline int getSubtreeNum(){
+        return subtree_number;
+    }
+
 
     inline int getLeftCardinality(){
         return left_child_cardinality;
