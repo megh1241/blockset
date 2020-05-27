@@ -51,10 +51,12 @@ void JSONReader<T, F>::removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>
                 if(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getLeft() == -1){
                     //set to leaf node
                     temp_ensemble[i][j].setLeft(0);
+                    temp_ensemble[i][j].setLeftCardinality(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getCardinality());
                 }
                 if(temp_ensemble[i][temp_ensemble[i][j].getRight()].getLeft() == -1){
                     //set to leaf node
                     temp_ensemble[i][j].setRight(0);
+                    temp_ensemble[i][j].setRightCardinality(temp_ensemble[i][temp_ensemble[i][j].getRight()].getCardinality());
                 }
                 id_to_index[temp_ensemble[i][j].getID()] = temp_bin.size();
                 temp_bin.push_back(temp_ensemble[i][j]);

@@ -196,6 +196,13 @@ class Packer{
         return ele;
     }
 
+    inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseClassHelper(
+            std::vector<StatNode<T, F>>&bin, 
+            const int num_trees_in_bin, 
+            std::vector<int> &bin_start, 
+            std::deque<StatNode<T, F>> &bin_q) { 
+    }
+
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(
             std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, 
@@ -297,6 +304,9 @@ class Packer{
         else if(layout.find(std::string("dfs")) != std::string::npos){
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
+        else if(layout.find(std::string("class")) != std::string::npos){
+            packSubtreeBlockwiseClassHelper(bin, num_trees_in_bin, bin_start, bin_q);
+        }
         else{
             packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
@@ -331,6 +341,9 @@ class Packer{
         }
         else if(layout.find(std::string("dfs")) != std::string::npos){
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
+        }
+        else if(layout.find(std::string("class")) != std::string::npos){
+            packSubtreeBlockwiseClassHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
         else{
             packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q);
