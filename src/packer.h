@@ -20,6 +20,7 @@ class Packer{
     std::vector<StatNode<T, F>> finalbin;
     std::map<int, int> node_to_index;
     std::map<int, int> subtree_count_map;
+    std::map<int, int> subtree_class_map;
 
     private:
     //Note: contains helper functions (i.e common routines used for packing)
@@ -201,16 +202,19 @@ class Packer{
     
     
     inline bool myCompFunction(StatNode<T, F> &node1, StatNode<T, F> &node2){
-
         if(node1.getSTNum() == node2.getSTNum())
             return node1.getID() < node2.getID();
 
         if(subtree_count_map[node1.getSTNum()] == subtree_count_map[node2.getSTNum()])
             return node1.getSTNum() < node2.getSTNum();
 
-        return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+        int block_size = std::atoi(Config::getValue("blocksize").c_str());
+        if (subtree_count_map[node1.getSTNum()] < block_size && subtree_count_map[node2.getSTNum()] < block_size)
+            return subtree_class_map[node1.getSTNum()] < subtree_class_map[node2.getSTNum()];
 
+        return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
     }
+
 
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseClassHelper(
             std::vector<StatNode<T, F>>&bin, 
@@ -221,7 +225,7 @@ class Packer{
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
         //int pos_in_block = (finalbin.size()-1) % block_size;
         int pos_in_block = 0;
-        
+        std::vector<int> class_vector(num_classes, 0);
         //TODO: insert blank nodes
         
         int subtree_count = 0;
@@ -234,6 +238,13 @@ class Packer{
                 subtree_count_map[subtree_count]++;
             }
             else{
+                //Find max class of previous subtree
+                int maj_class = std::distance(class_vector.begin(), std::max_element(class_vector.begin(), class_vector.end()));
+                //zero class array
+                std::fill(class_vector.begin(), class_vector.end(), 0);
+                //set subtree_class_map
+                subtree_class_map[subtree_count] = maj_class;
+
                 subtree_count++;
                 subtree_count_map[subtree_count] = 0;
                 ele = popMaxCardEle(bin_q);
@@ -249,14 +260,21 @@ class Packer{
             pos_in_block = (pos_in_block + 1) % block_size;
 
             if((ele.getLeft() < num_classes) && 
-                    (ele.getRight() < num_classes))
+                    (ele.getRight() < num_classes)){
+                class_vector[ele.getLeft()]+=ele.getLeftCardinality();
+                class_vector[ele.getRight()]+=ele.getRightCardinality();
                 continue;
+            }
 
-            else if(ele.getLeft() < num_classes)
+            else if(ele.getLeft() < num_classes){
                 bin_q.push_front(bin[ele.getRight()]);
+                class_vector[ele.getLeft()]+=ele.getLeftCardinality();
+            }
 
-            else if(ele.getRight() < num_classes)
+            else if(ele.getRight() < num_classes){
                 bin_q.push_front(bin[ele.getLeft()]); 
+                class_vector[ele.getRight()]+=ele.getRightCardinality();
+            }
 
             else {
                 if(layout.find(std::string("stat")) != std::string::npos ||
