@@ -73,10 +73,13 @@ class StatNode: public Node<T, F>
         subtree_number = num;
     }
 
-    inline int getSubtreeNum(){
+    inline int getSTNum(){
         return subtree_number;
     }
 
+    inline int setSTNum(int num){
+        subtree_number = num;
+    }
 
     inline int getLeftCardinality(){
         return left_child_cardinality;

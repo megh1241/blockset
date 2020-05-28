@@ -5,6 +5,7 @@
 #include "stat_node.h"
 #include "node.h"
 #include "config.h"
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <deque>
@@ -18,6 +19,7 @@ class Packer{
     std::string layout;
     std::vector<StatNode<T, F>> finalbin;
     std::map<int, int> node_to_index;
+    std::map<int, int> subtree_count_map;
 
     private:
     //Note: contains helper functions (i.e common routines used for packing)
@@ -195,6 +197,19 @@ class Packer{
         bin_st.erase(bin_st.begin() + positer, bin_st.begin() + positer +1);
         return ele;
     }
+    
+    
+    inline bool myCompFunction(StatNode<T, F> &node1, StatNode<T, F> &node2){
+
+        if(node1.getSTNum() == node2.getSTNum())
+            return node1.getID() < node2.getID();
+
+        if(subtree_count_map[node1.getSTNum()] == subtree_count_map[node2.getSTNum()])
+            return node1.getSTNum() < node2.getSTNum();
+
+        return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+
+    }
 
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseClassHelper(
             std::vector<StatNode<T, F>>&bin, 
@@ -203,10 +218,13 @@ class Packer{
             std::deque<StatNode<T, F>> &bin_q) { 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        int pos_in_block = (finalbin.size()-1) % block_size;
+        //int pos_in_block = (finalbin.size()-1) % block_size;
+        
+        //TODO: insert blank nodes
+        
+        int pos_in_block = 0;
         int subtree_count = 0;
 
-        std::map<int, int> subtree_count_map;
         subtree_count_map[0] = 0;
         while(!bin_q.empty()){
             auto ele = bin_q.front();
@@ -259,6 +277,24 @@ class Packer{
                 }
             }
         }
+
+        // set new IDs
+        int siz = finalbin.size();
+        for (auto i=num_classes; i<siz; i++){
+            if(finalbin[i].getLeft() >= num_classes)
+                finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
+            if(finalbin[i].getRight() >= num_classes)
+                finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
+        }
+
+        int node_count = 0;
+        for (auto node: finalbin){
+            node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
+            node_count++;
+        }
+        std::sort(finalbin.begin() + num_classes, finalbin.end(), [this](auto l, auto r){return myCompFunction(l, r);} );
+
+        //replace bin with final bin
     }
 
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(
