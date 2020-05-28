@@ -180,6 +180,7 @@ class Packer{
         }		
     }
 
+
     StatNode<T, F> popMaxCardEle(std::deque<StatNode<T, F>> &bin_st){
         int max = -1;
         int positer = 0;
@@ -219,10 +220,10 @@ class Packer{
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
         //int pos_in_block = (finalbin.size()-1) % block_size;
+        int pos_in_block = 0;
         
         //TODO: insert blank nodes
         
-        int pos_in_block = 0;
         int subtree_count = 0;
 
         subtree_count_map[0] = 0;
@@ -278,7 +279,6 @@ class Packer{
             }
         }
 
-        // set new IDs
         int siz = finalbin.size();
         for (auto i=num_classes; i<siz; i++){
             if(finalbin[i].getLeft() >= num_classes)
@@ -287,14 +287,20 @@ class Packer{
                 finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
         }
 
+        bin.clear();
+        for (auto node: finalbin)
+            bin.push_back(node);
+
+        // set new IDs
+        std::sort(finalbin.begin() + num_classes, finalbin.end(), [this](auto l, auto r){return myCompFunction(l, r);} );
+        
+        node_to_index.clear();
         int node_count = 0;
         for (auto node: finalbin){
             node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
             node_count++;
         }
-        std::sort(finalbin.begin() + num_classes, finalbin.end(), [this](auto l, auto r){return myCompFunction(l, r);} );
 
-        //replace bin with final bin
     }
 
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(

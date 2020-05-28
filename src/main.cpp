@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
             loadTestData(test_vec, lab); 
             //Perform prediction
             obj->predict(test_vec, preds, predi, false);
-            std::cout<<"predicted\n"; 
+            
             //Compute accuracy
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
             std::vector<double> lab;
             loadTestData(test_vec, lab); 
             obj->predict(test_vec, preds, predi, false);
-            std::cout<<"predicted\n"; 
+            
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";
         }
@@ -161,10 +161,16 @@ int main(int argc, char* argv[]) {
             obj->predict(test_vec, preds, predi, true);
             std::cout<<"predicted\n"; 
             //Compute accuracy
+            std::cout<<"Size of predicted: "<<predi.size();
+            for (auto i: predi)
+                std::cout<<i<<", ";
+            std::cout<<"\n";
+            
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";
         }
         else{
+            std::cout<<"Not classification!\n";
             std::vector<double> preds;
             std::vector<double> predi;    
             std::vector<double> lab;
