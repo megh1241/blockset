@@ -218,6 +218,23 @@ class Packer{
     }
 
 
+    inline StatNode<T, F> genBlankNode(){
+        return StatNode<T, F>(-1, -1, -1, -1, -1); 
+    }
+
+
+    inline std::vector<StatNode<T, F>> extract_delete_ST(std::vector<StatNode<T, F>>&finalbin, const int &st_num){
+        std::vector<StatNode<T, F>> nodes;
+        while(1){
+            if(finalbin.back().getSTNum() != st_num)
+                break;
+            nodes.push_back(finalbin.back());
+            finalbin.pop_back();
+        }
+        return nodes;
+    }
+
+
     inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseClassHelper(
             std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, 
@@ -225,17 +242,24 @@ class Packer{
             std::deque<StatNode<T, F>> &bin_q) { 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        //int pos_in_block = (finalbin.size()-1) % block_size;
-        int pos_in_block = 0;
-        std::vector<int> class_vector(num_classes, 0);
-        //TODO: insert blank nodes
         
+        int pos_in_block = (finalbin.size()) % block_size;
+        std::vector<int> class_vector(num_classes, 0);
+        int num_blank_nodes = 0;
+        int initial_pos_in_block = pos_in_block;
+        //insert blank nodes
+        for(int i = pos_in_block; i<block_size; ++i){
+            finalbin.push_back(genBlankNode());
+            num_blank_nodes++;
+        }
+
         int subtree_count = 0;
 
         subtree_count_map[0] = 0;
+        pos_in_block = 0;
         while(!bin_q.empty()){
             auto ele = bin_q.front();
-            if(pos_in_block != block_size - 1){
+            if(pos_in_block != 0){
                 bin_q.pop_front();
                 subtree_count_map[subtree_count]++;
             }
@@ -255,9 +279,6 @@ class Packer{
             finalbin.push_back(ele);
             int fsiz = finalbin.size();
             finalbin[fsiz - 1].setSubtreeNum(subtree_count);
-
-            node_to_index.insert(std::pair<int, int>(ele.getID(), 
-                        finalbin.size()-1));
 
             pos_in_block = (pos_in_block + 1) % block_size;
 
@@ -299,21 +320,29 @@ class Packer{
             }
         }
 
-        int siz = finalbin.size();
-        for (auto i=num_classes; i<siz; i++){
-            if(finalbin[i].getLeft() >= num_classes)
-                finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
-            if(finalbin[i].getRight() >= num_classes)
-                finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
-        }
-
-        bin.clear();
-        for (auto node: finalbin)
-            bin.push_back(node);
-
         // set new IDs
         std::sort(finalbin.begin() + num_classes, finalbin.end(), [this](auto l, auto r){return myCompFunction(l, r);} );
-        
+      
+        //Pack small subtrees to the gap resulting from the bin
+        int gap = num_blank_nodes;
+        int subtree_num;
+        while(gap > 0){
+            auto curr_node = finalbin.back();
+            subtree_count = subtree_count_map[curr_node.getSTNum()];
+            if(subtree_num < gap) {
+                auto nodes = extract_delete_ST(finalbin, curr_node.getSTNum());
+                int siz = nodes.size();
+                int k=0;
+                for(int i = initial_pos_in_block+1; i< initial_pos_in_block+siz+1; ++i){
+                    finalbin[i] = nodes[k];
+                    ++k;
+                }
+                initial_pos_in_block+=siz;;
+                gap = gap - subtree_count;
+            }
+        }
+
+        //Populate node index map and bin starts
         node_to_index.clear();
         bin_start.clear();
         int node_count = 0;
@@ -334,12 +363,12 @@ class Packer{
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        int pos_in_block = (finalbin.size()-1) % block_size;
+        int pos_in_block = (finalbin.size()) % block_size;
 
         bin_start.clear();
         while(!bin_q.empty()){
             auto ele = bin_q.front();
-            if(pos_in_block != block_size - 1){
+            if(pos_in_block != 0){
                 bin_q.pop_front();
                 finalbin.push_back(ele);
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
