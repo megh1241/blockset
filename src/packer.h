@@ -187,12 +187,14 @@ class Packer{
         int positer = 0;
         int ecount = 0;
 
+        StatNode<T, F> ii ;
         StatNode<T, F> ele;
-        for(auto ii: bin_st) {
-            if((ii.getCardinality() > max) || (ii.getCardinality() == max && ii.getDepth() < ele.getDepth())){
-                max = ii.getCardinality();
+        for(int i=0; i<bin_st.size(); ++i) {
+            //ii = bin_st[i];
+            if((bin_st[i].getCardinality() > max) || (bin_st[i].getCardinality() == max && bin_st[i].getDepth() < ele.getDepth())){
+                max = bin_st[i].getCardinality();
                 positer = ecount;
-                ele = ii;
+                ele = bin_st[i];
             }
             ecount++;
         }
@@ -252,7 +254,7 @@ class Packer{
 
             finalbin.push_back(ele);
             int fsiz = finalbin.size();
-            finalbin[fsiz-1].setSubtreeNum(subtree_count);
+            finalbin[fsiz - 1].setSubtreeNum(subtree_count);
 
             node_to_index.insert(std::pair<int, int>(ele.getID(), 
                         finalbin.size()-1));
@@ -313,8 +315,11 @@ class Packer{
         std::sort(finalbin.begin() + num_classes, finalbin.end(), [this](auto l, auto r){return myCompFunction(l, r);} );
         
         node_to_index.clear();
+        bin_start.clear();
         int node_count = 0;
         for (auto node: finalbin){
+            if (node.getDepth() == 0)
+                bin_start.push_back(node_count);
             node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
             node_count++;
         }
@@ -331,18 +336,26 @@ class Packer{
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
         int pos_in_block = (finalbin.size()-1) % block_size;
 
+        bin_start.clear();
         while(!bin_q.empty()){
             auto ele = bin_q.front();
             if(pos_in_block != block_size - 1){
                 bin_q.pop_front();
+                finalbin.push_back(ele);
+                node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                        finalbin.size()-1));
+                if(ele.getDepth() ==  0)
+                    bin_start.push_back(finalbin.size() -1);
             }
             else{
                 ele = popMaxCardEle(bin_q);
+                finalbin.push_back(ele);
+                node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                        finalbin.size()-1));
+                if(ele.getDepth() ==  0)
+                    bin_start.push_back(finalbin.size() -1);
             }
 
-            finalbin.push_back(ele);
-            node_to_index.insert(std::pair<int, int>(ele.getID(), 
-                        finalbin.size()-1));
 
             pos_in_block = (pos_in_block + 1) % block_size;
 
