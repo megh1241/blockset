@@ -101,7 +101,8 @@ class StatNode: public Node<T, F>
          std::cout<<"id: "<<id<<"feature: "<<Node<T, F>::feature
              <<" ,threshold: "<<Node<T, F>::threshold<<", left: "
              <<Node<T, F>::left<<" ,right: "<<Node<T, F>::right
-             <<", cardinality: "<<cardinality<<"\n";
+             <<", cardinality: "<<cardinality<<", subtree number: "
+             <<subtree_number<<"\n";
     }
 };
 

@@ -190,7 +190,6 @@ class Packer{
         StatNode<T, F> ii ;
         StatNode<T, F> ele;
         for(int i=0; i<bin_st.size(); ++i) {
-            //ii = bin_st[i];
             if((bin_st[i].getCardinality() > max) || (bin_st[i].getCardinality() == max && bin_st[i].getDepth() < ele.getDepth())){
                 max = bin_st[i].getCardinality();
                 positer = ecount;
@@ -201,9 +200,20 @@ class Packer{
         bin_st.erase(bin_st.begin() + positer, bin_st.begin() + positer +1);
         return ele;
     }
+
+
+    inline bool myCompFunctionReg(StatNode<T, F> &node1, StatNode<T, F> &node2){
+        if(node1.getSTNum() == node2.getSTNum())
+            return node1.getID() < node2.getID();
+
+        if(subtree_count_map[node1.getSTNum()] == subtree_count_map[node2.getSTNum()])
+            return node1.getSTNum() < node2.getSTNum();
+
+        return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+    }
+
     
-    
-    inline bool myCompFunction(StatNode<T, F> &node1, StatNode<T, F> &node2){
+    inline bool myCompFunctionClass(StatNode<T, F> &node1, StatNode<T, F> &node2){
         if(node1.getSTNum() == node2.getSTNum())
             return node1.getID() < node2.getID();
 
@@ -219,7 +229,11 @@ class Packer{
 
 
     inline StatNode<T, F> genBlankNode(){
-        return StatNode<T, F>(-1, -1, -1, -1, -1); 
+       auto a =  StatNode<T, F>(-1, -1, -1, -1, -1); 
+       a.setDepth(-1);
+       a.setID(-1);
+       a.setSTNum(-1);
+       return a;
     }
 
 
@@ -235,18 +249,26 @@ class Packer{
     }
 
 
-    inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseClassHelper(
+    inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(
             std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, 
             std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> &bin_q) { 
+            std::deque<StatNode<T, F>> &bin_q,
+            bool class_flag ) { 
+
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        
+
         int pos_in_block = (finalbin.size()) % block_size;
         std::vector<int> class_vector(num_classes, 0);
         int num_blank_nodes = 0;
         int initial_pos_in_block = pos_in_block;
+
+        int subtree_end_id = -2;
+
+        for(int i=0; i< num_classes; ++i)
+            bin[i].setSTNum(-1);
+
         //insert blank nodes
         for(int i = pos_in_block; i<block_size; ++i){
             finalbin.push_back(genBlankNode());
@@ -257,13 +279,17 @@ class Packer{
 
         subtree_count_map[0] = 0;
         pos_in_block = 0;
-        while(!bin_q.empty()){
+        while(!bin_q.empty()) {
             auto ele = bin_q.front();
-            if(pos_in_block != 0){
+            if((pos_in_block != 0) && (ele.getID() != subtree_end_id)){
                 bin_q.pop_front();
+                subtree_end_id = bin_q.front().getID();
                 subtree_count_map[subtree_count]++;
+                
+                node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                        finalbin.size()));
             }
-            else{
+            else if (pos_in_block == 0){
                 //Find max class of previous subtree
                 int maj_class = std::distance(class_vector.begin(), std::max_element(class_vector.begin(), class_vector.end()));
                 //zero class array
@@ -272,13 +298,32 @@ class Packer{
                 subtree_class_map[subtree_count] = maj_class;
 
                 subtree_count++;
-                subtree_count_map[subtree_count] = 0;
+                subtree_count_map[subtree_count] = 1;
                 ele = popMaxCardEle(bin_q);
+                subtree_end_id = bin_q.front().getID();
+                node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                        finalbin.size()));
+            }
+            else {
+                bin_q.pop_front();
+                subtree_end_id = bin_q.front().getID();
+                //Find max class of previous subtree
+                int maj_class = std::distance(class_vector.begin(), std::max_element(class_vector.begin(), class_vector.end()));
+                //zero class array
+                std::fill(class_vector.begin(), class_vector.end(), 0);
+                //set subtree_class_map
+                subtree_class_map[subtree_count] = maj_class;
+
+                subtree_count++;
+                subtree_count_map[subtree_count] = 1;
+                node_to_index.insert(std::pair<int, int>(ele.getID(), 
+                        finalbin.size()));
             }
 
             finalbin.push_back(ele);
             int fsiz = finalbin.size();
             finalbin[fsiz - 1].setSubtreeNum(subtree_count);
+
 
             pos_in_block = (pos_in_block + 1) % block_size;
 
@@ -319,28 +364,51 @@ class Packer{
                 }
             }
         }
+        int siz = finalbin.size();
+        for (auto i=num_classes; i<siz; i++){
+            if(finalbin[i].getLeft() >= num_classes)
+                finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
+            if(finalbin[i].getRight() >= num_classes)
+                finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
+        }
 
+        bin.clear();
+        for (auto node: finalbin)
+            bin.push_back(node);
+        
         // set new IDs
-        std::sort(finalbin.begin() + num_classes, finalbin.end(), [this](auto l, auto r){return myCompFunction(l, r);} );
-      
+        
+        std::sort(finalbin.begin() + block_size, finalbin.end(), [this](auto l, auto r){return myCompFunctionReg(l, r);} );
+
         //Pack small subtrees to the gap resulting from the bin
         int gap = num_blank_nodes;
         int subtree_num;
+        
         while(gap > 0){
             auto curr_node = finalbin.back();
             subtree_count = subtree_count_map[curr_node.getSTNum()];
-            if(subtree_num < gap) {
+            if(subtree_count <= gap && subtree_count > 0) {
                 auto nodes = extract_delete_ST(finalbin, curr_node.getSTNum());
                 int siz = nodes.size();
                 int k=0;
-                for(int i = initial_pos_in_block+1; i< initial_pos_in_block+siz+1; ++i){
-                    finalbin[i] = nodes[k];
+                for(int i = initial_pos_in_block; i< initial_pos_in_block+siz; ++i){
+                    finalbin[i].setID(nodes[k].getID());
+                    finalbin[i].setLeft(nodes[k].getLeft());
+                    finalbin[i].setRight(nodes[k].getRight());
+                    finalbin[i].setCardinality(nodes[k].getCardinality());
+                    finalbin[i].setDepth(nodes[k].getDepth());
+                    finalbin[i].setSTNum(nodes[k].getSTNum());
                     ++k;
                 }
                 initial_pos_in_block+=siz;;
                 gap = gap - subtree_count;
             }
+            else 
+                break;
         }
+       
+        if (class_flag == true)
+            std::sort(finalbin.begin() + block_size, finalbin.end(), [this](auto l, auto r){return myCompFunctionClass(l, r);} );
 
         //Populate node index map and bin starts
         node_to_index.clear();
@@ -349,76 +417,13 @@ class Packer{
         for (auto node: finalbin){
             if (node.getDepth() == 0)
                 bin_start.push_back(node_count);
-            node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
+            if ( node.getID()>= num_classes && node.getLeft() != -1 && node.getRight()!=-1)
+                node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
             node_count++;
         }
 
     }
 
-    inline std::deque<StatNode<T, F>>  packSubtreeBlockwiseHelper(
-            std::vector<StatNode<T, F>>&bin, 
-            const int num_trees_in_bin, 
-            std::vector<int> &bin_start, 
-            std::deque<StatNode<T, F>> &bin_q) { 
-
-        int num_classes = std::atoi(Config::getValue("numclasses").c_str());
-        int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        int pos_in_block = (finalbin.size()) % block_size;
-
-        bin_start.clear();
-        while(!bin_q.empty()){
-            auto ele = bin_q.front();
-            if(pos_in_block != 0){
-                bin_q.pop_front();
-                finalbin.push_back(ele);
-                node_to_index.insert(std::pair<int, int>(ele.getID(), 
-                        finalbin.size()-1));
-                if(ele.getDepth() ==  0)
-                    bin_start.push_back(finalbin.size() -1);
-            }
-            else{
-                ele = popMaxCardEle(bin_q);
-                finalbin.push_back(ele);
-                node_to_index.insert(std::pair<int, int>(ele.getID(), 
-                        finalbin.size()-1));
-                if(ele.getDepth() ==  0)
-                    bin_start.push_back(finalbin.size() -1);
-            }
-
-
-            pos_in_block = (pos_in_block + 1) % block_size;
-
-            if((ele.getLeft() < num_classes) && 
-                    (ele.getRight() < num_classes))
-                continue;
-
-            else if(ele.getLeft() < num_classes)
-                bin_q.push_front(bin[ele.getRight()]);
-
-            else if(ele.getRight() < num_classes)
-                bin_q.push_front(bin[ele.getLeft()]); 
-
-            else {
-                if(layout.find(std::string("stat")) != std::string::npos ||
-                        layout.find(std::string("weighted")) != std::string::npos){
-
-                    if(bin[ele.getLeft()].getCardinality() < 
-                            bin[ele.getRight()].getCardinality()){
-                        bin_q.push_front(bin[ele.getLeft()]); 
-                        bin_q.push_front(bin[ele.getRight()]);
-                    }
-                    else{
-                        bin_q.push_front(bin[ele.getRight()]);
-                        bin_q.push_front(bin[ele.getLeft()]); 
-                    }
-                }
-                else{
-                    bin_q.push_front(bin[ele.getLeft()]); 
-                    bin_q.push_front(bin[ele.getRight()]);
-                }
-            }
-        }
-    }		
 
 
     public:
@@ -428,9 +433,11 @@ class Packer{
     Packer(int depth, std::string layout_str): 
         depth_intertwined(depth), layout(layout_str){}
 
+
     inline void setDepthIntertwined(const int depth){
         depth_intertwined = depth;
     }
+
 
     inline void pack(std::vector<StatNode<T, F>>&bin, 
             const int num_trees_in_bin, std::vector<int> &bin_start){
@@ -447,6 +454,7 @@ class Packer{
             PackRegularLayout(bin, num_trees_in_bin, bin_start);
         }
     }
+
 
     inline void PackLayoutWithBin(std::vector<StatNode<T, F>> &bin,
             const int num_trees_in_bin, std::vector<int> &bin_start){
@@ -465,10 +473,10 @@ class Packer{
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
         else if(layout.find(std::string("class")) != std::string::npos){
-            packSubtreeBlockwiseClassHelper(bin, num_trees_in_bin, bin_start, bin_q);
+            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q, true);
         }
         else{
-            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q);
+            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q, false);
         }
 
         // set new IDs
@@ -483,6 +491,7 @@ class Packer{
         //replace bin with final bin
         std::copy(finalbin.begin(), finalbin.end(), bin.begin());
     }
+
 
     inline void PackRegularLayout(std::vector<StatNode<T, F>> &bin,
             const int num_trees_in_bin, std::vector<int> &bin_start){
@@ -503,10 +512,10 @@ class Packer{
             packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
         }
         else if(layout.find(std::string("class")) != std::string::npos){
-            packSubtreeBlockwiseClassHelper(bin, num_trees_in_bin, bin_start, bin_q);
+            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q, true);
         }
         else{
-            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q);
+            packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q, false);
         }
 
         // set new IDs
