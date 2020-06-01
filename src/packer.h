@@ -21,6 +21,7 @@ class Packer{
     std::map<int, int> node_to_index;
     std::map<int, int> subtree_count_map;
     std::map<int, int> subtree_class_map;
+    std::map<int, int> class_numST_map;
 
     private:
     //Note: contains helper functions (i.e common routines used for packing)
@@ -221,8 +222,11 @@ class Packer{
             return node1.getSTNum() < node2.getSTNum();
 
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        if (subtree_count_map[node1.getSTNum()] < block_size && subtree_count_map[node2.getSTNum()] < block_size)
-            return subtree_class_map[node1.getSTNum()] < subtree_class_map[node2.getSTNum()];
+        if (subtree_count_map[node1.getSTNum()] < block_size && subtree_count_map[node2.getSTNum()] < block_size){
+            if (subtree_class_map[node1.getSTNum()] == subtree_class_map[node2.getSTNum()]) 
+                return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+            return class_numST_map[subtree_class_map[node1.getSTNum()]] > class_numST_map[subtree_class_map[node2.getSTNum()]];
+        }
 
         return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
     }
@@ -266,8 +270,10 @@ class Packer{
 
         int subtree_end_id = -2;
 
-        for(int i=0; i< num_classes; ++i)
+        for(int i=0; i< num_classes; ++i){
             bin[i].setSTNum(-1);
+            class_numST_map[i] = 0;
+        }
 
         //insert blank nodes
         for(int i = pos_in_block; i<block_size; ++i){
@@ -296,7 +302,7 @@ class Packer{
                 std::fill(class_vector.begin(), class_vector.end(), 0);
                 //set subtree_class_map
                 subtree_class_map[subtree_count] = maj_class;
-
+                class_numST_map[maj_class]++;
                 subtree_count++;
                 subtree_count_map[subtree_count] = 1;
                 ele = popMaxCardEle(bin_q);
@@ -384,6 +390,7 @@ class Packer{
         int gap = num_blank_nodes;
         int subtree_num;
         
+        std::cout<<"gap before: "<<gap<<"\n";
         while(gap > 0){
             auto curr_node = finalbin.back();
             subtree_count = subtree_count_map[curr_node.getSTNum()];
@@ -406,9 +413,19 @@ class Packer{
             else 
                 break;
         }
-       
+
+        std::cout<<"Final gap: "<<gap<<"\n";
+        int pos = 0, count = 0;
+        for (auto node:finalbin){
+            if (node.getID() >= num_classes && subtree_count_map[node.getSTNum()] < block_size) {
+                pos = count;
+                break;
+            }
+            count++;
+        }
+
         if (class_flag == true)
-            std::sort(finalbin.begin() + block_size, finalbin.end(), [this](auto l, auto r){return myCompFunctionClass(l, r);} );
+            std::sort(finalbin.begin() + pos, finalbin.end(), [this](auto l, auto r){return myCompFunctionClass(l, r);} );
 
         //Populate node index map and bin starts
         node_to_index.clear();
