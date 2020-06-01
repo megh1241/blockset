@@ -1,1 +1,0 @@
-./exe  --mode pack --format binary  --layout bfs --intertwine 1  --modelfilename /root/pacset/models/iris10.json --datafilename ~/pacset/data/iris.csv --numthreads 1 --package sklearn --algorithm randomforest --task classification

@@ -28,7 +28,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
-n_trees = 64
+n_trees = 128
 #n_trees = 128
 #data_filename = '../data/cifar-10.csv'
 data_filename = '../data/iris.csv'
@@ -54,7 +54,8 @@ def save_dataset_csv(X, y, filename):
     print('concat size: ', end=' ')
     print(concat.shape)
 
-    np.savetxt(filename, concat, delimiter=",", fmt='%1.4f')
+    print (concat.shape)
+    np.savetxt(filename, concat, delimiter=",", fmt='%s')
 
 
 def load_csv(filename):
@@ -92,7 +93,6 @@ y = iris.target
 '''
 
 # Load data from https://www.openml.org/d/554
-'''
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
 train_samples = 60000
 t0 = time.time()
@@ -102,27 +102,27 @@ X = X[permutation]
 y = y[permutation]
 X = X.reshape((X.shape[0], -1))
 train_size = X.shape[0]
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=train_samples)
-'''
 #scaler = StandardScaler()
-#X_train = scaler.fit_transform(X_train)
-#X_test = scaler.transform(X_test)
-#X = X_train
+#X = scaler.fit_transform(X)
 
+#Load csv
 #X, y, a, b = load_csv(data_filename)
-X, y = datasets.load_diabetes(return_X_y=True)
+
+#Load sklearn dataset
+#X, y = datasets.load_diabetes(return_X_y=True)
 
 #Train model
-model1 = RandomForestRegressor(n_estimators = n_trees)
+model1 = RandomForestClassifier(n_estimators = n_trees)
+#model1 = RandomForestRegressor(n_estimators = n_trees)
 model1.fit(X,  y)
 
 #Save dataset to csv
-save_dataset_csv(X, y, '../data/reg.csv')
+save_dataset_csv(X, y, '../data/mnist.csv')
 
 #Save model to pickle
-#pickle.dump(model, open('../models/rf128.pkl', 'wb'))
+pickle.dump(model1, open('../models/mnist.pkl', 'wb'))
 
 #Save model to json
 #skljson.to_json(model1, '../models/reg.json')
-#skljson.to_json(model1, '../models/iris10.json')
+skljson.to_json(model1, '../models/mnist.json')
+
