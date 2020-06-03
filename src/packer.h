@@ -295,8 +295,9 @@ class Packer{
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
                         finalbin.size()));
             }
-            else if (pos_in_block == 0){
+            else{
                 //Find max class of previous subtree
+                bin_q.pop_front();
                 int maj_class = std::distance(class_vector.begin(), std::max_element(class_vector.begin(), class_vector.end()));
                 //zero class array
                 std::fill(class_vector.begin(), class_vector.end(), 0);
@@ -305,23 +306,7 @@ class Packer{
                 class_numST_map[maj_class]++;
                 subtree_count++;
                 subtree_count_map[subtree_count] = 1;
-                ele = popMaxCardEle(bin_q);
                 subtree_end_id = bin_q.front().getID();
-                node_to_index.insert(std::pair<int, int>(ele.getID(), 
-                        finalbin.size()));
-            }
-            else {
-                bin_q.pop_front();
-                subtree_end_id = bin_q.front().getID();
-                //Find max class of previous subtree
-                int maj_class = std::distance(class_vector.begin(), std::max_element(class_vector.begin(), class_vector.end()));
-                //zero class array
-                std::fill(class_vector.begin(), class_vector.end(), 0);
-                //set subtree_class_map
-                subtree_class_map[subtree_count] = maj_class;
-
-                subtree_count++;
-                subtree_count_map[subtree_count] = 1;
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
                         finalbin.size()));
             }
