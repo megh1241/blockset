@@ -28,8 +28,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
+#n_trees = 2048
 n_trees = 128
-#n_trees = 128
 #data_filename = '../data/cifar-10.csv'
 data_filename = '../data/iris.csv'
 
@@ -112,17 +112,17 @@ train_size = X.shape[0]
 #X, y = datasets.load_diabetes(return_X_y=True)
 
 #Train model
-model1 = RandomForestClassifier(n_estimators = n_trees)
+model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
 #model1 = RandomForestRegressor(n_estimators = n_trees)
 model1.fit(X,  y)
 
 #Save dataset to csv
-save_dataset_csv(X, y, '../data/mnist.csv')
+#save_dataset_csv(X, y, '../data/mnist.csv')
 
 #Save model to pickle
-pickle.dump(model1, open('../models/mnist.pkl', 'wb'))
+#pickle.dump(model1, open('../models/mnist.pkl', 'wb'))
 
 #Save model to json
-#skljson.to_json(model1, '../models/reg.json')
 skljson.to_json(model1, '../models/mnist.json')
+#skljson.to_json(model1, '/data5/mnist2048.json')
 
