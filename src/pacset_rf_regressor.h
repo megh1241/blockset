@@ -15,7 +15,6 @@
 
 #define BLOCK_LOGGING 1
 
-#define BLOCK_SIZE 128
 
 template <typename T, typename F>
 class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {

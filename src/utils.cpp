@@ -15,7 +15,7 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
     std::string line, word, temp; 
     std::vector<float> temp_vector;
     int num_obs = 0;
-    int max_n = 100;
+    int max_n = 1000;
     while(getline(fin, line, '\n')){
         std::istringstream templine(line);
         std::string data;

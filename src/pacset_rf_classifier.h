@@ -4,7 +4,8 @@
 #include <vector>
 #include <unordered_set>
 #include <fstream>
-
+#include <chrono>
+#include <random>
 #include "pacset_base_model.h"
 #include "packer.h"
 #include "config.h"
@@ -14,7 +15,7 @@
 #include "MemoryMapped.h"
 
 #define BLOCK_LOGGING 1
-
+#define NUM_FILES 999
 #define BLOCK_SIZE 128
 
 template <typename T, typename F>
@@ -124,13 +125,18 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         void predict(const std::vector<std::vector<T>> &observations,
                         std::vector<double> &preds, std::vector<double> &result, bool mmap) {}
 
-        inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds) {
+        inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum) {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
             int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
             std::string modelfname = Config::getValue("modelfilename");
-            MemoryMapped mmapped_obj(modelfname.c_str(), 0);
-            Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
+            
+#ifdef LAT_LOGGING 
+	    MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+#else
+	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
+#endif
+	    Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
             
             std::unordered_set<int> blocks_accessed;
             int block_offset = 0;
@@ -186,12 +192,13 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #pragma omp critical
                 block_offset += PacsetBaseModel<T, F>::bin_node_sizes[bin_counter];
             }
+        mmapped_obj.close();
 #ifdef BLOCK_LOGGING 
             return blocks_accessed.size();
 #else
             return 0;
 #endif
-        }
+	}
 
 
         inline void predict(const std::vector<std::vector<T>>& observation, 
@@ -204,6 +211,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_bins; 
+	    std::vector<double> elapsed_arr;
             std::string layout = Config::getValue("layout");
             std::string num_threads = Config::getValue("numthreads");
             std::string dataset = Config::getValue("datafilename");
@@ -216,10 +224,12 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             int max = -1;
             int maxid = -1;
             int blocks;
+	    int ct=0;
             std::vector<int> num_blocks;
             for(auto single_obs : observation){
-                if (mmap)
-                    blocks = mmapAndPredict(single_obs, preds);
+		auto start = std::chrono::steady_clock::now();
+	       	if (mmap)
+                    blocks = mmapAndPredict(single_obs, preds, ct+1);
                 else
                     blocks = predict(single_obs, preds);
                 num_blocks.push_back(blocks);
@@ -231,6 +241,13 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                     }
                 }
                 int count = std::count(std::begin(preds), std::end(preds), max);
+		auto end = std::chrono::steady_clock::now();
+#ifdef LAT_LOGGING
+		double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+		elapsed_arr.push_back(elapsed);
+#endif
+		std::cout<<"observation done: "<<ct<<"\n";
+		ct++;
                 results.push_back(maxid); 
                 std::fill(preds.begin(), preds.end(), 0);
                 max = -1;
@@ -247,6 +264,17 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 fout<<i<<",";
             }
             fout.close();
+#endif
+#ifdef LAT_LOGGING
+            std::fstream fout2;
+            std::string filename2 = "logs/latency_" + 
+                layout + "threads_" + num_threads +
+                + "intertwine_"  + intertwine + ".csv";
+            fout2.open(filename2, std::ios::out | std::ios::app);
+            for(auto i: elapsed_arr){
+                fout2<<i<<",";
+            }
+            fout2.close();
 #endif
         }
 
@@ -304,9 +332,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 fout.open(filename, std::ios::binary | std::ios::out );
                 Node<T, F> node_to_write;
                 for(auto bin: bins){
-                    for(auto node: bin){
+			for(auto node: bin){
                         node_to_write = node;
-                        fout.write((char*)&node_to_write, sizeof(node_to_write));
+			std::cout<<"Size of node to write: "<< sizeof(node_to_write)<<"\n";
+			fout.write((char*)&node_to_write, sizeof(node_to_write));
                     }
                 }
                 fout.close();
@@ -337,7 +366,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             //Write the metadata needed to reconstruct bins and for prediction
             //TODO: change filename
             int num_classes, num_bins;
-            std::string filename = "metadata.txt";
+	    std::string filename = Config::getValue("metadatafilename");
+	    //std::string filename = "metadata.txt";
             std::fstream f;
             f.open(filename, std::ios::in );
 
