@@ -20,7 +20,7 @@ from sklearn.datasets import fetch_openml
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-
+import json
 from sklearn.datasets import fetch_openml
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
@@ -29,10 +29,11 @@ from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
 #n_trees = 2048
-n_trees = 128
+n_trees = 200
 #data_filename = '../data/cifar-10.csv'
 data_filename = '../data/iris.csv'
 
+json_filename = "../models/mnist_manual.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -56,6 +57,34 @@ def save_dataset_csv(X, y, filename):
 
     print (concat.shape)
     np.savetxt(filename, concat, delimiter=",", fmt='%s')
+
+
+def argmax_1(a):
+    return max(range(len(a)), key=lambda x: a[x])
+
+
+def write_to_json(model1, filename):
+    start_time = time.time()
+    
+    new_dict = {'estimators': {'nodes': [], 'values': [] } }
+    for count, estimator in enumerate(model1.estimators_):
+        nodes = estimator.tree_.__getstate__()['nodes'].tolist()
+        newnodes = [list((i[0], i[1], i[3], [5])) for i in nodes]
+        length = len(nodes)
+        values = estimator.tree_.__getstate__()['values']
+        for i in range(length):
+            if newnodes[i][0] == -1:
+                newnodes[i][2] = argmax_1(list(values[i]))
+    
+        new_dict['estimators']['nodes'].append(newnodes)
+
+    json_obj = json.dumps(new_dict)
+    with open(filename, "w") as outfile: 
+        outfile.write(json_obj) 
+
+    end_time = time.time()
+    print('time taken for manual json conversion: ', end='')
+    print(end_time - start_time)
 
 
 def load_csv(filename):
@@ -91,7 +120,6 @@ iris = load_iris()
 X = iris.data
 y = iris.target
 '''
-
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
 train_samples = 60000
@@ -110,19 +138,15 @@ train_size = X.shape[0]
 
 #Load sklearn dataset
 #X, y = datasets.load_diabetes(return_X_y=True)
-
 #Train model
 model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
-#model1 = RandomForestRegressor(n_estimators = n_trees)
 model1.fit(X,  y)
+
+write_to_json(model1, json_filename)
 
 #Save dataset to csv
 #save_dataset_csv(X, y, '../data/mnist.csv')
 
-#Save model to pickle
-#pickle.dump(model1, open('../models/mnist.pkl', 'wb'))
-
 #Save model to json
-skljson.to_json(model1, '../models/mnist.json')
-#skljson.to_json(model1, '/data5/mnist2048.json')
+#skljson.to_json(model1, '../models/mnist.json')
 
