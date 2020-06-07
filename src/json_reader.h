@@ -19,11 +19,17 @@ class JSONReader{
         std::vector<std::vector<StatNode<T, F>>> temp_ensemble);
     void removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins,
         std::vector<std::vector<StatNode<T, F>>> temp_ensemble);
+    
     public:
         JSONReader(): filename(Config::getValue("modelfilename")), 
             package_name(Config::getValue("package")){}
 
         void convertSklToBins(std::vector<std::vector<StatNode<T, F>>>&bins, 
+                std::vector<int>&bin_sizes, 
+                std::vector<std::vector<int>>&bin_start,
+                std::vector<int>&bin_node_sizes); 
+
+        void convertSklToBinsRapidJson(std::vector<std::vector<StatNode<T, F>>>&bins, 
                 std::vector<int>&bin_sizes, 
                 std::vector<std::vector<int>>&bin_start,
                 std::vector<int>&bin_node_sizes); 

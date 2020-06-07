@@ -5,8 +5,17 @@
 #include <iostream>
 #include <fstream>
 #include "config.h"
+#include <assert.h> 
+#include "../rapidjson/include/rapidjson/document.h"
+#include "../rapidjson/include/rapidjson/writer.h"
+#include "../rapidjson/include/rapidjson/stringbuffer.h"
+#include <iostream>
+#include <fstream>
+#include <iostream>
 
 using json = nlohmann::json;
+using namespace rapidjson;
+
 
 template<typename T, typename F>
 int JSONReader<T, F>::populateBinSizes( 
@@ -89,6 +98,7 @@ void JSONReader<T, F>::removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>
     }
 }
 
+
 template<typename T, typename F>
 void JSONReader<T, F>::removeClassLeafNodes(std::vector<std::vector<StatNode<T, F>>> &bins, 
         std::vector<std::vector<StatNode<T, F>>> temp_ensemble ){
@@ -149,6 +159,7 @@ void JSONReader<T, F>::removeClassLeafNodes(std::vector<std::vector<StatNode<T, 
         }
     }
 }
+
 
 template<typename T, typename F>
 void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>> &bins, 
@@ -299,5 +310,134 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
     }
     ifs.close();
 }
+
+
+template<typename T, typename F>
+void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNode<T, F>>> &bins, 
+        std::vector<int> &bin_sizes, 
+        std::vector<std::vector<int>> &bin_start,
+        std::vector<int> &bin_node_sizes){
+
+    std::string task = Config::getValue("task");
+    int count;
+    //Read the json from file into a string stream
+    std::string model_filename = Config::getValue("modelfilename");
+    std::fstream f;
+    std::ifstream in(model_filename);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                        std::istreambuf_iterator<char>());
+    const char *json = contents.data();
+
+    //Parse the json string using rapidjson
+    Document d;
+    d.Parse(json);
+    assert(d.IsObject());
+    assert(d.HasMember("estimators"));
+    
+    //Parse the metadata
+    //get and set number of classes
+    int num_classes = d["n_classes"].GetInt();
+    Config::setConfigItem("numclasses", std::to_string(num_classes));
+    //Get the number of trees
+    int num_trees = d["n_estimators"].GetInt();
+    int num_bins = populateBinSizes(bin_sizes, num_trees);
+    //reserve memory for bins
+    bins.reserve(num_bins);
+    for(int i=0; i<num_bins; ++i)
+        bins[i].reserve(bin_sizes[i]);
+
+    //Recursively walk through the json model until we get the nodes per estimator
+    int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
+    std::vector<StatNode<T, F>> temp_bin;
+
+    if (task.compare(std::string("classification")) == 0) {
+        for(int i=0; i<num_classes; ++i)
+            temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
+    }
+    else {
+        temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
+    }
+    tree_offset = temp_bin.size();
+    //Note: temp_ensemble contains the leaf nodes as a separate node.
+    //We want the leafs to point to the class nodes. temp_ensemble doesnot
+    //contain class nodes.
+
+    std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
+    int left=0, right=0, cardinality=0, feature=0;
+    int id = 0;
+    int node_counter = 0;
+    int class_num = 0;
+    float threshold = 0;
+    int depth = 1;
+    int max = 0;
+    int max_idx;
+    std::vector<int> tree_starts;
+    //Iterate through nodes
+    const Value& forest_nodes = d["estimators"]["nodes"];
+    assert(num_trees == forest_nodes.Size());
+    for (SizeType i=0; i< num_trees; ++i){
+     	const Value& nodes = forest_nodes[i];
+        int num_nodes_in_tree = nodes.Size();
+	for (SizeType j=0; j < num_nodes_in_tree; ++j){
+     	    const Value& node = nodes[j];
+            left = nodes[j][0].GetInt();
+            right = nodes[j][1].GetInt();
+            feature = nodes[j][2].GetInt();
+            threshold = nodes[j][3].GetInt();
+            cardinality = nodes[j][4].GetInt();
+
+            //Internal node
+                id = temp_bin.size();
+                if(left == 1) depth = 0;
+                else depth = 1;
+                temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
+                        feature, threshold, cardinality, id, depth);
+
+            ++node_counter;
+        }
+        node_counter = 0;
+        ++tree_num_in_bin;
+
+        //Move on to the next bin if the current bin reached full capacity
+        if(tree_num_in_bin == bin_sizes[bin_number]){
+            ++bin_number;
+            tree_num_in_bin = 0;
+            temp_ensemble.push_back(temp_bin); 
+            temp_bin.clear();
+            if (task.compare(std::string("classification")) == 0) {
+                
+                for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
+                    temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
+            }
+            else {
+                    temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
+            }
+        }
+        tree_offset = temp_bin.size();
+    }
+
+    if (task.compare(std::string("classification")) == 0)
+        removeClassLeafNodes(bins, temp_ensemble );
+    else
+        removeRegLeafNodes(bins, temp_ensemble);
+
+    //populate the tree root indices (bin_start)
+    //TODO: this is inefficient, do this check in removeLeafNodes!
+    int counter = 0;
+    for(auto bin: bins){
+        for(auto node: bin){
+            //root node
+            if(node.getDepth() == 0)
+                tree_starts.push_back(counter);
+
+            counter++;
+        }
+        counter = 0;
+        bin_node_sizes.push_back(bin.size());
+        bin_start.push_back(tree_starts);
+        tree_starts.clear();
+    }
+}
+
 template class JSONReader<float, float>;
 template class JSONReader<int, float>;
