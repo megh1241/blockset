@@ -379,11 +379,11 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //Iterate through nodes
     const Value& forest_nodes = d["estimators"]["nodes"];
     assert(num_trees == forest_nodes.Size());
-   
-    for (SizeType i=0; i< forest_nodes.Size(); ++i){
+    SizeType forest_size = forest_nodes.Size();   
+    for (SizeType i=0; i< forest_size; ++i){
 	const Value& nodes = forest_nodes[i];
-        int num_nodes_in_tree = nodes.Size();
-	for (SizeType j=0; j < nodes.Size(); ++j){
+        SizeType num_nodes_in_tree = nodes.Size();
+	for (SizeType j=0; j < num_nodes_in_tree; ++j){
      	    const Value& node = nodes[j];
             left = nodes[j][0].GetInt();
             right = nodes[j][1].GetInt();
@@ -393,17 +393,18 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 	    
             //Internal node
                 id = temp_bin.size();
-                if(left == 1) 
-			depth = 0;
-                else 
-			depth = 1;
                
-	        if (left > -1)	
+	        if (left > -1){	
+                    if(left == 1) 
+		        depth = 0;
+                    else  
+			depth = 1;
 		    temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
                         feature, threshold, cardinality, id, depth);
+		}
 		else
 		    temp_bin.emplace_back(left, right, 
-                        feature, threshold, cardinality, id, depth);
+                        feature, threshold, cardinality, id, 1);
 
             ++node_counter;
         }
