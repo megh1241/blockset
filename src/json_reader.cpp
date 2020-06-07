@@ -308,6 +308,10 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
         bin_start.push_back(tree_starts);
         tree_starts.clear();
     }
+        for (auto i : bin_start){
+		for(auto j: i)
+			std::cout<<j<<"\n";
+	}
     ifs.close();
 }
 
@@ -322,7 +326,6 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     int count;
     //Read the json from file into a string stream
     std::string model_filename = Config::getValue("modelfilename");
-    std::fstream f;
     std::ifstream in(model_filename);
     std::string contents((std::istreambuf_iterator<char>(in)),
                         std::istreambuf_iterator<char>());
@@ -337,9 +340,12 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //Parse the metadata
     //get and set number of classes
     int num_classes = d["n_classes"].GetInt();
+    std::cout<<"num classes: "<<num_classes<<"\n";
+    fflush(stdout);
     Config::setConfigItem("numclasses", std::to_string(num_classes));
     //Get the number of trees
     int num_trees = d["n_estimators"].GetInt();
+    std::cout<<"num_trees: "<<num_trees<<"\n";
     int num_bins = populateBinSizes(bin_sizes, num_trees);
     //reserve memory for bins
     bins.reserve(num_bins);
@@ -375,22 +381,30 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //Iterate through nodes
     const Value& forest_nodes = d["estimators"]["nodes"];
     assert(num_trees == forest_nodes.Size());
-    for (SizeType i=0; i< num_trees; ++i){
-     	const Value& nodes = forest_nodes[i];
+   
+    for (SizeType i=0; i< forest_nodes.Size(); ++i){
+	const Value& nodes = forest_nodes[i];
         int num_nodes_in_tree = nodes.Size();
-	for (SizeType j=0; j < num_nodes_in_tree; ++j){
+	for (SizeType j=0; j < nodes.Size(); ++j){
      	    const Value& node = nodes[j];
             left = nodes[j][0].GetInt();
             right = nodes[j][1].GetInt();
             feature = nodes[j][2].GetInt();
-            threshold = nodes[j][3].GetInt();
+            threshold = (float)nodes[j][3].GetDouble();
             cardinality = nodes[j][4].GetInt();
-
+	    
             //Internal node
                 id = temp_bin.size();
-                if(left == 1) depth = 0;
-                else depth = 1;
-                temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
+                if(left == 1) 
+			depth = 0;
+                else 
+			depth = 1;
+               
+	        if (left > -1)	
+		    temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
+                        feature, threshold, cardinality, id, depth);
+		else
+		    temp_bin.emplace_back(left, right, 
                         feature, threshold, cardinality, id, depth);
 
             ++node_counter;
@@ -403,7 +417,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
             ++bin_number;
             tree_num_in_bin = 0;
             temp_ensemble.push_back(temp_bin); 
-            temp_bin.clear();
+	    std::cout<<"PUSHED!!!!!\n";
+	    temp_bin.clear();
             if (task.compare(std::string("classification")) == 0) {
                 
                 for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
@@ -421,6 +436,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     else
         removeRegLeafNodes(bins, temp_ensemble);
 
+    std::cout<<"ch1\n";
+    fflush(stdout);
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
     int counter = 0;
@@ -435,8 +452,15 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
         counter = 0;
         bin_node_sizes.push_back(bin.size());
         bin_start.push_back(tree_starts);
-        tree_starts.clear();
+	tree_starts.clear();
     }
+        for (auto i : bin_start){
+		for(auto j: i)
+			std::cout<<j<<"\n";
+	}
+    std::cout<<"ch2\n";
+    fflush(stdout);
+    in.close();
 }
 
 template class JSONReader<float, float>;

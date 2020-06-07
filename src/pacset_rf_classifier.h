@@ -35,28 +35,54 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         inline void loadModel() {
             JSONReader<T, F> J;
+            //J.convertSklToBins(PacsetBaseModel<T, F>::bins, 
             J.convertSklToBinsRapidJson(PacsetBaseModel<T, F>::bins, 
                     PacsetBaseModel<T, F>::bin_sizes, 
                     PacsetBaseModel<T, F>::bin_start,
                     PacsetBaseModel<T, F>::bin_node_sizes);
-        }
+        	std::cout<<"converted\n";
+		fflush(stdout);
+        std::cout<<"test data loaded\n";
+	}
 
         inline void pack(){
-            std::string layout = Config::getValue("layout");
-
+		std::cout<<"ppoint 1\n";
+	    fflush(stdout);	
+	std::string layout = Config::getValue("layout");
+		std::cout<<"ppoint 2\n";
+	    fflush(stdout);	
+		
             auto bin = PacsetBaseModel<T, F>::bins[0];
+		std::cout<<"ppoint 3\n";
+	    fflush(stdout);	
             int num_bins = std::stoi(Config::getValue("numthreads"));
+		std::cout<<"ppoint 3\n";
+	    fflush(stdout);	
             for(int i=0; i<num_bins; ++i){
-                Packer<T, F> packer_obj(layout);
-
+		    std::cout<<"bin number: "<<i<<"\n";
+		    fflush(stdout);
+		   Packer<T, F> packer_obj(layout);
+		std::cout<<"initiallize packer obj\n";
+		fflush(stdout);
                 if(Config::getValue("intertwine") != std::string("notfound"))
                     packer_obj.setDepthIntertwined(std::atoi(Config::getValue("intertwine").c_str()));
-               
+		std::cout<<"before pack\n";
+		fflush(stdout);
+		for (auto i: PacsetBaseModel<T, F>::bin_start){
+			for(auto j: i)
+				std::cout<<j<<"\n";
+		}
                 //should pack in place
                 packer_obj.pack(PacsetBaseModel<T, F>::bins[i], 
                         PacsetBaseModel<T, F>::bin_sizes[i],
                         PacsetBaseModel<T, F>::bin_start[i] 
                         );
+		std::cout<<"after pack\n";
+		fflush(stdout);
+		for (auto i: PacsetBaseModel<T, F>::bin_start){
+			for(auto j: i)
+				std::cout<<j<<"\n";
+		}
             }
         }
 
@@ -227,6 +253,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 	    int ct=0;
             std::vector<int> num_blocks;
             for(auto single_obs : observation){
+		    std::cout<<"start obs\n";
 		auto start = std::chrono::steady_clock::now();
 	       	if (mmap)
                     blocks = mmapAndPredict(single_obs, preds, ct+1);
@@ -310,9 +337,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             }
 
             //start position of each bin
-            for(auto bin: bin_start){
-                for(auto tree_start: bin){
-                    fout<<tree_start<<"\n";
+            for(auto i: bin_start){
+                for(auto tree_start: i){
+			std::cout<<tree_start<<"\n";
+			fout<<tree_start<<"\n";
                 }
             }
             fout.close();

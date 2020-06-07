@@ -56,7 +56,6 @@ class Packer{
 
         while(curr_level < num_nodes_process * num_trees_in_bin) {
             auto ele = temp_q.front();
-            ele.printNode();
             temp_q.pop_front();
             if(ele.getID()>= 0) {
                 finalbin.push_back(ele);

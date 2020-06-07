@@ -99,7 +99,8 @@ int main(int argc, char* argv[]) {
         //load json model from disk    
         obj->loadModel();
         std::cout<<"model loaded\n";
-        //pack model
+        fflush(stdout);
+	//pack model
         obj->pack();
         std::cout<<"model packed \n";
         //Load test data from file
@@ -137,7 +138,8 @@ int main(int argc, char* argv[]) {
 
         //Read the model from file, pack and save to file
         obj->loadModel();
-
+	std::cout<<"Model loaded\n";
+	fflush(stdout);
         //pack model
         obj->pack();
 
@@ -146,11 +148,12 @@ int main(int argc, char* argv[]) {
     }
     else if (Config::getValue("mode") == std::string("inference")){
         //TODO: fill
+	    std::cout<<"before deserialize\n";
         obj->deserialize();
+	    std::cout<<"after deserialize\n";
 
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
-        std::cout<<"test data loaded\n";
 
 
         if (Config::getValue("task") == std::string("classification")){
@@ -158,7 +161,9 @@ int main(int argc, char* argv[]) {
             std::vector<int> predi;    
             std::vector<int> lab;
             //Perform prediction
-            loadTestData(test_vec, lab); 
+	    std::cout<<"loading test data\b";
+	    loadTestData(test_vec, lab); 
+          	std::cout<<"test data loaded\n";
             obj->predict(test_vec, preds, predi, true);
             std::cout<<"predicted\n"; 
             //Compute accuracy

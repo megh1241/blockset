@@ -29,11 +29,11 @@ from sklearn.utils import check_random_state
 
 ######## GLOBALS #########
 #n_trees = 2048
-n_trees = 200
+n_trees = 128
 #data_filename = '../data/cifar-10.csv'
 data_filename = '../data/iris.csv'
 
-json_filename = "../models/mnist_manual.json"
+json_filename = "/data5/mnist_manual2.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -65,19 +65,22 @@ def argmax_1(a):
 
 def write_to_json(model1, filename):
     start_time = time.time()
-    
+    final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
     for count, estimator in enumerate(model1.estimators_):
         nodes = estimator.tree_.__getstate__()['nodes'].tolist()
-        newnodes = [list((i[0], i[1], i[3], [5])) for i in nodes]
+        newnodes = [list((i[0], i[1], i[2], i[3], i[5])) for i in nodes]
         length = len(nodes)
         values = estimator.tree_.__getstate__()['values']
         for i in range(length):
             if newnodes[i][0] == -1:
-                newnodes[i][2] = argmax_1(list(values[i]))
+                newnodes[i][2] = argmax_1(list(values[i][0]))
     
         new_dict['estimators']['nodes'].append(newnodes)
+        final_count = count
 
+    new_dict['n_estimators'] = final_count+1 
+    new_dict['n_classes'] = model1.n_classes_
     json_obj = json.dumps(new_dict)
     with open(filename, "w") as outfile: 
         outfile.write(json_obj) 
@@ -148,5 +151,5 @@ write_to_json(model1, json_filename)
 #save_dataset_csv(X, y, '../data/mnist.csv')
 
 #Save model to json
-#skljson.to_json(model1, '../models/mnist.json')
+skljson.to_json(model1, '../models/mnist_new3.json')
 
