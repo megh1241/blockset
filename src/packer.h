@@ -269,8 +269,6 @@ class Packer{
 	int actual_pos = finalbin.size();
 	int initial_pos_in_block = actual_pos;
 	int actual_pos_boundary = ( actual_pos / block_size + 1)*block_size;
-	std::cout<<"actual pos: "<<actual_pos<<"\n";
-	std::cout<<"actual pos boundary: "<<actual_pos_boundary<<"\n";
         int subtree_end_id = -2;
 
         for(int i=0; i< num_classes; ++i){

@@ -12,7 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <iostream>
-
+#include <chrono>
 using json = nlohmann::json;
 using namespace rapidjson;
 
@@ -170,6 +170,7 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
     std::string task = Config::getValue("task");
     const int parse_num = 8; 
     int count;
+    auto start = std::chrono::steady_clock::now();
     std::string model_filename = Config::getValue("modelfilename");
     std::ifstream ifs(model_filename);
     json rf_json_model = json::parse(ifs); 
@@ -292,6 +293,9 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
     else
         removeRegLeafNodes(bins, temp_ensemble);
 
+    auto end = std::chrono::steady_clock::now();
+    double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+    std::cout<<"elapsed: "<<elapsed<<"\n";
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
     int counter = 0;
@@ -308,10 +312,6 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
         bin_start.push_back(tree_starts);
         tree_starts.clear();
     }
-        for (auto i : bin_start){
-		for(auto j: i)
-			std::cout<<j<<"\n";
-	}
     ifs.close();
 }
 
@@ -332,6 +332,7 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     const char *json = contents.data();
 
     //Parse the json string using rapidjson
+    auto start = std::chrono::steady_clock::now();
     Document d;
     d.Parse(json);
     assert(d.IsObject());
@@ -340,12 +341,9 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //Parse the metadata
     //get and set number of classes
     int num_classes = d["n_classes"].GetInt();
-    std::cout<<"num classes: "<<num_classes<<"\n";
-    fflush(stdout);
     Config::setConfigItem("numclasses", std::to_string(num_classes));
     //Get the number of trees
     int num_trees = d["n_estimators"].GetInt();
-    std::cout<<"num_trees: "<<num_trees<<"\n";
     int num_bins = populateBinSizes(bin_sizes, num_trees);
     //reserve memory for bins
     bins.reserve(num_bins);
@@ -417,7 +415,6 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
             ++bin_number;
             tree_num_in_bin = 0;
             temp_ensemble.push_back(temp_bin); 
-	    std::cout<<"PUSHED!!!!!\n";
 	    temp_bin.clear();
             if (task.compare(std::string("classification")) == 0) {
                 
@@ -436,8 +433,9 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     else
         removeRegLeafNodes(bins, temp_ensemble);
 
-    std::cout<<"ch1\n";
-    fflush(stdout);
+    auto end = std::chrono::steady_clock::now();
+    double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+    std::cout<<"elapsed: "<<elapsed<<"\n";
     //populate the tree root indices (bin_start)
     //TODO: this is inefficient, do this check in removeLeafNodes!
     int counter = 0;
@@ -454,12 +452,6 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
         bin_start.push_back(tree_starts);
 	tree_starts.clear();
     }
-        for (auto i : bin_start){
-		for(auto j: i)
-			std::cout<<j<<"\n";
-	}
-    std::cout<<"ch2\n";
-    fflush(stdout);
     in.close();
 }
 
