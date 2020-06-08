@@ -33,7 +33,8 @@ n_trees = 128
 #data_filename = '../data/cifar-10.csv'
 data_filename = '../data/iris.csv'
 
-json_filename = "/data5/mnist_manual2.json"
+#json_filename = "/data5/mnist_manual2.json"
+json_filename = "/data5/reg.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -63,7 +64,7 @@ def argmax_1(a):
     return max(range(len(a)), key=lambda x: a[x])
 
 
-def write_to_json(model1, filename):
+def write_to_json(model1, filename, regression=False):
     start_time = time.time()
     final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
@@ -79,8 +80,12 @@ def write_to_json(model1, filename):
         new_dict['estimators']['nodes'].append(newnodes)
         final_count = count
 
+    if regression:
+        new_dict['n_classes'] = -1
+    else
+        new_dict['n_classes'] = model1.n_classes_
+
     new_dict['n_estimators'] = final_count+1 
-    new_dict['n_classes'] = model1.n_classes_
     json_obj = json.dumps(new_dict)
     with open(filename, "w") as outfile: 
         outfile.write(json_obj) 
@@ -122,7 +127,6 @@ def load_csv(filename):
 iris = load_iris()
 X = iris.data
 y = iris.target
-'''
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
 train_samples = 60000
@@ -139,14 +143,16 @@ train_size = X.shape[0]
 #Load csv
 #X, y, a, b = load_csv(data_filename)
 
+'''
 #Load sklearn dataset
-#X, y = datasets.load_diabetes(return_X_y=True)
+X, y = datasets.load_diabetes(return_X_y=True)
 #Train model
-model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
+model1 = RandomForestRegressor(n_estimators = n_trees, n_jobs=-1)
+#model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
 model1.fit(X,  y)
 
-write_to_json(model1, json_filename)
-
+#write_to_json(model1, json_filename)
+write_to_json_regression(model1, json_filename, regression = True)
 #Save dataset to csv
 #save_dataset_csv(X, y, '../data/mnist.csv')
 
