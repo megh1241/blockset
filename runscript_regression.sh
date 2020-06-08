@@ -1,3 +1,3 @@
 
-./exe  --mode both --layout bfs --intertwine 1 --modelfilename ~/pacset/models/reg.json --datafilename ~/pacset/data/reg.csv --numthreads 1 --package sklearn --algorithm randomforest --task regression 
+./exe  --mode inference --format binary --modelfilename /data5/packedmodelbfs --layout bfs --intertwine 1 --metadatafilename ~/pacset/metadata.txt --datafilename ~/pacset/data/regdata.csv --numthreads 1 --package sklearn --algorithm randomforest --task regression 
 
