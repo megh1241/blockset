@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "node.h"
 #include "MemoryMapped.h"
-#define NUM_FILES 20
+#define NUM_FILES 49 
 #define BLOCK_LOGGING 1
 #define LAT_LOGGING 1
 
@@ -166,7 +166,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 #endif
 	    
 	    Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
-            
+
             std::unordered_set<int> blocks_accessed;
             int next_node = 0;
             int block_offset = 0;
@@ -231,7 +231,6 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 {
                 leaf_sum +=sum;
                 block_offset += PacsetBaseModel<T, F>::bin_node_sizes[bin_counter];
-	    	std::cout<<"leaf sum:: "<<leaf_sum<<"\n";
                 }
 
             }
@@ -398,7 +397,8 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             //Write the metadata needed to reconstruct bins and for prediction
             //TODO: change filename
             int num_classes, num_bins;
-            std::string filename = "metadata.txt";
+            std::string filename = Config::getValue("metadatafilename");
+            //std::string filename = "metadata.txt";
             std::fstream f;
             f.open(filename, std::ios::in );
 
