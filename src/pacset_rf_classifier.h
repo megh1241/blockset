@@ -16,7 +16,7 @@
 
 #define BLOCK_LOGGING 1
 #define NUM_FILES 999
-#define BLOCK_SIZE 128
+#define BLOCK_SIZE 2048
 
 template <typename T, typename F>
 class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {

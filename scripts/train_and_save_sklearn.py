@@ -26,14 +26,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
+import codecs
 
 ######## GLOBALS #########
 #n_trees = 2048
 n_trees = 128
 #data_filename = '../data/cifar-10.csv'
-data_filename = '../data/iris.csv'
-
-json_filename = "/data5/mnist_manual2.json"
+#data_filename = '../data/iris.csv'
+data_filename = '/data5/foo2.csv'
+json_filename = "/data5/foo.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -82,6 +83,7 @@ def write_to_json(model1, filename):
     new_dict['n_estimators'] = final_count+1 
     new_dict['n_classes'] = model1.n_classes_
     json_obj = json.dumps(new_dict)
+    print('finish dumping')
     with open(filename, "w") as outfile: 
         outfile.write(json_obj) 
 
@@ -103,16 +105,23 @@ def load_csv(filename):
     X_train = []
     X_test = []
     num = 0
-    with open(filename,'rt')as f:
+    with open(filename,'rt') as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
-            row_int = [float(item) for item in row]
-            last_ele = row_int.pop(-1)
+            #row_new = [i.encode('utf-8').strip() for i in row]
+            row1 = [int(item) for item in row if item != '\0']
+            row_int = list(np.nan_to_num(row1))
+            last_ele = row_int.pop(0)
+            #if num % 2:
             X_train.append(row_int)
             X_test.append(int(last_ele))
             num+=1
-            print (int(last_ele))
-    return X_train, X_test, X_train, X_test
+            print(num)
+            if num > 99999995:
+                break
+   
+    f.close()
+    return X_train, X_test
 
 
 ###### BEGIN SCRIPT ######
@@ -122,7 +131,6 @@ def load_csv(filename):
 iris = load_iris()
 X = iris.data
 y = iris.target
-'''
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
 train_samples = 60000
@@ -135,21 +143,24 @@ X = X.reshape((X.shape[0], -1))
 train_size = X.shape[0]
 #scaler = StandardScaler()
 #X = scaler.fit_transform(X)
+'''
 
 #Load csv
-#X, y, a, b = load_csv(data_filename)
-
+X, y  = load_csv(data_filename)
+print('csv loaded')
 #Load sklearn dataset
 #X, y = datasets.load_diabetes(return_X_y=True)
 #Train model
 model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
+print('classifier created')
 model1.fit(X,  y)
+print('model fit')
 
 write_to_json(model1, json_filename)
-
+print('finish write to file')
 #Save dataset to csv
 #save_dataset_csv(X, y, '../data/mnist.csv')
 
 #Save model to json
-skljson.to_json(model1, '../models/mnist_new3.json')
+#skljson.to_json(model1, '../models/mnist_new3.json')
 
