@@ -14,9 +14,10 @@
 #include "node.h"
 #include "MemoryMapped.h"
 
+#define LAT_LOGGING 2
 #define BLOCK_LOGGING 1
-#define NUM_FILES 999
-#define BLOCK_SIZE 2048
+#define NUM_FILES 20 
+#define BLOCK_SIZE 128
 
 template <typename T, typename F>
 class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {

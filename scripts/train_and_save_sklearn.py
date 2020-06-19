@@ -33,8 +33,11 @@ import codecs
 n_trees = 128
 #data_filename = '../data/cifar-10.csv'
 #data_filename = '../data/iris.csv'
-data_filename = '/data5/foo2.csv'
 json_filename = "/data5/foo.json"
+data_filename = '../data/iris.csv'
+
+#json_filename = "/data5/mnist_manual2.json"
+json_filename = "/data5/reg.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -64,7 +67,7 @@ def argmax_1(a):
     return max(range(len(a)), key=lambda x: a[x])
 
 
-def write_to_json(model1, filename):
+def write_to_json(model1, filename, regression=False):
     start_time = time.time()
     final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
@@ -80,8 +83,12 @@ def write_to_json(model1, filename):
         new_dict['estimators']['nodes'].append(newnodes)
         final_count = count
 
+    if regression:
+        new_dict['n_classes'] = -1
+    else
+        new_dict['n_classes'] = model1.n_classes_
+
     new_dict['n_estimators'] = final_count+1 
-    new_dict['n_classes'] = model1.n_classes_
     json_obj = json.dumps(new_dict)
     print('finish dumping')
     with open(filename, "w") as outfile: 
@@ -148,18 +155,16 @@ train_size = X.shape[0]
 #Load csv
 X, y  = load_csv(data_filename)
 print('csv loaded')
+#X, y, a, b = load_csv(data_filename)
+
+'''
 #Load sklearn dataset
-#X, y = datasets.load_diabetes(return_X_y=True)
-#Train model
-model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
+X, y = datasets.load_diabetes(return_X_y=True)
 print('classifier created')
+model1 = RandomForestRegressor(n_estimators = n_trees, n_jobs=-1)
+#model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
 model1.fit(X,  y)
 print('model fit')
-
-write_to_json(model1, json_filename)
-print('finish write to file')
-#Save dataset to csv
-#save_dataset_csv(X, y, '../data/mnist.csv')
 
 #Save model to json
 #skljson.to_json(model1, '../models/mnist_new3.json')

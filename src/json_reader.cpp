@@ -54,23 +54,10 @@ void JSONReader<T, F>::removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>
     for(int i=0; i<num_bins; ++i){
         bin_size = temp_ensemble[i].size();
         //placeholder leaf node
-        temp_bin.push_back(temp_ensemble[i][0]);
-        for(int j=1; j<bin_size; ++j){
-            if(temp_ensemble[i][j].getLeft() != -1 && temp_ensemble[i][j].getRight() != -1){
-                if(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getLeft() == -1){
-                    //set to leaf node
-                    temp_ensemble[i][j].setLeft(0);
-                    temp_ensemble[i][j].setLeftCardinality(temp_ensemble[i][temp_ensemble[i][j].getLeft()].getCardinality());
-                }
-                if(temp_ensemble[i][temp_ensemble[i][j].getRight()].getLeft() == -1){
-                    //set to leaf node
-                    temp_ensemble[i][j].setRight(0);
-                    temp_ensemble[i][j].setRightCardinality(temp_ensemble[i][temp_ensemble[i][j].getRight()].getCardinality());
-                }
-                id_to_index[temp_ensemble[i][j].getID()] = temp_bin.size();
-                temp_bin.push_back(temp_ensemble[i][j]);
-                oldidx_to_newidx[j] = temp_bin.size()-1 ;
-            }
+        for(int j=0; j<bin_size; ++j){
+            id_to_index[temp_ensemble[i][j].getID()] = temp_bin.size();
+            temp_bin.push_back(temp_ensemble[i][j]);
+            oldidx_to_newidx[j] = temp_bin.size()-1 ;
         }
 
         id_to_index_vec.push_back(id_to_index);
@@ -83,7 +70,7 @@ void JSONReader<T, F>::removeRegLeafNodes(std::vector<std::vector<StatNode<T, F>
 
     int nbins = bins.size();
     for(int i=0; i<nbins; ++i){
-        for(int j=1; j<bins[i].size(); ++j){
+        for(int j=0; j<bins[i].size(); ++j){
             left = bins[i][j].getLeft();
             right = bins[i][j].getRight();
             if(left >= 1){
@@ -199,8 +186,7 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
             temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
     }
     else {
-        Config::setConfigItem("numclasses", std::to_string(1));
-        temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
+        Config::setConfigItem("numclasses", std::to_string(-1));
     }
     tree_offset = temp_bin.size();
     //Note: temp_ensemble contains the leaf nodes as a separate node.
@@ -225,12 +211,12 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
         for (auto node: nodes){
             left = node.at(0);
             right = node.at(1);
+	    feature = node.at(2);
             threshold = node.at(3);
             cardinality = node.at(5);
 
             //Internal node
             if(left > -1){
-                feature = node.at(2);
                 id = temp_bin.size();
                 if(left == 1)
                     depth = 0;
@@ -243,28 +229,26 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
 
             //This is a leaf node. Populate the feature attr with class
             else {
-                if (task.compare(std::string("classification")) == 0) {
-                    auto class_card_arr = values.at(node_counter).at(0);
+    		if (task.compare(std::string("classification")) == 0){
+            	    auto class_card_arr = values.at(node_counter).at(0);
                     class_num = 0;
                     max = -1;
                     for (auto ele: class_card_arr){
-                        if((int)ele > max){
+               	        if((int)ele > max){
                             max = (int)ele;
-                            max_idx = class_num;
+                    	    max_idx = class_num;
                         }
                         ++class_num;
                     }
                     feature = max_idx;
                     id = temp_bin.size();
                     temp_bin.emplace_back(left, right, feature, threshold, cardinality, id, 1);
-                }
-                //in case of regression, there are no "classes"
-                else {
-                    feature = node.at(2);
-                    id = temp_bin.size();
+            	}
+		else{
+            	    threshold = values.at(node_counter).at(0).at(0);
                     temp_bin.emplace_back(left, right, feature, threshold, cardinality, id, 1);
-                }
-            }
+		}
+	    }
             ++node_counter;
         }
         node_counter = 0;
@@ -277,12 +261,8 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
             temp_ensemble.push_back(temp_bin); 
             temp_bin.clear();
             if (task.compare(std::string("classification")) == 0) {
-                
                 for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
                     temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
-            }
-            else {
-                    temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
             }
         }
         tree_offset = temp_bin.size();
@@ -290,9 +270,10 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
 
     if (task.compare(std::string("classification")) == 0)
         removeClassLeafNodes(bins, temp_ensemble );
-    else
-        removeRegLeafNodes(bins, temp_ensemble);
-
+    else{
+	    for(auto bin: temp_ensemble)
+		    bins.push_back(bin);
+    }
     auto end = std::chrono::steady_clock::now();
     double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
     std::cout<<"elapsed: "<<elapsed<<"\n";
@@ -340,7 +321,15 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     
     //Parse the metadata
     //get and set number of classes
-    int num_classes = d["n_classes"].GetInt();
+    int num_classes;
+    
+    if (task.compare(std::string("classification")) == 0) {
+    	num_classes = d["n_classes"].GetInt();
+    } 
+    else
+    	num_classes = 0; 
+    
+    
     Config::setConfigItem("numclasses", std::to_string(num_classes));
     //Get the number of trees
     int num_trees = d["n_estimators"].GetInt();
@@ -357,9 +346,6 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     if (task.compare(std::string("classification")) == 0) {
         for(int i=0; i<num_classes; ++i)
             temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
-    }
-    else {
-        temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
     }
     tree_offset = temp_bin.size();
     //Note: temp_ensemble contains the leaf nodes as a separate node.
@@ -392,20 +378,19 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
             cardinality = nodes[j][4].GetInt();
 	    
             //Internal node
-                id = temp_bin.size();
+            id = temp_bin.size();
                
-	        if (left > -1){	
-                    if(left == 1) 
-		        depth = 0;
-                    else  
-			depth = 1;
-		    temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
-                        feature, threshold, cardinality, id, depth);
-		}
-		else
-		    temp_bin.emplace_back(left, right, 
-                        feature, threshold, cardinality, id, 1);
-
+	    if (left > -1){	
+                if(left == 1) 
+		    depth = 0;
+                else  
+		    depth = 1;
+		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
+                    feature, threshold, cardinality, id, depth);
+	    }
+	    else
+		temp_bin.emplace_back(left, right, 
+                    feature, threshold, cardinality, id, 1);
             ++node_counter;
         }
         node_counter = 0;
@@ -422,17 +407,16 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
                 for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
                     temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
             }
-            else {
-                    temp_bin.push_back(StatNode<T, F>(-1, 0, -1, -1, -1, -1, -1));
-            }
         }
         tree_offset = temp_bin.size();
     }
 
     if (task.compare(std::string("classification")) == 0)
         removeClassLeafNodes(bins, temp_ensemble );
-    else
-        removeRegLeafNodes(bins, temp_ensemble);
+    else{
+	    for(auto bin: temp_ensemble)
+		    bins.push_back(bin);
+    }
 
     auto end = std::chrono::steady_clock::now();
     double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
