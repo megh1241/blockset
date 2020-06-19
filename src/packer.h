@@ -21,6 +21,7 @@ class Packer{
     std::map<int, int> node_to_index;
     std::map<int, int> subtree_count_map;
     std::map<int, int> subtree_class_map;
+    std::map<int, int> subtree_nodecount_map;
     std::map<int, int> class_numST_map;
 
     private:
@@ -214,6 +215,27 @@ class Packer{
     }
 
     
+    inline bool myCompFunctionReg2(StatNode<T, F> &node1, StatNode<T, F> &node2){
+        if(node1.getSTNum() == node2.getSTNum())
+            return node1.getID() < node2.getID();
+
+	
+        if(subtree_count_map[node1.getSTNum()] == subtree_count_map[node2.getSTNum()]){
+            if (subtree_nodecount_map[node1.getSTNum()] == subtree_nodecount_map[node2.getSTNum()])
+	        return node1.getSTNum() < node2.getSTNum();
+	    return subtree_nodecount_map[node1.getSTNum()] > subtree_nodecount_map[node2.getSTNum()];
+	}
+
+        //return node1.getSTNum() < node2.getSTNum();
+        return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+    }
+
+    
+    inline bool compCard(StatNode<T, F> &node1, StatNode<T, F> &node2){
+        return node1.getCardinality() > node2.getCardinality();
+    }
+
+    
     inline bool myCompFunctionClass(StatNode<T, F> &node1, StatNode<T, F> &node2){
         if(node1.getSTNum() == node2.getSTNum())
             return node1.getID() < node2.getID();
@@ -222,7 +244,7 @@ class Packer{
             return node1.getSTNum() < node2.getSTNum();
 
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-        if (subtree_count_map[node1.getSTNum()] < block_size && subtree_count_map[node2.getSTNum()] < block_size){
+        if (subtree_nodecount_map[node1.getSTNum()] < block_size && subtree_nodecount_map[node2.getSTNum()] < block_size){
             if (subtree_class_map[node1.getSTNum()] == subtree_class_map[node2.getSTNum()]) 
                 return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
             return class_numST_map[subtree_class_map[node1.getSTNum()]] > class_numST_map[subtree_class_map[node2.getSTNum()]];
@@ -271,6 +293,9 @@ class Packer{
 	int actual_pos_boundary = ( actual_pos / block_size + 1)*block_size;
         int subtree_end_id = -2;
 
+	
+        std::sort(bin_q.begin(), bin_q.end(), [this](auto l, auto r){return compCard(l, r);} );
+	pos_in_block = 0;
         for(int i=0; i< num_classes; ++i){
             bin[i].setSTNum(-1);
             class_numST_map[i] = 0;
@@ -283,30 +308,36 @@ class Packer{
 	}
 
         //insert blank nodes
-        for(int i = actual_pos; i<actual_pos_boundary; ++i){
+        /*for(int i = actual_pos; i<actual_pos_boundary; ++i){
             finalbin.push_back(genBlankNode());
             num_blank_nodes++;
-        }
+        }*/
 
         int subtree_count = 0;
 
         subtree_count_map[0] = 0;
 	int st_flag = 0;
-        pos_in_block = 0;
-        while(!bin_q.empty()) {
+        //pos_in_block = 0;
+	pos_in_block = finalbin.size();
+        int start_flag = 0;
+	while(!bin_q.empty()) {
             auto ele = bin_q.front();
             //if(pos_in_block != 0){
             if((pos_in_block != 0) && (ele.getID() != subtree_end_id)){
-
+		if (start_flag == 0){
+			subtree_count_map[subtree_count] = ele.getCardinality();
+		}
                 bin_q.pop_front();
                 //subtree_end_id = bin_q.front().getID();
-                if (subtree_count_map.find(subtree_count) == subtree_count_map.end())
-			subtree_count_map[subtree_count] = 1;
+                if (subtree_nodecount_map.find(subtree_count) == subtree_nodecount_map.end())
+			subtree_nodecount_map[subtree_count] = 1;
 		else
-			subtree_count_map[subtree_count]++;
+			subtree_nodecount_map[subtree_count]++;
                 
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
                         finalbin.size()));
+
+	    	start_flag = 1;
 	    }
             else{
                 //Find max class of previous subtree
@@ -319,9 +350,11 @@ class Packer{
                 subtree_class_map[subtree_count] = maj_class;
                 class_numST_map[maj_class]++;
                 subtree_count++;
-                subtree_count_map[subtree_count] = 1;
+                subtree_count_map[subtree_count] = ele.getCardinality();
+                subtree_nodecount_map[subtree_count] = 1;
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
                         finalbin.size()));
+		start_flag = 1;
             }
 
             finalbin.push_back(ele);
@@ -333,6 +366,8 @@ class Packer{
 
             if((ele.getLeft() < num_classes) && 
                     (ele.getRight() < num_classes)){
+		subtree_count_map[subtree_count] += ele.getLeftCardinality();
+		subtree_count_map[subtree_count] += ele.getRightCardinality();
                 class_vector[ele.getLeft()]+=ele.getLeftCardinality();
                 class_vector[ele.getRight()]+=ele.getRightCardinality();
                 continue;
@@ -341,11 +376,13 @@ class Packer{
             else if(ele.getLeft() < num_classes){
                 bin_q.push_front(bin[ele.getRight()]);
                 class_vector[ele.getLeft()]+=ele.getLeftCardinality();
+		subtree_count_map[subtree_count] += ele.getLeftCardinality();
             }
 
             else if(ele.getRight() < num_classes){
                 bin_q.push_front(bin[ele.getLeft()]); 
                 class_vector[ele.getRight()]+=ele.getRightCardinality();
+		subtree_count_map[subtree_count] += ele.getRightCardinality();
             }
 
             else {
@@ -382,13 +419,13 @@ class Packer{
         
         // set new IDs
         
-        std::sort(finalbin.begin() +  actual_pos_boundary, finalbin.end(), [this](auto l, auto r){return myCompFunctionReg(l, r);} );
+        std::sort(finalbin.begin() +  actual_pos_boundary, finalbin.end(), [this](auto l, auto r){return myCompFunctionReg2(l, r);} );
 
         //Pack small subtrees to the gap resulting from the bin
         int gap = num_blank_nodes;
         int subtree_num;
         
-        while(gap > 0){
+        /*while(gap > 0){
             auto curr_node = finalbin.back();
             subtree_count = subtree_count_map[curr_node.getSTNum()];
             if(subtree_count <= gap && subtree_count > 0) {
@@ -409,7 +446,7 @@ class Packer{
             }
             else 
                 break;
-        }
+        }*/
 
 
         if (class_flag == true)
