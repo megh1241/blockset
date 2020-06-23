@@ -220,14 +220,14 @@ class Packer{
             return node1.getID() < node2.getID();
 
 	
-        if(subtree_count_map[node1.getSTNum()] == subtree_count_map[node2.getSTNum()]){
-            if (subtree_nodecount_map[node1.getSTNum()] == subtree_nodecount_map[node2.getSTNum()])
-	        return node1.getSTNum() < node2.getSTNum();
-	    return subtree_nodecount_map[node1.getSTNum()] > subtree_nodecount_map[node2.getSTNum()];
+        if(subtree_nodecount_map[node1.getSTNum()] == subtree_nodecount_map[node2.getSTNum()]){
+            if (subtree_count_map[node1.getSTNum()] == subtree_count_map[node2.getSTNum()])
+        	return node1.getSTNum() < node2.getSTNum();
+	    return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+		
 	}
 
-        //return node1.getSTNum() < node2.getSTNum();
-        return subtree_count_map[node1.getSTNum()] > subtree_count_map[node2.getSTNum()];
+        return subtree_nodecount_map[node1.getSTNum()] > subtree_nodecount_map[node2.getSTNum()];
     }
 
     
@@ -284,7 +284,7 @@ class Packer{
 
         int num_classes = std::atoi(Config::getValue("numclasses").c_str());
         int block_size = std::atoi(Config::getValue("blocksize").c_str());
-
+	std::cout<<"block size: "<<block_size<<"\n";
         int pos_in_block = (finalbin.size()) % block_size;
         std::vector<int> class_vector(num_classes, 0);
         int num_blank_nodes = 0;
@@ -292,9 +292,9 @@ class Packer{
 	int initial_pos_in_block = actual_pos;
 	int actual_pos_boundary = ( actual_pos / block_size + 1)*block_size;
         int subtree_end_id = -2;
-
-	
-        std::sort(bin_q.begin(), bin_q.end(), [this](auto l, auto r){return compCard(l, r);} );
+	node_to_index.clear();
+	std::cout<<"finalbin size: "<<finalbin.size()<<"\n";
+	std::sort(bin_q.begin(), bin_q.end(), [this](auto l, auto r){return compCard(l, r);} );
 	pos_in_block = 0;
         for(int i=0; i< num_classes; ++i){
             bin[i].setSTNum(-1);
@@ -308,66 +308,81 @@ class Packer{
 	}
 
         //insert blank nodes
-        /*for(int i = actual_pos; i<actual_pos_boundary; ++i){
+        for(int i = actual_pos; i<actual_pos_boundary; ++i){
             finalbin.push_back(genBlankNode());
             num_blank_nodes++;
-        }*/
+        }
 
         int subtree_count = 0;
 
         subtree_count_map[0] = 0;
 	int st_flag = 0;
-        //pos_in_block = 0;
-	pos_in_block = finalbin.size();
+        pos_in_block = 0;
+	//pos_in_block = finalbin.size() ;
+	//std::cout<<"pos in block"<<pos_in_block<<"\n";
         int start_flag = 0;
+	int signal = 0;
 	while(!bin_q.empty()) {
             auto ele = bin_q.front();
             //if(pos_in_block != 0){
-            if((pos_in_block != 0) && (ele.getID() != subtree_end_id)){
-		if (start_flag == 0){
-			subtree_count_map[subtree_count] = ele.getCardinality();
-		}
+            if((pos_in_block != block_size-1) && (ele.getID() != subtree_end_id)){
                 bin_q.pop_front();
-                //subtree_end_id = bin_q.front().getID();
-                if (subtree_nodecount_map.find(subtree_count) == subtree_nodecount_map.end())
-			subtree_nodecount_map[subtree_count] = 1;
-		else
-			subtree_nodecount_map[subtree_count]++;
-                
+		
+		if (start_flag == 0){
+                	subtree_count_map[subtree_count] = ele.getCardinality();
+			subtree_end_id = ele.getID();
+		}
+	        if(signal == 0){	
+			if (subtree_nodecount_map.find(subtree_count) == subtree_nodecount_map.end())
+				subtree_nodecount_map[subtree_count] = 1;
+			else
+				subtree_nodecount_map[subtree_count]++;
+		}
+		if (signal == 1)
+			signal = 0;
+
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
                         finalbin.size()));
 
 	    	start_flag = 1;
+            	finalbin.push_back(ele);
+            	int fsiz = finalbin.size();
+            	pos_in_block = (pos_in_block + 1) % block_size;
+	    	ele.setSubtreeNum(subtree_count);
+            	finalbin[fsiz - 1].setSubtreeNum(subtree_count);
 	    }
             else{
-                //Find max class of previous subtree
+		//Find max class of previous subtree
                 bin_q.pop_front();
-                subtree_end_id = bin_q.front().getID();
+		//ele = popMaxCardEle(bin_q);
+		subtree_end_id = bin_q.front().getID();
                 int maj_class = std::distance(class_vector.begin(), std::max_element(class_vector.begin(), class_vector.end()));
+		subtree_nodecount_map[subtree_count]++;
                 //zero class array
                 std::fill(class_vector.begin(), class_vector.end(), 0);
                 //set subtree_class_map
                 subtree_class_map[subtree_count] = maj_class;
                 class_numST_map[maj_class]++;
-                subtree_count++;
-                subtree_count_map[subtree_count] = ele.getCardinality();
-                subtree_nodecount_map[subtree_count] = 1;
+	    	ele.setSubtreeNum(subtree_count);
+            	finalbin.push_back(ele);
+            	int fsiz = finalbin.size();
+            	finalbin[fsiz - 1].setSubtreeNum(subtree_count);
                 node_to_index.insert(std::pair<int, int>(ele.getID(), 
-                        finalbin.size()));
+                        finalbin.size()-1));
 		start_flag = 1;
-            }
+                pos_in_block = 0;
+                subtree_count++;
+		subtree_nodecount_map[subtree_count] = 1;
+                subtree_count_map[subtree_count] = bin_q.front().getCardinality();
+            	signal = 1;
+	    }
 
-            finalbin.push_back(ele);
-            int fsiz = finalbin.size();
-            finalbin[fsiz - 1].setSubtreeNum(subtree_count);
 
-
-            pos_in_block = (pos_in_block + 1) % block_size;
 
             if((ele.getLeft() < num_classes) && 
                     (ele.getRight() < num_classes)){
-		subtree_count_map[subtree_count] += ele.getLeftCardinality();
-		subtree_count_map[subtree_count] += ele.getRightCardinality();
+		//subtree_count_map[subtree_count] += ele.getLeftCardinality();
+		//subtree_count_map[subtree_count] += ele.getRightCardinality();
                 class_vector[ele.getLeft()]+=ele.getLeftCardinality();
                 class_vector[ele.getRight()]+=ele.getRightCardinality();
                 continue;
@@ -376,13 +391,13 @@ class Packer{
             else if(ele.getLeft() < num_classes){
                 bin_q.push_front(bin[ele.getRight()]);
                 class_vector[ele.getLeft()]+=ele.getLeftCardinality();
-		subtree_count_map[subtree_count] += ele.getLeftCardinality();
+		//subtree_count_map[subtree_count] += ele.getLeftCardinality();
             }
 
             else if(ele.getRight() < num_classes){
                 bin_q.push_front(bin[ele.getLeft()]); 
                 class_vector[ele.getRight()]+=ele.getRightCardinality();
-		subtree_count_map[subtree_count] += ele.getRightCardinality();
+		//subtree_count_map[subtree_count] += ele.getRightCardinality();
             }
 
             else {
@@ -412,6 +427,12 @@ class Packer{
             if(finalbin[i].getRight() >= num_classes)
                 finalbin[i].setRight(node_to_index[bin[finalbin[i].getRight()].getID()]);
         }
+	    for ( auto it = subtree_nodecount_map.begin(); it != subtree_nodecount_map.end(); it++ )
+	    {
+		    std::cout<<it->first<<": "<<it->second<<"\n";
+	    }
+
+
 
         bin.clear();
         for (auto node: finalbin)
@@ -425,7 +446,7 @@ class Packer{
         int gap = num_blank_nodes;
         int subtree_num;
         
-        /*while(gap > 0){
+        while(gap > 0){
             auto curr_node = finalbin.back();
             subtree_count = subtree_count_map[curr_node.getSTNum()];
             if(subtree_count <= gap && subtree_count > 0) {
@@ -446,7 +467,7 @@ class Packer{
             }
             else 
                 break;
-        }*/
+        }
 
 
         if (class_flag == true)
@@ -465,6 +486,13 @@ class Packer{
                 node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
             node_count++;
         }
+	/*int curr_size = finalbin.size();
+	if (curr_size % block_size != 0){
+		int desired_size = block_size - curr_size % block_size; 
+		for (int i=0; i<desired_size; ++i)
+			finalbin.push_back(genBlankNode());
+	}
+	*/
     }
 
 

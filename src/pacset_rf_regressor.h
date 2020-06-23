@@ -14,7 +14,6 @@
 #include "MemoryMapped.h"
 #define NUM_FILES 49 
 #define BLOCK_LOGGING 1
-#define LAT_LOGGING 1
 
 template <typename T, typename F>
 class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
@@ -29,7 +28,9 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             for (auto i: bin_start)
                 PacsetBaseModel<T, F>::bin_start.push_back(i);  
         }
-
+        inline void setSize(int index, int size){
+		                PacsetBaseModel<T, F>::bin_node_sizes[index] = size;
+				        }
 
         inline void loadModel() {
             JSONReader<T, F> J;

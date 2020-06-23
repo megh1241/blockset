@@ -73,7 +73,7 @@ static void parseArgs(int argc, char* argv[]){
 
     //set default block size
     if(Config::getValue("blocksize") == std::string("notfound")){
-        Config::setConfigItem(std::string("blocksize"), std::string("128"));
+        Config::setConfigItem(std::string("blocksize"), std::string("16"));
     }
 }
 
@@ -105,12 +105,12 @@ int main(int argc, char* argv[]) {
         std::cout<<"model packed \n";
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
-        std::cout<<"test data loaded\n";
         if (Config::getValue("task") == std::string("classification")){
             std::vector<int> lab;
             std::vector<int> preds;
             std::vector<int> predi;    
             loadTestData(test_vec, lab); 
+        std::cout<<"test data loaded\n";
             //Perform prediction
             obj->predict(test_vec, preds, predi, false);
             

@@ -14,9 +14,8 @@
 #include "node.h"
 #include "MemoryMapped.h"
 
-#define LAT_LOGGING 2
 #define BLOCK_LOGGING 1
-#define NUM_FILES 20 
+#define NUM_FILES 1 
 #define BLOCK_SIZE 128
 
 template <typename T, typename F>
@@ -33,6 +32,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 PacsetBaseModel<T, F>::bin_start.push_back(i);  
         }
 
+	inline void setSize(int index, int size){
+		PacsetBaseModel<T, F>::bin_node_sizes[index] = size;
+	}
 
         inline void loadModel() {
             JSONReader<T, F> J;
@@ -57,6 +59,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                         PacsetBaseModel<T, F>::bin_sizes[i],
                         PacsetBaseModel<T, F>::bin_start[i] 
                         );
+		setSize(i, PacsetBaseModel<T, F>::bins[i].size());
             }
         }
 
@@ -67,7 +70,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             int num_classes = std::stoi(Config::getValue("numclasses"));
             int num_threads = std::stoi(Config::getValue("numthreads"));
             int num_bins = PacsetBaseModel<T, F>::bins.size();
-
+	    std::cout<<"inside predict\n";
+	    fflush(stdout);
             std::unordered_set<int> blocks_accessed;
             int block_offset = 0;
             int block_number = 0;
@@ -289,7 +293,12 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             
             //Write the metadata needed to reconstruct bins and for prediction
             //TODO: change filename
-            std::string filename = "metadata.txt";
+            std::string filename;
+	    if (Config::getValue("metadatafilename") != std::string("notfound"))
+		filename = Config::getValue("metadatafilename");
+	    else
+            	filename = "metadata.txt";
+
             std::fstream fout;
             fout.open(filename, std::ios::out );
 
@@ -342,12 +351,16 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             }
             else{
                 //Write the nodes
-                std::string modelfname = Config::getValue("packfilename");
+                std::string modelfname = Config::getValue("modelfilename2");
                 std::string filename;
 
                 std::cout<<"modelfname: "<<modelfname<<"\n";
+                if(modelfname != std::string("notfound"))
+                    filename = modelfname;
+                else
+                    filename = "packedmodel.txt";
 
-                filename = "packedmodel.txt";
+
 
                 std::cout<<"filename: "<<filename <<"\n";
                 fout.open(filename,  std::ios::out );

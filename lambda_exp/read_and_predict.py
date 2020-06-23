@@ -8,10 +8,10 @@ import time
 
 #### GLOBAL VARIABLES ####
 
-model_filepath = "packedmodel.txt"
-obs_filepath = "/data/cifar-10.csv"
-metadata_filepath = "metadata.txt"
-aws_dns_endpoint "your-dns-endpoint"
+model_filepath = "../models/packedbinwdfsstat16.txt"
+obs_filepath = "../data/cifar-10.csv"
+metadata_filepath = "../models/metabinwdfsstat16.txt"
+aws_dns_endpoint = "lambda-redis.zzfeoi.ng.0001.use1.cache.amazonaws.com"
 blocksize = 16
 
 #TODO: Do not hardcode, read from file
@@ -241,7 +241,8 @@ def test(client, num_bins):
                 print(int(j/blocksize))
                 print('binnum')
                 print(i)
-    
+
+
 def getBlockNodeFromDB(client, node_id, bin_num):
     if node_id not in cached_node_hash[bin_num]:
         block_num = int(node_id / blocksize)

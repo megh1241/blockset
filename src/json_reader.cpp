@@ -24,15 +24,20 @@ int JSONReader<T, F>::populateBinSizes(
     //Calculate Bin sizes from number of trees
     int num_bins = std::stoi(Config::getValue("numthreads")); 
     int num_trees_per_bin = num_trees / num_bins;
-
+    std::cout<<"check1\n";
+    fflush(stdout);
     //populate bin_sizes
     for(int i=0; i<num_bins; ++i)
         bin_sizes.push_back(num_trees_per_bin);
+    std::cout<<"check2\n";
+    fflush(stdout);
 
     //Add remaining trees to bin_sizes
     int leftover_trees = num_trees % num_bins;
     for(int i=0; i<leftover_trees; ++i)
         bin_sizes[i % num_bins]++;
+    std::cout<<"check3\n";
+    fflush(stdout);
 
     return num_bins;
 }
@@ -312,12 +317,16 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
                         std::istreambuf_iterator<char>());
     const char *json = contents.data();
 
+    std::cout<<"point 1\n";
+    fflush(stdout);
     //Parse the json string using rapidjson
     auto start = std::chrono::steady_clock::now();
     Document d;
     d.Parse(json);
     assert(d.IsObject());
     assert(d.HasMember("estimators"));
+    std::cout<<"point 2\n";
+    fflush(stdout);
     
     //Parse the metadata
     //get and set number of classes
@@ -329,15 +338,19 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     else
     	num_classes = 0; 
     
+    std::cout<<"point 3\n";
+    fflush(stdout);
     
     Config::setConfigItem("numclasses", std::to_string(num_classes));
     //Get the number of trees
     int num_trees = d["n_estimators"].GetInt();
     int num_bins = populateBinSizes(bin_sizes, num_trees);
     //reserve memory for bins
-    bins.reserve(num_bins);
-    for(int i=0; i<num_bins; ++i)
-        bins[i].reserve(bin_sizes[i]);
+//bins.reserve(num_bins);
+    //for(int i=0; i<num_bins; ++i)
+      //  bins[i].reserve(bin_sizes[i]);
+    std::cout<<"point 4\n";
+    fflush(stdout);
 
     //Recursively walk through the json model until we get the nodes per estimator
     int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
@@ -348,6 +361,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
             temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
     }
     tree_offset = temp_bin.size();
+    std::cout<<"point 5\n";
+    fflush(stdout);
     //Note: temp_ensemble contains the leaf nodes as a separate node.
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
     //contain class nodes.
@@ -366,6 +381,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     const Value& forest_nodes = d["estimators"]["nodes"];
     assert(num_trees == forest_nodes.Size());
     SizeType forest_size = forest_nodes.Size();   
+    std::cout<<"point 6\n";
+    fflush(stdout);
     for (SizeType i=0; i< forest_size; ++i){
 	const Value& nodes = forest_nodes[i];
         SizeType num_nodes_in_tree = nodes.Size();
