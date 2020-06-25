@@ -171,10 +171,10 @@ void JSONReader<T, F>::convertSklToBins(std::vector<std::vector<StatNode<T, F>>>
     int num_bins = populateBinSizes(bin_sizes, num_trees);
 
     //reserve memory for bins
-    bins.reserve(num_bins);
+    /*bins.reserve(num_bins);
     for(int i=0; i<num_bins; ++i)
         bins[i].reserve(bin_sizes[i]);
-
+    */
     //Recursively walk through the json model until we get the nodes per estimator
     int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
     std::vector<StatNode<T, F>> temp_bin;
@@ -302,6 +302,7 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
         std::vector<int> &bin_sizes, 
         std::vector<std::vector<int>> &bin_start,
         std::vector<int> &bin_node_sizes){
+
 
     std::string task = Config::getValue("task");
     int count;
