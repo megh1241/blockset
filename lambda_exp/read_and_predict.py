@@ -5,20 +5,70 @@ import numpy as np
 import redis
 import csv
 import time
+import os 
 
 #### GLOBAL VARIABLES ####
 
-model_filepath = "packedmodel.txt"
-obs_filepath = "/data/cifar-10.csv"
-metadata_filepath = "metadata.txt"
-aws_dns_endpoint "your-dns-endpoint"
+aws_dns_endpoint = "lambda-redis.zzfeoi.ng.0001.use1.cache.amazonaws.com"
+obs_filepath = "/home/ubuntu/pacset/data/cifar-10.csv"
+model_dir = '/home/ubuntu/pacset/lambda_models'
+model_dir2 = '/home/ubuntu/pacset/models'
+
+model_filenames = [
+ 'packedbfs16.txt',
+ 'packedbinbfs16.txt',
+ 'packedbindfs16.txt',
+ 'packedbinstatblock16_8.txt',
+ 'packedbinstatdfs16.txt',
+ 'packedblockstat16.txt',
+ 'packeddfs16.txt',
+ 'packedstatdfs16.txt'
+ ]
+
+meta_filenames = [
+ 'metabfs16.txt',
+ 'metabinbfs16.txt',
+ 'metabindfs16.txt',
+ 'metabinstatblock16_8.txt',
+ 'metabinstatdfs16.txt',
+ 'metablockstat16.txt',
+ 'metadfs16.txt',
+ 'metastatdfs16.txt'
+]
+
+model_filenames2 = [
+'packedbinstatblock16_32.txt',
+'packedbinstatblock16_4.txt'
+]
+
+meta_filenames2 = [
+'metabinstatblock16_32.txt',
+'metabinstatblock16_4.txt',
+]
+
+model_filenames3 = [
+#'packedbinstatblock1.txt',
+'packedbinstatblock2.txt',
+#'packedbinstatblock4.txt',
+#'packedbinstatblock8.txt',
+#'packedbinstatblock16.txt',
+#'packedbinstatblock32.txt',
+#'packedbinstatblock64.txt',
+#'packedbinstatblock128.txt'
+]
+
+meta_filenames3 = [
+#'metabinstatblock1.txt',
+'metabinstatblock2.txt',
+#'metabinstatblock4.txt',
+#'metabinstatblock8.txt',
+#'metabinstatblock16.txt',
+#'metabinstatblock32.txt',
+#'metabinstatblock64.txt',
+#'metabinstatblock128.txt'
+]
+
 blocksize = 16
-
-#TODO: Do not hardcode, read from file
-bin_sizes = []
-bin_node_sizes = []
-tree_start = []
-
 cached_node_hash = []
 
 def loadModelMetadataFromFile(metadata_filepath):
@@ -27,6 +77,9 @@ def loadModelMetadataFromFile(metadata_filepath):
     sets global metadata
     vars to the appropriate val
     """
+    bin_sizes = []
+    bin_node_sizes = []
+    tree_start = []
     readlines = []
 
     with open(metadata_filepath, 'rt') as f:
@@ -38,6 +91,7 @@ def loadModelMetadataFromFile(metadata_filepath):
     num_classes = metadata_int[0]
     num_bins = metadata_int[1]
 
+    print (len(metadata_int))
     k = 2
     for i in range(num_bins):
         bin_sizes.append(metadata_int[k]) 
@@ -55,7 +109,7 @@ def loadModelMetadataFromFile(metadata_filepath):
         tree_start.append(temp)
 
     
-    return num_bins, num_classes, bin_node_sizes
+    return num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start
 
 
 def loadObsFromFile(filepath):
@@ -129,12 +183,12 @@ def createForestRedisDB(forest):
     return redisClient
 
 
-def createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes):
+def createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes, db_id):
     """
     Create a redis DB to store nodes of
     the forest in the form of hashes where
     the keys are the node attributes
-    :param forest
+    :param forest, bin_node_sizes, num_bins, num_classes, db_id
     :return returns a handle to the redis client
     """
     
@@ -144,15 +198,18 @@ def createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes)
     #Create Redis client
     redisClient = redis.StrictRedis(host=aws_dns_endpoint,
                                         port=6379,
-                                        db=0)
+                                        db=db_id)
 
     redisClient.flushdb()
+    print('db_id: ', end='')
+    print(db_id)
     bin_num_curr = 0
     count = 0
     pos = 0
     #Store the nodes in a redis hash table
     for node in forest:
         block_num = int(count / blocksize)
+        print(str(bin_num_curr) + ':' + str(block_num))
         redisClient.rpush(str(bin_num_curr) + ':' + str(block_num), count, 
                 node[0], node[1], node[2], node[3])
         count += 1
@@ -163,7 +220,7 @@ def createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes)
     return redisClient
 
 
-def createObservationRedisDB(X_test, num_bins, num_classes):
+def createObservationRedisDB(X_test):
     """
     Create a redis DB to store test data
     :param X_test
@@ -193,18 +250,15 @@ def createLabelRedisDB(y):
     return redisClient
 
 
-def createMetaRedisDB(X):
+def createMetaRedisDB(X, num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start, dbid):
     #Create Redis client
     redisClient = redis.StrictRedis(host=aws_dns_endpoint,
                                         port=6379,
-                                        db=3)
-
-    redisClient.flushdb()
+                                        db=dbid)
 
     redisClient.set("num_features", len(X[0]))
     redisClient.set("num_observations", len(X))
     redisClient.set("num_classes", num_classes)
-    #redisClient.set("num_trees", num_trees)
     redisClient.set("num_bins", num_bins)
     redisClient.set("block_size", blocksize)
 
@@ -241,7 +295,8 @@ def test(client, num_bins):
                 print(int(j/blocksize))
                 print('binnum')
                 print(i)
-    
+
+
 def getBlockNodeFromDB(client, node_id, bin_num):
     if node_id not in cached_node_hash[bin_num]:
         block_num = int(node_id / blocksize)
@@ -309,44 +364,52 @@ def validatePredictions(predicted, y):
 ######## BEGIN SCRIPT #########
 ###############################
 
-
-#load metadata from file
-num_bins, num_classes, bin_node_sizes = loadModelMetadataFromFile(metadata_filepath)
-
-print("num bins outside meta: ")
-print(num_bins)
-#Read list from file
-forest = readModelFromFile(model_filepath)
-
-#create the redis DB to store the nodes in the forest
-redisClientForest = createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes)
+model_filepaths = [os.path.join(model_dir2, model_filename) for model_filename in model_filenames3]
+metadata_filepaths = [os.path.join(model_dir2, meta_filename) for meta_filename in meta_filenames3]
 
 #Read observation data from file
 X, y = loadObsFromFile(obs_filepath)
 
+db_id = 4 
+for model_filepath, meta_filepath in zip(model_filepaths, metadata_filepaths):
+    #load metadata from file
+    num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start  = loadModelMetadataFromFile(meta_filepath)
+    print('metadata loaded from file')
+    #Read list from file
+    forest = readModelFromFile(model_filepath)
+    print('model loaded from file')
+    #create the redis DB to store the nodes in the forest
+    redisClientForest = createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes, db_id)
+    print('forest created')
+    #create the redis DB to store metadata
+    redisClientMetadata = createMetaRedisDB(X, num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start, db_id)
+    print('metadata created')
+    print('done: ', end=', ')
+    print(model_filepath)
+    db_id += 1
+
+
 #Create the redis DB
-redisClientObservation = createObservationRedisDB(X, num_bins, num_classes)
+redisClientObservation = createObservationRedisDB(X)
 print('obs created')
 
 #create the redis DB to store labels
 redisClientLabel = createLabelRedisDB(y)
 print('label created')
 
-#create the redis DB to store metadata
-redisClientMetadata = createMetaRedisDB(X)
 
-print('metadata created')
+'''
 #Predict
 num_observations = len(X)
 num_features = len(X[0])
 predicted = []
+
 redisClientObservation = redis.StrictRedis(host=aws_dns_endpoint,
                                             port=6379,
                                             db=1)
 redisClientForest = redis.StrictRedis(host=aws_dns_endpoint,
                                             port=6379,
                                             db=0)
-'''
 #ans = test(redisClientForest, num_bins)
 sum_1 = 0
 avg_1 = 0
