@@ -97,15 +97,11 @@ int main(int argc, char* argv[]) {
     //Read the model from file, pack and save to file
     if(Config::getValue("mode") == std::string("both")){
         //load json model from disk    
-        obj->loadModel();
-        std::cout<<"model loaded\n";
-        fflush(stdout);
+	obj->loadModel();
 	//pack model
         obj->pack();
-        std::cout<<"model packed \n";
         //Load test data from file
         std::vector<std::vector<float>> test_vec;
-        std::cout<<"test data loaded\n";
         if (Config::getValue("task") == std::string("classification")){
             std::vector<int> lab;
             std::vector<int> preds;
@@ -131,7 +127,7 @@ int main(int argc, char* argv[]) {
         }
         
         //save packed model to file
-        //obj->serialize();
+        obj->serialize();
 
     }
     else if (Config::getValue("mode") == std::string("pack")){

@@ -380,7 +380,6 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 	    
             //Internal node
             id = temp_bin.size();
-               
 	    if (left > -1){	
                 if(left == 1) 
 		    depth = 0;
@@ -388,10 +387,13 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 		    depth = 1;
 		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
                     feature, threshold, cardinality, id, depth);
+	    	
 	    }
 	    else
 		temp_bin.emplace_back(left, right, 
                     feature, threshold, cardinality, id, 1);
+	    int siz = temp_bin.size();
+	    temp_bin[siz-1].setTreeID(i);
             ++node_counter;
         }
         node_counter = 0;
