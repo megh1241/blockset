@@ -32,12 +32,13 @@ import codecs
 #n_trees = 2048
 n_trees = 128
 #data_filename = '../data/cifar-10.csv'
+data_filename = '/data4/foo2.csv'
 #data_filename = '../data/iris.csv'
-json_filename = "/data5/foo.json"
-data_filename = '../data/iris.csv'
-
+#json_filename = "/data5/foo.json"
+#data_filename = '../data/iris.csv'
+json_filename = '../models/cifarnew.json'
 #json_filename = "/data5/mnist_manual2.json"
-json_filename = "/data5/reg.json"
+#json_filename = "/data5/reg.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -85,7 +86,7 @@ def write_to_json(model1, filename, regression=False):
 
     if regression:
         new_dict['n_classes'] = -1
-    else
+    else:
         new_dict['n_classes'] = model1.n_classes_
 
     new_dict['n_estimators'] = final_count+1 
@@ -115,16 +116,18 @@ def load_csv(filename):
     with open(filename,'rt') as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
+            print(row)
+            print("******************************************************************************")
             #row_new = [i.encode('utf-8').strip() for i in row]
             row1 = [int(item) for item in row if item != '\0']
             row_int = list(np.nan_to_num(row1))
-            last_ele = row_int.pop(0)
+            last_ele = row_int.pop(-1)
             #if num % 2:
             X_train.append(row_int)
             X_test.append(int(last_ele))
             num+=1
             print(num)
-            if num > 99999995:
+            if num > 9995:
                 break
    
     f.close()
@@ -155,17 +158,17 @@ train_size = X.shape[0]
 #Load csv
 X, y  = load_csv(data_filename)
 print('csv loaded')
-#X, y, a, b = load_csv(data_filename)
+#model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
+#model1.fit(X,  y)
+#write_to_json(model1, json_filename)
 
 '''
 #Load sklearn dataset
 X, y = datasets.load_diabetes(return_X_y=True)
 print('classifier created')
 model1 = RandomForestRegressor(n_estimators = n_trees, n_jobs=-1)
-#model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
-model1.fit(X,  y)
 print('model fit')
 
 #Save model to json
 #skljson.to_json(model1, '../models/mnist_new3.json')
-
+'''
