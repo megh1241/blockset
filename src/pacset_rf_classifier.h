@@ -293,7 +293,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 	    if(Config::getValue("metadatafilename") != std::string("notfound"))
 		    filename = Config::getValue("metadatafilename");
 	    else
-		    filename = "metadata.txt"
+		    filename = "metadata.txt";
 
             std::fstream fout;
             fout.open(filename, std::ios::out );
