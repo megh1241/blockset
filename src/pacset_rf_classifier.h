@@ -17,7 +17,7 @@
 #define LAT_LOGGING 2
 #define BLOCK_LOGGING 1
 #define NUM_FILES 20 
-#define BLOCK_SIZE 128
+#define BLOCK_SIZE 2048
 
 template <typename T, typename F>
 class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
@@ -289,7 +289,12 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
             
             //Write the metadata needed to reconstruct bins and for prediction
             //TODO: change filename
-            std::string filename = "metadata.txt";
+            std::string filename;
+	    if(Config::getValue("metadatafilename") != std::string("notfound"))
+		    filename = Config::getValue("metadatafilename");
+	    else
+		    filename = "metadata.txt"
+
             std::fstream fout;
             fout.open(filename, std::ios::out );
 
@@ -345,9 +350,13 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
 
+                if(modelfname != std::string("notfound"))
+                    filename = modelfname;
+                else
+                    filename = "packedmodel.txt";
+
                 std::cout<<"modelfname: "<<modelfname<<"\n";
 
-                filename = "packedmodel.txt";
 
                 std::cout<<"filename: "<<filename <<"\n";
                 fout.open(filename,  std::ios::out );
