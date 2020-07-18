@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "node.h"
 #include "MemoryMapped.h"
-#define NUM_FILES 49 
+#define NUM_FILES 10
 #define BLOCK_LOGGING 1
 #define LAT_LOGGING 1
 
@@ -30,7 +30,9 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 PacsetBaseModel<T, F>::bin_start.push_back(i);  
         }
 
-
+                inline void setBinNodeSizes(int pos, int siz){
+                        PacsetBaseModel<T, F>::bin_node_sizes[pos] = siz;
+                }
         inline void loadModel() {
             JSONReader<T, F> J;
             //J.convertSklToBins(PacsetBaseModel<T, F>::bins, 
@@ -82,7 +84,9 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             int block_offset = 0;
             int block_number = 0;
             int next_node = 0;
+	    fflush(stdout);
 	    std::cout<<"enter predict\n";
+	    fflush(stdout);
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
@@ -160,13 +164,13 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             std::string modelfname = Config::getValue("modelfilename");
             
 #ifdef LAT_LOGGING
-            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+	    MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
+            //MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
 #else
 	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
 	    
 	    Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
-
             std::unordered_set<int> blocks_accessed;
             int next_node = 0;
             int block_offset = 0;
@@ -182,14 +186,13 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 int block_number = 0;
-                Node<T, F> *bin  = data + offsets[bin_counter];
-
-                std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
-                std::vector<double> last_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
+		Node<T, F> *bin  = data + offsets[bin_counter];
+                std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_sizes[bin_counter]);
+                std::vector<double> last_node(PacsetBaseModel<T, F>::bin_sizes[bin_counter]);
                 int i, feature_num=0, number_not_in_leaf=0;
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
-                total_num_trees += siz;
+		total_num_trees += siz;
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     __builtin_prefetch(&bin[curr_node[i]], 0, 3);

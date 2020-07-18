@@ -23,10 +23,12 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
             temp_vector.push_back(std::atof(data.c_str()));
         }
         int siz = temp_vector.size();
+        //int last_ele = (int)(temp_vector.at(siz-1));
         int last_ele = (int)(temp_vector.at(0));
         labels.push_back(last_ele);
-        temp_vector.erase(temp_vector.begin());
-        test_data.push_back(temp_vector);
+        temp_vector.pop_back();
+	temp_vector.erase(temp_vector.begin());
+        //test_data.push_back(temp_vector);
         temp_vector.clear();
         num_obs++;
         if (num_obs > max_n)
@@ -43,6 +45,8 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<double
     std::vector<std::string> row; 
     std::string line, word, temp; 
     std::vector<float> temp_vector;
+    int num_obs = 0;
+    int max_n = 50;
     while(getline(fin, line, '\n')){
         std::istringstream templine(line);
         std::string data;
@@ -50,11 +54,15 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<double
             temp_vector.push_back(std::atof(data.c_str()));
         }
         int siz = temp_vector.size();
-        double last_ele = (double)(temp_vector.at(siz-1));
+        double last_ele = (double)(temp_vector.at(0));
         labels.push_back(last_ele);
-        temp_vector.pop_back();
+        //temp_vector.pop_back();
+	temp_vector.erase(temp_vector.begin());
         test_data.push_back(temp_vector);
         temp_vector.clear();
+        num_obs++;
+        if (num_obs > max_n)
+            break;
     }
     std::cout<<"size of test data: "<<test_data.size()<<"\n";
     fin.close();

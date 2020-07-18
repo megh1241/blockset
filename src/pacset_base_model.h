@@ -18,7 +18,9 @@ class PacsetBaseModel{
         virtual void setMembers(const std::vector<int> &bin_sizes, 
                 const std::vector<int> &bin_node_sizes, 
                 const std::vector<std::vector<int>> &bin_start) = 0;
-        virtual void pack() = 0;
+        
+	virtual void setBinNodeSizes(int pos, int siz) = 0;
+	virtual void pack() = 0;
         virtual void loadModel() = 0;
         virtual int predict(const std::vector<T> &observations, 
                 std::vector<int> &preds) = 0;

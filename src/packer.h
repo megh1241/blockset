@@ -1031,7 +1031,7 @@ class Packer{
 				packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q, true);
 			}
 			else{
-				packSubtreeBlockwiseHelper4(bin, num_trees_in_bin, bin_start, bin_q, false);
+				packSubtreeBlockwiseHelper3(bin, num_trees_in_bin, bin_start, bin_q, false);
 			}
 
 			// set new IDs
