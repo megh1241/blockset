@@ -73,7 +73,7 @@ static void parseArgs(int argc, char* argv[]){
 
     //set default block size
     if(Config::getValue("blocksize") == std::string("notfound")){
-        Config::setConfigItem(std::string("blocksize"), std::string("128"));
+        Config::setConfigItem(std::string("blocksize"), std::string("2048"));
     }
 }
 

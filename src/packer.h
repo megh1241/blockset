@@ -472,7 +472,7 @@ class Packer{
 
 		for(int i=num_classes ; i<finalbin.size(); ++i)
 			node_to_index.insert(std::pair<int, int>(finalbin[i].getID(), i)); 
-		
+	
 		int subtree_count = 0;
 
 		subtree_count_map[0] = 0;
@@ -988,7 +988,7 @@ class Packer{
 				packSubtreeBlockwiseHelper(bin, num_trees_in_bin, bin_start, bin_q, true);
 			}
 			else{
-				packSubtreeBlockwiseHelper4(bin, num_trees_in_bin, bin_start, bin_q, false);
+				packSubtreeBlockwiseHelper3(bin, num_trees_in_bin, bin_start, bin_q, false);
 			}
 
 			// set new IDs

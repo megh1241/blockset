@@ -325,8 +325,13 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             
             //Write the metadata needed to reconstruct bins and for prediction
             //TODO: change filename
-            std::string filename = "metadata.txt";
-            std::fstream fout;
+	    std::string filename;
+	    if(Config::getValue("metadatafilename") == std::string("notfound"))
+	    	filename = "metadata.txt";
+            else
+		filename = Config::getValue("metadatafilename"); 
+	    
+	    std::fstream fout;
             fout.open(filename, std::ios::out );
 
             //Number of classes
@@ -381,8 +386,10 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
 
-
-                filename = "packedmodel.txt";
+		if(modelfname != std::string("notfound"))
+		    filename = modelfname;
+		else
+                    filename = "packedmodel.txt";
 
                 std::cout<<"filename: "<<filename <<"\n";
                 fout.open(filename,  std::ios::out );
