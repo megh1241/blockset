@@ -67,6 +67,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                         PacsetBaseModel<T, F>::bin_sizes[i],
                         PacsetBaseModel<T, F>::bin_start[i] 
                         );
+		 setBinNodeSizes(i, PacsetBaseModel<T, F>::bins[i].size());
 		std::cout<<"checkpoint3\n";
 		fflush(stdout);
             }
@@ -195,7 +196,8 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 		total_num_trees += siz;
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
-                    __builtin_prefetch(&bin[curr_node[i]], 0, 3);
+                    //bin[curr_node[i]].printNode();
+		    __builtin_prefetch(&bin[curr_node[i]], 0, 3);
 #ifdef BLOCK_LOGGING 
                     block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
 #pragma omp critical
@@ -205,7 +207,8 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 do{
                     number_not_in_leaf = 0;
                     for( i=0; i<siz; ++i){
-		        if(curr_node[i] >= 0){
+			//std::cout<<curr_node[i]<<"\n";
+		        if(curr_node[i] > 0){
 #ifdef BLOCK_LOGGING 
                     	    block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
 #pragma omp critical
@@ -273,11 +276,13 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 	    int ct=1;
             for(auto single_obs : observation){
 		auto start = std::chrono::steady_clock::now();
+		std::cout<<"before observation: "<<ct<<"\n";
                 if (mmap)
                     blocks = mmapAndPredict(single_obs, preds, ct);
                 else{
                     blocks = predict(single_obs, preds);
                 }
+		std::cout<<"after observation: "<<ct<<"\n";
                 num_blocks.push_back(blocks);
                 results.push_back((double)preds[0] / (double)preds[1] );    
             
