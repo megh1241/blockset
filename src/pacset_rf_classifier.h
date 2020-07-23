@@ -6,6 +6,13 @@
 #include <fstream>
 #include <chrono>
 #include <random>
+#include <stdint.h>
+#include <cstdint>
+#include <sys/types.h>
+#include <capnp/message.h>
+#include <capnp/serialize-packed.h>
+#include <capnp/serialize.h>
+#include "forest.capnp.h"
 #include "pacset_base_model.h"
 #include "packer.h"
 #include "config.h"
@@ -18,6 +25,10 @@
 #define BLOCK_LOGGING 1
 #define NUM_FILES 10 
 #define BLOCK_SIZE 2048
+
+using forest::Node;
+using forest::Forest;
+using std::uint32_t;
 
 template <typename T, typename F>
 class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
@@ -286,19 +297,15 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #endif
 		}
 
-		inline void serialize() {
+		inline void serializeMetadata() {
+			//Write the metadata needed to reconstruct bins and for prediction
 			auto bins = PacsetBaseModel<T, F>::bins;
 			int num_classes = std::stoi(Config::getValue("numclasses"));
 			int num_bins = bins.size();
 			std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
 			std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
 			std::vector<std::vector<int>> bin_start  = PacsetBaseModel<T, F>::bin_start;
-			std::string format = Config::getValue("format");
-
-			//Write the metadata needed to reconstruct bins and for prediction
-			//TODO: change filename
 			std::string filename;
-
 
 			std::string modelfname = Config::getValue("metadatafilename");
 
@@ -333,51 +340,68 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			}
 			fout.close();
 
-			if(format != std::string("notfound") ||
-					format == std::string("binary")){
+		}
 
-				std::string modelfname = Config::getValue("packfilename");
-				std::string filename;
+		inline void serializeModelBinary() {
+			auto bins = PacsetBaseModel<T, F>::bins;
+			std::string modelfname = Config::getValue("packfilename");
+			std::string filename;
+			if(modelfname != std::string("notfound"))
+			    filename = modelfname;
+			else
+			    filename = "packedmodel.bin";
 
-				if(modelfname != std::string("notfound"))
-					filename = modelfname;
-				else
-					filename = "packedmodel.bin";
-
-				//Write the nodes
-				fout.open(filename, std::ios::binary | std::ios::out );
-				Node<T, F> node_to_write;
-				for(auto bin: bins){
-					for(auto node: bin){
-						node_to_write = node;
-						fout.write((char*)&node_to_write, sizeof(node_to_write));
-					}
+			//Write the nodes
+			std::fstream fout;
+			fout.open(filename, std::ios::binary | std::ios::out );
+			Node<T, F> node_to_write;
+			for(auto bin: bins){
+				for(auto node: bin){
+					node_to_write = node;
+					fout.write((char*)&node_to_write, sizeof(node_to_write));
 				}
-				fout.close();
-
 			}
-			else{
-				//Write the nodes
-				std::string modelfname = Config::getValue("packfilename");
-				std::string filename;
+			fout.close();
+		}
+	
+		inline void serializeModelText(){
+			auto bins = PacsetBaseModel<T, F>::bins;
+			std::string modelfname = Config::getValue("packfilename");
+			std::string filename;
 
-				if(modelfname != std::string("notfound"))
-					filename = modelfname;
-				else
-					filename = "packedmodel.txt";
+			if(modelfname != std::string("notfound"))
+			    filename = modelfname;
+			else
+			    filename = "packedmodel.txt";
 
+			//Write the nodes
+			std::fstream fout;
+			fout.open(filename,  std::ios::out );
+			for(auto bin: bins){
+			    for(auto node: bin){
+				fout<<node.getLeft()<<", "<<node.getRight()
+				<<", "<<node.getFeature()<<", "<<node.getThreshold()<<"\n";
+			    }
+			}
+			fout.close();
+		}
 
-				std::cout<<"modelfname: "<<modelfname<<"\n";
+		inline void serializeModelCapnp() {
+					
+		}
 
+		inline void serialize() {
+			std::string format = Config::getValue("format");
+			serializeMetadata();
 
-				fout.open(filename,  std::ios::out );
-				for(auto bin: bins){
-					for(auto node: bin){
-						fout<<node.getLeft()<<", "<<node.getRight()
-							<<", "<<node.getFeature()<<", "<<node.getThreshold()<<"\n";
-					}
-				}
-				fout.close();
+			if(format == std::string("binary")){
+			    serializeModelBinary();
+			}
+			else if(format == std::string("text")){
+			    serializeModelText();
+			}
+			else {
+			    serializeModelCapnp();
 			}
 		}
 
