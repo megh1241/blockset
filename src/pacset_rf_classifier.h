@@ -26,7 +26,7 @@
 #define NUM_FILES 10 
 #define BLOCK_SIZE 2048
 
-using forest::Node;
+using forest::CapNode;
 using forest::Forest;
 using std::uint32_t;
 
@@ -297,6 +297,15 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 #endif
 		}
 
+		void createCapnpNode(CapNode::Builder &node, uint32_t id, uint32_t left, 
+				uint32_t right, uint32_t feature, float threshold){
+        		node.setId(id);
+        		node.setLeft(left);
+        		node.setRight(right);
+        		node.setFeature(feature);
+        		node.setThreshold(threshold);
+		}
+
 		inline void serializeMetadata() {
 			//Write the metadata needed to reconstruct bins and for prediction
 			auto bins = PacsetBaseModel<T, F>::bins;
@@ -387,7 +396,44 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 		}
 
 		inline void serializeModelCapnp() {
-					
+			FILE *f;
+			int fd;
+			std::string modelfname = Config::getValue("packfilename");
+			std::string filename;
+		     	
+			if(modelfname != std::string("notfound"))
+			    filename = modelfname;
+			else
+			    filename = "packedmodel.bin";
+
+			f = fopen(filename.c_str(),"w");
+			fd = fileno(f);
+			
+			auto bins = PacsetBaseModel<T, F>::bins;
+			std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
+			std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
+			int num_bins = bins.size();
+			int num_nodes=0;
+			for(int i=0; i<num_bins; ++i)	
+				num_nodes += bin_node_sizes[i];
+
+			::capnp::MallocMessageBuilder message;
+        		Forest::Builder forestBuilder = message.initRoot<Forest>();
+        		::capnp::List<CapNode>::Builder nodeListBuilder =\
+						forestBuilder.initNodeList(num_nodes);
+
+			int i=0;
+			for (auto bin : bins){
+				for (auto pacset_node : bin){
+					CapNode::Builder node = nodeListBuilder[i];
+					createCapnpNode(node, pacset_node.getID(), pacset_node.getLeft(),
+						       	pacset_node.getRight(), pacset_node.getFeature(), 
+							pacset_node.getThreshold()
+						   );
+					++i;	
+				}
+			}
+			writeMessageToFd(fd, message);
 		}
 
 		inline void serialize() {
