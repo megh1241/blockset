@@ -47,26 +47,37 @@ meta_filenames2 = [
 ]
 
 model_filenames3 = [
-#'packedbinstatblock1.txt',
-'packedbinstatblock2.txt',
-#'packedbinstatblock4.txt',
-#'packedbinstatblock8.txt',
-#'packedbinstatblock16.txt',
-#'packedbinstatblock32.txt',
-#'packedbinstatblock64.txt',
-#'packedbinstatblock128.txt'
+'packedblockstat1.txt',
+'packedblockstat2.txt',
+'packedblockstat4.txt',
+'packedblockstat8.txt',
+'packedblockstat16.txt',
+'packedblockstat32.txt',
+'packedblockstat64.txt'
 ]
 
+
 meta_filenames3 = [
-#'metabinstatblock1.txt',
-'metabinstatblock2.txt',
-#'metabinstatblock4.txt',
-#'metabinstatblock8.txt',
-#'metabinstatblock16.txt',
-#'metabinstatblock32.txt',
-#'metabinstatblock64.txt',
-#'metabinstatblock128.txt'
+'blockstat.txt',
+'blockstat2.txt',
+'blockstat4.txt',
+'blockstat8.txt',
+'blockstat16.txt',
+'blockstat32.txt',
+'blockstat64.txt',
 ]
+
+
+model_filenames4 = [
+'packedblockstat32.txt',
+'packedblockstat64.txt'
+]
+
+meta_filenames4 = [
+'blockstat32.txt',
+'blockstat64.txt'
+]
+
 
 blocksize = 16
 cached_node_hash = []
@@ -91,7 +102,11 @@ def loadModelMetadataFromFile(metadata_filepath):
     num_classes = metadata_int[0]
     num_bins = metadata_int[1]
 
-    print (len(metadata_int))
+    print('num classes: ', end='')
+    print(num_classes)
+    print('num bins: ', end='')
+    print(num_bins)
+
     k = 2
     for i in range(num_bins):
         bin_sizes.append(metadata_int[k]) 
@@ -108,6 +123,10 @@ def loadModelMetadataFromFile(metadata_filepath):
             k+=1
         tree_start.append(temp)
 
+    print('bin sizes: ', end='')
+    print(bin_sizes)
+    print('bin node sizes: ', end='')
+    print(bin_node_sizes)
     
     return num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start
 
@@ -201,15 +220,14 @@ def createForestBlockNodesRedisDB(forest, bin_node_sizes, num_bins, num_classes,
                                         db=db_id)
 
     redisClient.flushdb()
-    print('db_id: ', end='')
-    print(db_id)
     bin_num_curr = 0
     count = 0
     pos = 0
     #Store the nodes in a redis hash table
+    print('forest size: ', end='')
+    print(len(forest))
     for node in forest:
         block_num = int(count / blocksize)
-        print(str(bin_num_curr) + ':' + str(block_num))
         redisClient.rpush(str(bin_num_curr) + ':' + str(block_num), count, 
                 node[0], node[1], node[2], node[3])
         count += 1
@@ -364,16 +382,18 @@ def validatePredictions(predicted, y):
 ######## BEGIN SCRIPT #########
 ###############################
 
-model_filepaths = [os.path.join(model_dir2, model_filename) for model_filename in model_filenames3]
-metadata_filepaths = [os.path.join(model_dir2, meta_filename) for meta_filename in meta_filenames3]
+model_filepaths = [os.path.join(model_dir2, model_filename) for model_filename in model_filenames4]
+metadata_filepaths = [os.path.join(model_dir2, meta_filename) for meta_filename in meta_filenames4]
 
 #Read observation data from file
 X, y = loadObsFromFile(obs_filepath)
 
-db_id = 4 
+
+db_id = 8 
 for model_filepath, meta_filepath in zip(model_filepaths, metadata_filepaths):
     #load metadata from file
     num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start  = loadModelMetadataFromFile(meta_filepath)
+    print(bin_node_sizes)
     print('metadata loaded from file')
     #Read list from file
     forest = readModelFromFile(model_filepath)
@@ -391,11 +411,11 @@ for model_filepath, meta_filepath in zip(model_filepaths, metadata_filepaths):
 
 #Create the redis DB
 redisClientObservation = createObservationRedisDB(X)
-print('obs created')
+#print('obs created')
 
 #create the redis DB to store labels
 redisClientLabel = createLabelRedisDB(y)
-print('label created')
+#print('label created')
 
 
 '''
