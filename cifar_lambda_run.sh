@@ -21,6 +21,17 @@
 ./exe  --mode both --layout bfs --intertwine 0 --blocksize 16 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedbfs16.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/metabfs16.txt --numthreads 8 --package sklearn --algorithm randomforest --task classification
 ./exe  --mode both --layout dfs --intertwine 0 --blocksize 16 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packeddfs16.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/metadfs16.txt --numthreads 8 --package sklearn --algorithm randomforest --task classification
 ./exe  --mode both --layout blockstat --intertwine 0 --blocksize 16 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat16.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/metablockstat16.txt --numthreads 8 --package sklearn --algorithm randomforest --task classification
-'
-./exe  --mode both --layout blockstat --intertwine 0 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat.txt --numthreads 1 --package sklearn --algorithm randomforest --task classification
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat1.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat.txt --numthreads 1 --package sklearn --algorithm randomforest --task classification
 
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat2.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat2.txt --numthreads 2 --package sklearn --algorithm randomforest --task classification
+
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat4.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat4.txt --numthreads 4 --package sklearn --algorithm randomforest --task classification
+
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat8.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat8.txt --numthreads 8 --package sklearn --algorithm randomforest --task classification
+
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat16.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat16.txt --numthreads 16 --package sklearn --algorithm randomforest --task classification
+'
+
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat32.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat32.txt --numthreads 32 --package sklearn --algorithm randomforest --task classification
+
+./exe  --mode both --layout binblockstat --intertwine 4 --blocksize 128 --modelfilename ~/pacset/models/cifarnew.json --packfilename ~/pacset/models/packedblockstat64.txt --datafilename ~/pacset/data/cifar-10.csv --metadatafilename ~/pacset/models/blockstat64.txt --numthreads 64 --package sklearn --algorithm randomforest --task classification

@@ -2,8 +2,8 @@
 #declare -a layoutArray=("bfscorrect0" "dfscorrect0" "statdfscorrect0" "bfscorrect2" "dfscorrect2" )
 #declare -a layoutArray2=("bfs" "dfs" "statdfs" "binbfs" "bindfs")
 
-declare -a layoutArray=("block2048correct0" "block2048correct2" "stat2048correct2" )
-declare -a layoutArray2=("blockstat" "binblockstat" "binstatdfs" )
+declare -a layoutArray=("binblockstatcorrect2" "bindfsstatcorrect2")
+declare -a layoutArray2=("binblockstat" "binstatdfs" )
 
 ORIG_PACK_DIR="/data4"
 NUM_FILES=10
