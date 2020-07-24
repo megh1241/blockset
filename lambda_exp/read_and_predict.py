@@ -53,7 +53,8 @@ model_filenames3 = [
 'packedblockstat8.txt',
 'packedblockstat16.txt',
 'packedblockstat32.txt',
-'packedblockstat64.txt'
+'packedblockstat64.txt',
+'packedblockstat128.txt'
 ]
 
 
@@ -65,17 +66,20 @@ meta_filenames3 = [
 'blockstat16.txt',
 'blockstat32.txt',
 'blockstat64.txt',
+'blockstat128.txt'
 ]
 
 
 model_filenames4 = [
-'packedblockstat32.txt',
-'packedblockstat64.txt'
+'packedblockstat128.txt'
+#'packedblockstat32.txt',
+#'packedblockstat64.txt'
 ]
 
 meta_filenames4 = [
-'blockstat32.txt',
-'blockstat64.txt'
+'blockstat128.txt'
+#'blockstat32.txt',
+#'blockstat64.txt'
 ]
 
 
@@ -382,14 +386,14 @@ def validatePredictions(predicted, y):
 ######## BEGIN SCRIPT #########
 ###############################
 
-model_filepaths = [os.path.join(model_dir2, model_filename) for model_filename in model_filenames4]
-metadata_filepaths = [os.path.join(model_dir2, meta_filename) for meta_filename in meta_filenames4]
+model_filepaths = [os.path.join(model_dir2, model_filename) for model_filename in model_filenames3]
+metadata_filepaths = [os.path.join(model_dir2, meta_filename) for meta_filename in meta_filenames3]
 
 #Read observation data from file
 X, y = loadObsFromFile(obs_filepath)
 
 
-db_id = 8 
+db_id = 4 
 for model_filepath, meta_filepath in zip(model_filepaths, metadata_filepaths):
     #load metadata from file
     num_bins, num_classes, bin_node_sizes, bin_sizes, tree_start  = loadModelMetadataFromFile(meta_filepath)
