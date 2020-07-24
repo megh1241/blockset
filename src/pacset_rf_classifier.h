@@ -9,6 +9,11 @@
 #include <stdint.h>
 #include <cstdint>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
 #include <capnp/message.h>
 #include <capnp/serialize-packed.h>
 #include <capnp/serialize.h>
@@ -217,6 +222,98 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			return 0;
 #endif
 		}
+		
+		inline int CapnpPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum) {
+			int num_classes = std::stoi(Config::getValue("numclasses"));
+			int num_threads = std::stoi(Config::getValue("numthreads"));
+			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
+			std::string modelfname = Config::getValue("modelfilename");
+        	 	
+			FILE *f;
+			f = fopen(modelfname.c_str(), "r");
+			int fd = fileno(f);
+			//Get file size
+        		struct stat64 statInfo;
+        		if (fstat64(fd, &statInfo) < 0){
+                		std::cout<<"File error\n";
+                		return 0;
+        		}
+			size_t filesize = statInfo.st_size;
+
+        		void* mmapped_ptr = (kj::byte*)mmap64(NULL, filesize, PROT_READ, MAP_SHARED, fd, 0);
+
+        		kj::byte* mmapped_ptr_byte_beg = (kj::byte*)mmapped_ptr;
+        		kj::byte* mmapped_ptr_byte_end = (kj::byte*)(mmapped_ptr)+filesize;
+
+        		::capnp::word* byte_ptr_beg = reinterpret_cast<::capnp::word*>(mmapped_ptr_byte_beg);
+        		::capnp::word* byte_ptr_end = reinterpret_cast<::capnp::word*>(mmapped_ptr_byte_end);
+
+        		kj::ArrayPtr<::capnp::word> bufferPtr = kj::ArrayPtr<::capnp::word>(byte_ptr_beg, byte_ptr_end);
+
+        		::capnp::FlatArrayMessageReader message(bufferPtr);
+        		Forest::Reader forestReader = message.getRoot<Forest>();
+        		auto node_list = forestReader.getNodeList();
+
+			std::unordered_set<int> blocks_accessed;
+			int offset = 0;
+			std::vector<int> offsets;
+			int curr_offset = 0;
+			for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
+				offsets.push_back(curr_offset);
+				curr_offset += val;
+			}
+			int temp_pos;
+#pragma omp parallel for num_threads(num_threads)
+			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
+				int block_number = 0;
+				int bin_start_index = offsets[bin_counter];
+
+				std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
+				int i, feature_num=0, number_not_in_leaf=0;
+				T feature_val;
+				int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
+
+				for(i=0; i<siz; ++i){
+					curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
+					//__builtin_prefetch(&node_list[curr_node[i] +  offsets[bin_counter]], 0, 3);
+#ifdef BLOCK_LOGGING 
+					block_number = (curr_node[i] + bin_start_index) / BLOCK_SIZE;
+#pragma omp critical
+					blocks_accessed.insert(block_number);
+#endif
+				}
+				do{
+					number_not_in_leaf = 0;
+					for( i=0; i<siz; ++i){
+						if(node_list[curr_node[i] + bin_start_index].getLeft() > -1){
+#ifdef BLOCK_LOGGING 
+							block_number = (curr_node[i] + bin_start_index)/ BLOCK_SIZE;
+#pragma omp critical
+							blocks_accessed.insert(block_number);
+#endif
+							feature_num = node_list[curr_node[i] + bin_start_index].getFeature();
+							feature_val = observation[feature_num];
+							curr_node[i] = (feature_val <= (node_list[curr_node[i] + bin_start_index].getThreshold())) ? node_list[curr_node[i] + bin_start_index].getLeft() : node_list[curr_node[i] + bin_start_index].getRight();
+							//curr_node[i] = node_list[curr_node[i] + bin_start_index].nextNode(feature_val);
+					//		__builtin_prefetch(&node_list[curr_node[i] +  offsets[bin_counter]], 0, 3);
+							++number_not_in_leaf;
+						}
+					}
+				}while(number_not_in_leaf);
+
+				for(i=0; i<siz; ++i){
+#pragma omp atomic update
+					++preds[node_list[curr_node[i] +  offsets[bin_counter]].getRight()];
+				}
+
+			}
+#ifdef BLOCK_LOGGING 
+			return blocks_accessed.size();
+#else
+			return 0;
+#endif
+		}
+
 
 
 		inline void predict(const std::vector<std::vector<T>>& observation, 
@@ -234,7 +331,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::string num_threads = Config::getValue("numthreads");
 			std::string dataset = Config::getValue("datafilename");
 			std::string intertwine = Config::getValue("intertwine");
-
+			std::string format = Config::getValue("format");
 			for(int i=0; i<num_classes; ++i){
 				preds.push_back(0);
 			}
@@ -248,10 +345,13 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			fflush(stdout);
 			for(auto single_obs : observation){
 				auto start = std::chrono::steady_clock::now();
-				if (mmap)
+				if (format == "capnp")
+					blocks = CapnpPredict(single_obs, preds, ct+1);
+				else if (mmap)
 					blocks = mmapAndPredict(single_obs, preds, ct+1);
 				else
 					blocks = predict(single_obs, preds);
+
 				num_blocks.push_back(blocks);
 				//TODO: change
 				for(int i=0; i<num_classes; ++i){
