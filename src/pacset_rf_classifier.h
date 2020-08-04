@@ -562,47 +562,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			}
 			::capnp::MallocMessageBuilder message;
 			Forest::Builder forestBuilder = message.initRoot<Forest>();
-			/*auto orphan1 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
-			for(int j=0; j<blob_size; ++j){
-					orphan1.get()[j].setId(j);
-			}
-			auto orphan2 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
-			for(int j=0; j<blob_size; ++j){
-					orphan2.get()[j].setId(j);
-			}
-
-			::capnp::List<CapNode>::Reader lists[] = {orphan1.getReader(), orphan2.getReader()};
-		        kj::ArrayPtr<capnp::List<CapNode>::Reader> array = lists;
-			auto concat_orphan = message.getOrphanage().newOrphanConcat(array);
-			forestBuilder.adoptNodeList(kj::mv(concat_orphan));
-			*/
 			::capnp::List<CapNode>::Builder listBuilder = forestBuilder.initTinyList(blob_size);
 			::capnp::List<::capnp::List<CapNode>>::Builder listoflistBuilder = forestBuilder.initNodeList(total_num_lists);
 
-			/*auto orphan1 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
-			for(int j=0; j<blob_size; ++j){
-					orphan1.get()[j].setId(j);
-			}
-			auto orphan2 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
-			for(int j=0; j<blob_size; ++j){
-					orphan2.get()[j].setId(j);
-			}*/
-
-			/*::capnp::List<::capnp::List<CapNode>>::Reader lists[] = {orphan1.getReader(), orphan2.getReader()};
-		        kj::ArrayPtr<::capnp::List<::capnp::List<CapNode>>::Reader> array = lists;
-			auto concat_orphan = message.getOrphanage().newOrphanConcat(array);
-			forestBuilder.adoptNodeList(kj::mv(concat_orphan));
-			*/
-			/*
-			forestBuilder.adoptNodeList(kj::mv(orphan));
-			for(int i=0; i<blob_size; ++i){
-				orphan.get()[i].setId(i);
-			}
-			for(int i=0; i<1; ++i){
-				forest
-			}
-			nodeListBuilder.set(0, orphan);
-			*/
 			//auto node_orphan = builder.getOrphanage().newOrphan<CapNode>();
 			
 			int list_counter = 0;
@@ -611,7 +573,6 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				int node_counter = 0;
 				for(int j=0; j<num_tiny_lists[bin_counter]; ++j){
         				::capnp::List<CapNode>::Builder tinyListBuilder = listBuilder;
-					//::capnp::List<CapNode>::Builder tinyList;
 					for(int i=0; i<blob_size; ++i){
 						if(node_counter < bin.size()){
 							CapNode::Builder node = tinyListBuilder[i];
@@ -627,11 +588,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}
 				bin_counter++;
 			}
-			std::cout<<"point 6\n";
-			fflush(stdout);
 			writeMessageToFd(fd, message);
-			std::cout<<"point 7\n";
-			fflush(stdout);
 		}
 
 		inline void serialize() {
