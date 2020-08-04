@@ -12,5 +12,6 @@ struct CapNode {
 }
 
 struct Forest {
-  nodeList @0 :List(CapNode);
+  tinyList @0 :List(CapNode);
+  nodeList @1 :List(List(CapNode));
 }

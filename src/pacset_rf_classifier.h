@@ -35,6 +35,8 @@ using forest::CapNode;
 using forest::Forest;
 using std::uint32_t;
 
+const int blob_size = 10000;
+
 template <typename T, typename F>
 class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 	public:
@@ -69,6 +71,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
 			auto bin = PacsetBaseModel<T, F>::bins[0];
 			int num_bins = std::stoi(Config::getValue("numthreads"));
+			std::cout<<"Before pack\n";
 			for(int i=0; i<num_bins; ++i){
 				Packer<T, F> packer_obj(layout);
 				if(Config::getValue("intertwine") != std::string("notfound"))
@@ -79,6 +82,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 						PacsetBaseModel<T, F>::bin_start[i] 
 					       );
 				setBinNodeSizes(i, PacsetBaseModel<T, F>::bins[i].size());
+			std::cout<<"after pack\n";
 			}
 		}
 
@@ -222,7 +226,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			return 0;
 #endif
 		}
-		
+		std::pair<int, int> transformIndex(int node_number, int bin_start_list, int bin_number){
+			return std::make_pair(bin_start_list + node_number/blob_size, node_number % blob_size);
+		}	
 		inline int CapnpPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum) {
 			int num_classes = std::stoi(Config::getValue("numclasses"));
 			int num_threads = std::stoi(Config::getValue("numthreads"));
@@ -238,6 +244,21 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 		std::cout<<"File error\n";
                 		return 0;
         		}
+			int num_lists=0;
+			int total_num_lists = 0;
+			std::vector<int> num_tiny_lists;
+			std::vector<int> start_list_index;
+			for(int i=0; i<num_bins; ++i)	{
+				if(PacsetBaseModel<T, F>::bin_node_sizes[i] % blob_size == 0)
+					num_lists = PacsetBaseModel<T, F>::bin_node_sizes[i] / blob_size;
+				else
+					num_lists = PacsetBaseModel<T, F>::bin_node_sizes[i] / blob_size + 1;
+
+				num_tiny_lists.push_back(num_lists);
+				start_list_index.push_back(total_num_lists);
+				total_num_lists += num_lists;
+			}
+
 			size_t filesize = statInfo.st_size;
 
         		void* mmapped_ptr = (kj::byte*)mmap64(NULL, filesize, PROT_READ, MAP_SHARED, fd, 0);
@@ -250,7 +271,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
         		kj::ArrayPtr<::capnp::word> bufferPtr = kj::ArrayPtr<::capnp::word>(byte_ptr_beg, byte_ptr_end);
 
-        		::capnp::FlatArrayMessageReader message(bufferPtr);
+			::capnp::ReaderOptions options;
+			options.traversalLimitInWords = 18446744073709551  ;
+			options.nestingLimit = 640;
+			
+        		::capnp::FlatArrayMessageReader message(bufferPtr, options);
         		Forest::Reader forestReader = message.getRoot<Forest>();
         		auto node_list = forestReader.getNodeList();
 
@@ -265,6 +290,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			int temp_pos;
 #pragma omp parallel for num_threads(num_threads)
 			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
+				int bin_start_list = start_list_index[bin_counter];
 				int block_number = 0;
 				int bin_start_index = offsets[bin_counter];
 
@@ -285,15 +311,21 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				do{
 					number_not_in_leaf = 0;
 					for( i=0; i<siz; ++i){
-						if(node_list[curr_node[i] + bin_start_index].getLeft() > -1){
+						std::pair<int, int> indices = transformIndex(curr_node[i], bin_start_list, bin_counter);
+						int x = indices.first;
+						int y = indices.second;
+						if(node_list[x][y].getLeft() > -1){
 #ifdef BLOCK_LOGGING 
 							block_number = (curr_node[i] + bin_start_index)/ BLOCK_SIZE;
 #pragma omp critical
 							blocks_accessed.insert(block_number);
 #endif
-							feature_num = node_list[curr_node[i] + bin_start_index].getFeature();
+							std::pair<int, int> indices = transformIndex(curr_node[i], bin_start_list, bin_counter);
+							int x = indices.first;
+							int y = indices.second;
+							feature_num = node_list[x][y].getFeature();
 							feature_val = observation[feature_num];
-							curr_node[i] = (feature_val <= (node_list[curr_node[i] + bin_start_index].getThreshold())) ? node_list[curr_node[i] + bin_start_index].getLeft() : node_list[curr_node[i] + bin_start_index].getRight();
+							curr_node[i] = (feature_val <= (node_list[x][y].getThreshold())) ? node_list[x][y].getLeft() : node_list[x][y].getRight();
 							//curr_node[i] = node_list[curr_node[i] + bin_start_index].nextNode(feature_val);
 					//		__builtin_prefetch(&node_list[curr_node[i] +  offsets[bin_counter]], 0, 3);
 							++number_not_in_leaf;
@@ -302,8 +334,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}while(number_not_in_leaf);
 
 				for(i=0; i<siz; ++i){
-#pragma omp atomic update
-					++preds[node_list[curr_node[i] +  offsets[bin_counter]].getRight()];
+					std::pair<int, int> indices = transformIndex(curr_node[i], bin_start_list, bin_counter);
+					int x = indices.first;
+					int y = indices.second;
+#pragma omp atomic update 
+					++preds[node_list[x][y].getRight()];
 				}
 
 			}
@@ -398,7 +433,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 		}
 
 		void createCapnpNode(CapNode::Builder &node, uint32_t id, uint32_t left, 
-				uint32_t right, uint32_t feature, float threshold){
+				uint32_t right, float feature, float threshold){
         		node.setId(id);
         		node.setLeft(left);
         		node.setRight(right);
@@ -513,33 +548,96 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
 			std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;
 			int num_bins = bins.size();
-			int num_nodes=0;
-			for(int i=0; i<num_bins; ++i)	
-				num_nodes += bin_node_sizes[i];
+			int num_lists=0;
+			int total_num_lists = 0;
+			std::vector<int> num_tiny_lists;
+			for(int i=0; i<num_bins; ++i)	{
+				if(bin_node_sizes[i] % blob_size == 0)
+					num_lists = bin_node_sizes[i] / blob_size;
+				else
+					num_lists = bin_node_sizes[i] / blob_size + 1;
 
-			::capnp::MallocMessageBuilder message;
-        		Forest::Builder forestBuilder = message.initRoot<Forest>();
-        		::capnp::List<CapNode>::Builder nodeListBuilder =\
-						forestBuilder.initNodeList(num_nodes);
-
-			int i=0;
-			for (auto bin : bins){
-				for (auto pacset_node : bin){
-					CapNode::Builder node = nodeListBuilder[i];
-					createCapnpNode(node, pacset_node.getID(), pacset_node.getLeft(),
-						       	pacset_node.getRight(), pacset_node.getFeature(), 
-							pacset_node.getThreshold()
-						   );
-					++i;	
-				}
+				num_tiny_lists.push_back(num_lists);
+				total_num_lists += num_lists;
 			}
+			::capnp::MallocMessageBuilder message;
+			Forest::Builder forestBuilder = message.initRoot<Forest>();
+			/*auto orphan1 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
+			for(int j=0; j<blob_size; ++j){
+					orphan1.get()[j].setId(j);
+			}
+			auto orphan2 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
+			for(int j=0; j<blob_size; ++j){
+					orphan2.get()[j].setId(j);
+			}
+
+			::capnp::List<CapNode>::Reader lists[] = {orphan1.getReader(), orphan2.getReader()};
+		        kj::ArrayPtr<capnp::List<CapNode>::Reader> array = lists;
+			auto concat_orphan = message.getOrphanage().newOrphanConcat(array);
+			forestBuilder.adoptNodeList(kj::mv(concat_orphan));
+			*/
+			::capnp::List<CapNode>::Builder listBuilder = forestBuilder.initTinyList(blob_size);
+			::capnp::List<::capnp::List<CapNode>>::Builder listoflistBuilder = forestBuilder.initNodeList(total_num_lists);
+
+			/*auto orphan1 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
+			for(int j=0; j<blob_size; ++j){
+					orphan1.get()[j].setId(j);
+			}
+			auto orphan2 = message.getOrphanage().newOrphan<::capnp::List<CapNode>>(blob_size);
+			for(int j=0; j<blob_size; ++j){
+					orphan2.get()[j].setId(j);
+			}*/
+
+			/*::capnp::List<::capnp::List<CapNode>>::Reader lists[] = {orphan1.getReader(), orphan2.getReader()};
+		        kj::ArrayPtr<::capnp::List<::capnp::List<CapNode>>::Reader> array = lists;
+			auto concat_orphan = message.getOrphanage().newOrphanConcat(array);
+			forestBuilder.adoptNodeList(kj::mv(concat_orphan));
+			*/
+			/*
+			forestBuilder.adoptNodeList(kj::mv(orphan));
+			for(int i=0; i<blob_size; ++i){
+				orphan.get()[i].setId(i);
+			}
+			for(int i=0; i<1; ++i){
+				forest
+			}
+			nodeListBuilder.set(0, orphan);
+			*/
+			//auto node_orphan = builder.getOrphanage().newOrphan<CapNode>();
+			
+			int list_counter = 0;
+			int bin_counter = 0;
+			for(auto bin: bins){
+				int node_counter = 0;
+				for(int j=0; j<num_tiny_lists[bin_counter]; ++j){
+        				::capnp::List<CapNode>::Builder tinyListBuilder = listBuilder;
+					//::capnp::List<CapNode>::Builder tinyList;
+					for(int i=0; i<blob_size; ++i){
+						if(node_counter < bin.size()){
+							CapNode::Builder node = tinyListBuilder[i];
+							auto pacset_node = bin[node_counter];
+							createCapnpNode(node, pacset_node.getID(), pacset_node.getLeft(),
+                                pacset_node.getRight(), pacset_node.getFeature(), pacset_node.getThreshold());
+							tinyListBuilder.setWithCaveats(i, node);
+							node_counter++;
+						}
+					}
+					listoflistBuilder.set(list_counter, tinyListBuilder);
+					list_counter++;
+				}
+				bin_counter++;
+			}
+			std::cout<<"point 6\n";
+			fflush(stdout);
 			writeMessageToFd(fd, message);
+			std::cout<<"point 7\n";
+			fflush(stdout);
 		}
 
 		inline void serialize() {
 			std::string format = Config::getValue("format");
 			serializeMetadata();
-
+			std::cout<<"done metadata\n";
 			if(format == std::string("binary")){
 			    serializeModelBinary();
 			}
