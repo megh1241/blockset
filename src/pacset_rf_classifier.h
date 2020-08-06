@@ -234,9 +234,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			int num_threads = std::stoi(Config::getValue("numthreads"));
 			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
 			std::string modelfname = Config::getValue("modelfilename");
-        	 	
+        	 	std::string finalfname = ("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname);
 			FILE *f;
-			f = fopen(modelfname.c_str(), "r");
+			f = fopen(finalfname.c_str(), "r");
 			int fd = fileno(f);
 			//Get file size
         		struct stat64 statInfo;
@@ -348,8 +348,34 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			return 0;
 #endif
 		}
+		
+		void writeGarbage(){
+			std::fstream fi; 
+                	fi.open("/data_new/rand_file.txt", std::ios::out);
+                	for(int i=0; i<900000000; ++i)
+                    		fi<<(i+1)%6<<"\n";
+                	for(int i=0; i<900000000; ++i)
+                    		fi<<(float)(i) /float(i+2)<<"\n";
+                	fi.close();
+		}
 
-
+		void readGarbage(){
+                	std::fstream fi;
+                	int j;
+                	fi.open("/data_new/rand_file.txt");
+                	for(int i=0; i<300000000; ++i)
+                    		fi>>j;
+                	for(int i=0; i<300000000; ++i)
+                    		fi>>j;
+                	for(int i=0; i<300000000; ++i)
+                    		fi>>j;
+                	float k;
+			for(int i=0; i<400000000; ++i)
+                    		fi>>k;
+			for(int i=0; i<500000000; ++i)
+                    		fi>>k;
+                	fi.close();
+		}
 
 		inline void predict(const std::vector<std::vector<T>>& observation, 
 				std::vector<int>& preds, std::vector<int>&results, bool mmap) {
@@ -378,7 +404,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<int> num_blocks;
 			std::cout<<"observation start: "<<ct<<"\n";
 			fflush(stdout);
+			writeGarbage();
 			for(auto single_obs : observation){
+				readGarbage();
+				readGarbage();
+				readGarbage();
 				auto start = std::chrono::steady_clock::now();
 				if (format == "capnp")
 					blocks = CapnpPredict(single_obs, preds, ct+1);
