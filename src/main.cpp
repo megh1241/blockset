@@ -10,6 +10,7 @@
 #include "pacset_base_model.h"
 #include "pacset_rf_classifier.h"
 #include "pacset_rf_regressor.h"
+#include "pacset_gb_classifier.h"
 #include "pacset_factory.cpp"
 #include "utils.h"
 
@@ -97,6 +98,11 @@ int main(int argc, char* argv[]) {
         obj = (PacsetRandomForestRegressor<float, float> *)
             pf.getModel<float, float>();
     }
+    else if(Config::getValue("algorithm") == std::string("gradientboost")
+            && Config::getValue("task") == std::string("classification")) {
+        obj = (PacsetGradientBoostedClassifier<float, float> *)
+            pf.getModel<float, float>();
+    } 
 
     //Read the model from file, pack and save to file
     if(Config::getValue("mode") == std::string("both")){
