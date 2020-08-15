@@ -343,6 +343,7 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //Recursively walk through the json model until we get the nodes per estimator
     int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
     std::vector<StatNode<T, F>> temp_bin;
+    std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
 
     if (task.compare(std::string("classification")) == 0) {
         for(int i=0; i<num_classes; ++i)
@@ -353,7 +354,6 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //We want the leafs to point to the class nodes. temp_ensemble doesnot
     //contain class nodes.
 
-    std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
     int left=0, right=0, cardinality=0, feature=0;
     int id = 0;
     int node_counter = 0;
@@ -441,6 +441,61 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 	tree_starts.clear();
     }
     in.close();
+}
+
+
+template<typename T, typename F>
+void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
+                std::vector<int>&bin_sizes,
+                std::vector<std::vector<int>>&bin_start,
+                std::vector<int>&bin_node_sizes){
+	std::cout<<"enter\n";
+    std::string meta_model_filename = Config::getValue("modelmetafilename");
+    std::ifstream in_meta(meta_model_filename);
+    std::string contents_meta((std::istreambuf_iterator<char>(in_meta)),
+                        std::istreambuf_iterator<char>());
+    const char *json = contents_meta.data();
+
+    //Parse the json string using rapidjson
+    Document d;
+    d.Parse(json);
+    assert(d.IsObject());
+    int size = d.Size();
+    int num_classes = d["num_class"].GetInt();
+    Confg::setValue("num_classes", num_classes);
+
+    std::string task = Config::getValue("task");
+    int count;
+    //Read the json from file into a string stream
+    std::string model_filename = Config::getValue("modelfilename");
+    std::ifstream in(model_filename);
+    std::string contents((std::istreambuf_iterator<char>(in)),
+                        std::istreambuf_iterator<char>());
+    json = contents.data();
+
+    //Parse the json string using rapidjson
+    d.Parse(json);
+    assert(d.IsObject());
+    int forest_size = d.Size();
+    const Value& forest_nodes = d;
+    std::vector<StatNode<T, F>> temp_bin;
+    std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
+    int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
+    for (SizeType i=0; i< forest_size; ++i){
+    	std::cout<<forest_nodes[i]["nodeid"].GetInt()<<"\n";
+	std::cout<<forest_nodes[i]["depth"].GetInt()<<"\n";
+    	std::cout<<forest_nodes[i]["split"].GetString()<<"\n";
+	temp_bin.push_back(node);
+        tree_num_in_bin++;
+	if(tree_num_in_bin == bin_sizes[bin_number]){
+            ++bin_number;
+            tree_num_in_bin = 0;
+            temp_ensemble.push_back(temp_bin); 
+	    temp_bin.clear();
+        }
+        tree_offset = temp_bin.size();
+    }
+    std::cout<<"exit\n";
 }
 
 template class JSONReader<float, float>;
