@@ -449,44 +449,55 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
                 std::vector<int>&bin_sizes,
                 std::vector<std::vector<int>>&bin_start,
                 std::vector<int>&bin_node_sizes){
-	std::cout<<"enter\n";
-    std::string meta_model_filename = Config::getValue("modelmetafilename");
-    std::ifstream in_meta(meta_model_filename);
-    std::string contents_meta((std::istreambuf_iterator<char>(in_meta)),
+    std::string model_filename = Config::getValue("modelfilename");
+    std::ifstream in(model_filename);
+    std::string contents((std::istreambuf_iterator<char>(in)),
                         std::istreambuf_iterator<char>());
-    const char *json = contents_meta.data();
+    const char *json = contents.data();
 
     //Parse the json string using rapidjson
     Document d;
     d.Parse(json);
     assert(d.IsObject());
-    int size = d.Size();
-    int num_classes = d["num_class"].GetInt();
-    Confg::setValue("num_classes", num_classes);
+    int num_classes = d[0]["num_class"].GetInt();
+    int num_trees = d[0]["num_tree"].GetInt() * num_classes;
+    
+    Config::setConfigItem("numclasses", std::to_string(num_classes));
 
-    std::string task = Config::getValue("task");
-    int count;
-    //Read the json from file into a string stream
-    std::string model_filename = Config::getValue("modelfilename");
-    std::ifstream in(model_filename);
-    std::string contents((std::istreambuf_iterator<char>(in)),
-                        std::istreambuf_iterator<char>());
-    json = contents.data();
-
-    //Parse the json string using rapidjson
-    d.Parse(json);
-    assert(d.IsObject());
-    int forest_size = d.Size();
-    const Value& forest_nodes = d;
+    int ensemble_size = d.Size();
+    const Value& ensemble_nodes = d;
     std::vector<StatNode<T, F>> temp_bin;
     std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
-    int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
-    for (SizeType i=0; i< forest_size; ++i){
-    	std::cout<<forest_nodes[i]["nodeid"].GetInt()<<"\n";
-	std::cout<<forest_nodes[i]["depth"].GetInt()<<"\n";
-    	std::cout<<forest_nodes[i]["split"].GetString()<<"\n";
-	temp_bin.push_back(node);
-        tree_num_in_bin++;
+    
+    int num_bins = populateBinSizes(bin_sizes, num_trees);
+    int cardinality = 0, num_attr = 0, tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
+    int left, right, feature, id;
+    float threshold;
+    for (SizeType i=1; i< ensemble_size; ++i){
+	num_attr = ensemble_nodes[i].Size();
+	//Leaf node
+	if(num_attr == 2) {
+		id = ensemble_nodes[i][0].GetInt();
+		left = -1;
+		right  = -1;
+		feature = -1;
+		threshold = ensemble_nodes[i][1].GetFloat();	
+		temp_bin.emplace_back(left, right, 
+				feature, threshold,
+				cardinality, id, id);
+	}
+	//internal node
+	else{
+		id  = ensemble_nodes[i][0].GetInt();
+		feature = ensemble_nodes[i][1].GetInt();
+		threshold = ensemble_nodes[i][2].GetFloat();
+		left = ensemble_nodes[i][3].GetInt();
+		right = ensemble_nodes[i][4].GetInt();
+		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
+				feature, threshold, cardinality, id, id);
+	}
+	if(id == 0)
+        	tree_num_in_bin++;
 	if(tree_num_in_bin == bin_sizes[bin_number]){
             ++bin_number;
             tree_num_in_bin = 0;
@@ -495,8 +506,23 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
         }
         tree_offset = temp_bin.size();
     }
-    std::cout<<"exit\n";
-}
+    for(auto bin: temp_ensemble)
+	bins.push_back(bin);
+    std::vector<int> tree_starts;
+    int counter = 0;
+    for(auto bin: bins){
+        for(auto node: bin){
+	    //root node
+            if(node.getDepth() == 0)
+                tree_starts.push_back(counter);
 
+            counter++;
+        }
+        counter = 0;
+        bin_node_sizes.push_back(bin.size());
+        bin_start.push_back(tree_starts);
+	tree_starts.clear();
+    }
+}
 template class JSONReader<float, float>;
 template class JSONReader<int, float>;

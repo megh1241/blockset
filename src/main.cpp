@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
         std::vector<std::vector<float>> test_vec;
 
 
-        if (Config::getValue("task") == std::string("classification")){
+        if ((Config::getValue("algorithm") == std::string("randomforest")) && (Config::getValue("task") == std::string("classification"))){
             std::vector<int> preds;
             std::vector<int> predi;    
             std::vector<int> lab;
