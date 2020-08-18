@@ -44,7 +44,6 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 
         inline void pack(){
             std::string layout = Config::getValue("layout");
-	    std::cout<<"layout "<<layout<<"\n";
             auto bin = PacsetBaseModel<T, F>::bins[0];
             int num_bins = std::stoi(Config::getValue("numthreads"));
             for(int i=0; i<num_bins; ++i){
@@ -200,12 +199,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
 		total_num_trees += siz;
 		bin_tree_offset = tree_offsets[bin_counter];
-		std::cout<<"printing in predict!\n";
-		//for(int i=0; i<PacsetBaseModel<T, F>::bin_node_sizes[0]; ++i)
-		//	bin[i].printNode();
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
-                    //bin[curr_node[i]].printNode();
 		    __builtin_prefetch(&bin[curr_node[i]], 0, 3);
 #ifdef BLOCK_LOGGING 
                     block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
@@ -218,8 +213,6 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                     for( i=0; i<siz; ++i){
 		
 			if(curr_node[i] >= 0){
-			    std::cout<<i<<": "<<curr_node[i]<<"\n";
-			    bin[curr_node[i]].printNode();
 #ifdef BLOCK_LOGGING 
                     	    block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
 #pragma omp critical
@@ -229,7 +222,6 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                             feature_val = observation[feature_num];
                             if(bin[curr_node[i]].getLeft() == -1){
 				pred_mat[(bin_tree_offset+i)%num_classes] += bin[curr_node[i]].getThreshold();
-				//result_mat[(bin_tree_offset+i)/num_classes][(bin_tree_offset+i)%num_classes] = bin[curr_node[i]].getThreshold();
                                 curr_node[i] = -1;
 			    }
 			    else {
@@ -247,27 +239,15 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 }
 
             }
-	    //std::vector<float>result_mat_proba = logit(pred_mat);
 	    std::vector<float>result_mat_proba(pred_mat);
-	    /*for(auto ele: result_mat_proba){
-            	std::cout<<ele<<", ";
-	    }*/
-	    std::cout<<"\n";
-	    int max = -999;
+	    int max = result_mat_proba[0];
 	    int maxid = 0;
 	    for(int i=0; i<num_classes; ++i){
-            	if(result_mat_proba[i]>max){
+            	if(result_mat_proba[i] > max){
                     maxid = i;
                     max = result_mat_proba[i];
                 }
             }
-	    /*for(auto row: result_mat){
-	    	for(auto ele: row){
-			std::cout<<ele<<", ";
-		}
-		std::cout<<"\n";
-	    }
-	    */
             preds.clear();
             preds.push_back((double)maxid);
             preds.push_back((double)1);
@@ -310,8 +290,6 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 else{
                     blocks = predict(single_obs, preds);
                 }
-		std::cout<<"****************************\n";
-		//std::cout<<"after observation: "<<ct<<"\n";
                 num_blocks.push_back(blocks);
                 results.push_back((double)preds[0] / (double)preds[1] );    
             
@@ -321,8 +299,6 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 		elapsed_arr.push_back(elapsed);
 #endif
 		ct+=1;
-		if(ct==-2)
-			break;
             }
 
 #ifdef BLOCK_LOGGING 
@@ -451,11 +427,9 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             //Number of classes
             f>>num_classes;
             Config::setConfigItem("numclasses", std::to_string(num_classes));
-	    std::cout<<num_classes<<"\n";
 	    //Number of bins
             f>>num_bins;
             Config::setConfigItem("numthreads", std::to_string(num_bins));
-	    std::cout<<num_bins<<"\n";
             std::vector<int> num_trees_bin;
             std::vector<int> num_nodes_bin;
             std::vector<std::vector<int>> bin_tree_start;

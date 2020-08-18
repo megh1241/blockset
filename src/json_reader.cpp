@@ -475,8 +475,6 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     int left, right, feature, id, depth, nodeid;
     float threshold;
     int tree_end_flag = 0;
-    for(int i=0; i<num_bins; ++i)
-	    std::cout<<bin_sizes[i]<<"\n";
     for (SizeType i=1; i< ensemble_size; ++i){
 	num_attr = ensemble_nodes[i].Size();
 	id = temp_bin.size();
@@ -487,11 +485,7 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
 		right  = -1;
 		feature = -1;
 		threshold = ensemble_nodes[i][1].GetFloat();	
-		if(nodeid == 0){
-			depth = 0;
-		}
-		else
-			depth = 1;
+		depth = (nodeid == 0) ? 0 : 1;
 		temp_bin.emplace_back(left, right, 
 				feature, threshold,
 				cardinality, id, depth);
@@ -503,11 +497,7 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
 		threshold = ensemble_nodes[i][2].GetFloat();
 		left = ensemble_nodes[i][3].GetInt();
 		right = ensemble_nodes[i][4].GetInt();
-		if(nodeid == 0){
-			depth = 0;
-		}
-		else
-			depth = 1;
+		depth = (nodeid == 0) ? 0 : 1;
 		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
 				feature, threshold, cardinality, id, depth);
 	}
@@ -537,21 +527,15 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     for(auto bin: bins){
         for(auto node: bin){
 	    //root node
-	    node.printNode();
             if(node.getDepth() == 0)
                 tree_starts.push_back(counter);
 
             counter++;
         }
-	std::cout<<"************\n";
         counter = 0;
         bin_node_sizes.push_back(bin.size());
         bin_start.push_back(tree_starts);
 	tree_starts.clear();
-    }
-    for(auto b: bin_start){
-    	for(auto j: b)
-		std::cout<<j<<"\n";
     }
     
 }

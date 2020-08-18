@@ -103,7 +103,6 @@ class Packer{
 			std::vector<int> &bin_start, 
 			std::deque<StatNode<T, F>> &bin_q) { 
 		int num_classes = std::atoi(Config::getValue("numclasses").c_str());
-		std::cout<<"num_classes: "<<num_classes<<"\n";
 		while(!bin_q.empty()){
 			std::deque<StatNode<T, F>> bin_st;
 			auto ele = bin_q.front();
@@ -312,7 +311,6 @@ class Packer{
 		int actual_pos_boundary = ( actual_pos / block_size + 1)*block_size;
 		int subtree_end_id = -2;
 
-		//std::cout<<"finalbin size: "<<finalbin.size()<<"\n";
 		std::cout<<"initial queue size: "<<bin_q.size()<<"\n";	
 		std::cout<<"bin size: "<<bin.size()<<"\n";
 		std::sort(bin_q.begin(), bin_q.end(), [this](auto l, auto r){return compCard(l, r);} );
@@ -963,7 +961,6 @@ class Packer{
 				PackLayoutWithBin(bin, num_trees_in_bin, bin_start);
 			}
 			else{
-				std::cout<<"regular layout\n";
 				PackRegularLayout(bin, num_trees_in_bin, bin_start);
 			}
 		}
@@ -1022,7 +1019,6 @@ class Packer{
 
 			// STAT per (sub)tree layout 
 			if(layout.find(std::string("bfs")) != std::string::npos){
-				std::cout<<"entering bfs helper\n";
 				packSubtreeBFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
 			}
 			else if(layout.find(std::string("dfs")) != std::string::npos){
