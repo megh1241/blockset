@@ -182,17 +182,35 @@ int main(int argc, char* argv[]) {
             std::cout<<"Accuracy: "<<acc<<"\n";
         }
         else{
-            std::cout<<"Not classification!\n";
-            std::vector<double> preds;
-            std::vector<double> predi;    
-            std::vector<double> lab;
-            //Perform prediction
-            loadTestData(test_vec, lab); 
-            obj->predict(test_vec, preds, predi, true);
-            std::cout<<"predicted\n"; 
-            //Compute accuracy
-            double acc = getAccuracy(predi, lab);
-            std::cout<<"Accuracy: "<<acc<<"\n";
+	    if(Config::getValue("task") == std::string("regression")){
+            	std::cout<<"Not classification!\n";
+            	std::vector<double> preds;
+            	std::vector<double> predi;    
+            	std::vector<double> lab;
+            	//Perform prediction
+            	loadTestData(test_vec, lab); 
+            	obj->predict(test_vec, preds, predi, true);
+            	std::cout<<"predicted\n"; 
+            	//Compute accuracy
+            	double acc = getAccuracy(predi, lab);
+            	std::cout<<"Accuracy: "<<acc<<"\n";
+	    }
+	    else{
+            	std::cout<<"GBT!\n";
+            	std::vector<double> preds;
+            	std::vector<double> pred_d;    
+		std::vector<int> pred_i;
+            	std::vector<int> lab;
+            	//Perform prediction
+            	loadTestData(test_vec, lab); 
+            	obj->predict(test_vec, preds, pred_d, true);
+		for(auto i: pred_d)
+			pred_i.push_back((int)i);
+            	std::cout<<"predicted\n"; 
+            	double acc = getAccuracy(pred_i, lab);
+            	std::cout<<"Accuracy: "<<acc<<"\n";
+ 	    
+	    }
         }
     }
 }

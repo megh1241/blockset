@@ -102,8 +102,8 @@ class Packer{
 			const int num_trees_in_bin, 
 			std::vector<int> &bin_start, 
 			std::deque<StatNode<T, F>> &bin_q) { 
-
 		int num_classes = std::atoi(Config::getValue("numclasses").c_str());
+		std::cout<<"num_classes: "<<num_classes<<"\n";
 		while(!bin_q.empty()){
 			std::deque<StatNode<T, F>> bin_st;
 			auto ele = bin_q.front();
@@ -963,6 +963,7 @@ class Packer{
 				PackLayoutWithBin(bin, num_trees_in_bin, bin_start);
 			}
 			else{
+				std::cout<<"regular layout\n";
 				PackRegularLayout(bin, num_trees_in_bin, bin_start);
 			}
 		}
@@ -1014,7 +1015,6 @@ class Packer{
 
 			std::deque<StatNode<T, F>> bin_q;
 			int num_classes = std::atoi(Config::getValue("numclasses").c_str());
-
 			//initialize queue with root node of each tree
 			for(int i=0; i<num_trees_in_bin; ++i){
 				bin_q.push_back(bin[bin_start[i]]);
@@ -1022,6 +1022,7 @@ class Packer{
 
 			// STAT per (sub)tree layout 
 			if(layout.find(std::string("bfs")) != std::string::npos){
+				std::cout<<"entering bfs helper\n";
 				packSubtreeBFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
 			}
 			else if(layout.find(std::string("dfs")) != std::string::npos){

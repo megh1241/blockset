@@ -462,7 +462,8 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     int num_classes = d[0]["num_class"].GetInt();
     int num_trees = d[0]["num_tree"].GetInt() * num_classes;
     
-    Config::setConfigItem("numclasses", std::to_string(num_classes));
+    Config::setConfigItem("numclassesactual", std::to_string(num_classes));
+    Config::setConfigItem("numclasses", std::to_string(0));
 
     int ensemble_size = d.Size();
     const Value& ensemble_nodes = d;
@@ -471,58 +472,88 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     
     int num_bins = populateBinSizes(bin_sizes, num_trees);
     int cardinality = 0, num_attr = 0, tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
-    int left, right, feature, id;
+    int left, right, feature, id, depth, nodeid;
     float threshold;
+    int tree_end_flag = 0;
+    for(int i=0; i<num_bins; ++i)
+	    std::cout<<bin_sizes[i]<<"\n";
     for (SizeType i=1; i< ensemble_size; ++i){
 	num_attr = ensemble_nodes[i].Size();
+	id = temp_bin.size();
 	//Leaf node
 	if(num_attr == 2) {
-		id = ensemble_nodes[i][0].GetInt();
+		nodeid = ensemble_nodes[i][0].GetInt();
 		left = -1;
 		right  = -1;
 		feature = -1;
 		threshold = ensemble_nodes[i][1].GetFloat();	
+		if(nodeid == 0){
+			depth = 0;
+		}
+		else
+			depth = 1;
 		temp_bin.emplace_back(left, right, 
 				feature, threshold,
-				cardinality, id, id);
+				cardinality, id, depth);
 	}
 	//internal node
 	else{
-		id  = ensemble_nodes[i][0].GetInt();
+		nodeid  = ensemble_nodes[i][0].GetInt();
 		feature = ensemble_nodes[i][1].GetInt();
 		threshold = ensemble_nodes[i][2].GetFloat();
 		left = ensemble_nodes[i][3].GetInt();
 		right = ensemble_nodes[i][4].GetInt();
+		if(nodeid == 0){
+			depth = 0;
+		}
+		else
+			depth = 1;
 		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
-				feature, threshold, cardinality, id, id);
+				feature, threshold, cardinality, id, depth);
 	}
-	if(id == 0)
-        	tree_num_in_bin++;
-	if(tree_num_in_bin == bin_sizes[bin_number]){
-            ++bin_number;
-            tree_num_in_bin = 0;
-            temp_ensemble.push_back(temp_bin); 
-	    temp_bin.clear();
-        }
-        tree_offset = temp_bin.size();
+	if(i+1 == ensemble_size)
+		tree_end_flag = 1;
+	else if(ensemble_nodes[i+1][0].GetInt() == 0)
+		tree_end_flag = 1;
+	
+	if(tree_end_flag == 1){	
+            tree_num_in_bin++;
+	    if(tree_num_in_bin == bin_sizes[bin_number]){
+            	++bin_number;
+                tree_num_in_bin = 0;
+                temp_ensemble.push_back(temp_bin); 
+	        temp_bin.clear();
+            }
+            tree_offset = temp_bin.size();
+	    tree_end_flag = 0;
+	}
     }
+
     for(auto bin: temp_ensemble)
 	bins.push_back(bin);
+    
     std::vector<int> tree_starts;
     int counter = 0;
     for(auto bin: bins){
         for(auto node: bin){
 	    //root node
+	    node.printNode();
             if(node.getDepth() == 0)
                 tree_starts.push_back(counter);
 
             counter++;
         }
+	std::cout<<"************\n";
         counter = 0;
         bin_node_sizes.push_back(bin.size());
         bin_start.push_back(tree_starts);
 	tree_starts.clear();
     }
+    for(auto b: bin_start){
+    	for(auto j: b)
+		std::cout<<j<<"\n";
+    }
+    
 }
 template class JSONReader<float, float>;
 template class JSONReader<int, float>;

@@ -44,7 +44,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 
         inline void pack(){
             std::string layout = Config::getValue("layout");
-
+	    std::cout<<"layout "<<layout<<"\n";
             auto bin = PacsetBaseModel<T, F>::bins[0];
             int num_bins = std::stoi(Config::getValue("numthreads"));
             for(int i=0; i<num_bins; ++i){
@@ -158,7 +158,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             std::vector<std::vector<float> > result_mat(
     					num_boosters,
     			std::vector<float>(num_classes)) ;
-	    
+	   
+	    std::vector<float> pred_mat(num_classes); 
 	    std::string modelfname = Config::getValue("modelfilename");
             
 #ifdef LAT_LOGGING
@@ -176,12 +177,19 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             int offset = 0;
             double leaf_sum = 0;
             std::vector<int> offsets;
+            std::vector<int> tree_offsets;
             int curr_offset = 0;
+	    int bin_tree_offset = 0;
             total_num_trees=0;
 	    for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
                 offsets.push_back(curr_offset);
                 curr_offset += val;
             }
+	    tree_offsets.push_back(0);
+	    int it = 0;
+	    for(auto val: PacsetBaseModel<T, F>::bin_sizes){
+	    	tree_offsets.push_back(tree_offsets[it++] +  val);
+	    }
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 int block_number = 0;
@@ -191,6 +199,10 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 T feature_val;
                 int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
 		total_num_trees += siz;
+		bin_tree_offset = tree_offsets[bin_counter];
+		std::cout<<"printing in predict!\n";
+		//for(int i=0; i<PacsetBaseModel<T, F>::bin_node_sizes[0]; ++i)
+		//	bin[i].printNode();
                 for(i=0; i<siz; ++i){
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     //bin[curr_node[i]].printNode();
@@ -204,8 +216,10 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 do{
                     number_not_in_leaf = 0;
                     for( i=0; i<siz; ++i){
-			//std::cout<<curr_node[i]<<"\n";
-		        if(curr_node[i] > 0){
+		
+			if(curr_node[i] >= 0){
+			    std::cout<<i<<": "<<curr_node[i]<<"\n";
+			    bin[curr_node[i]].printNode();
 #ifdef BLOCK_LOGGING 
                     	    block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
 #pragma omp critical
@@ -214,7 +228,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
                             if(bin[curr_node[i]].getLeft() == -1){
-				result_mat[i/num_classes][i%num_classes] = bin[curr_node[i]].getThreshold();
+				pred_mat[(bin_tree_offset+i)%num_classes] += bin[curr_node[i]].getThreshold();
+				//result_mat[(bin_tree_offset+i)/num_classes][(bin_tree_offset+i)%num_classes] = bin[curr_node[i]].getThreshold();
                                 curr_node[i] = -1;
 			    }
 			    else {
@@ -232,15 +247,30 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 }
 
             }
-	    for(auto row: result_mat){
+	    //std::vector<float>result_mat_proba = logit(pred_mat);
+	    std::vector<float>result_mat_proba(pred_mat);
+	    /*for(auto ele: result_mat_proba){
+            	std::cout<<ele<<", ";
+	    }*/
+	    std::cout<<"\n";
+	    int max = -999;
+	    int maxid = 0;
+	    for(int i=0; i<num_classes; ++i){
+            	if(result_mat_proba[i]>max){
+                    maxid = i;
+                    max = result_mat_proba[i];
+                }
+            }
+	    /*for(auto row: result_mat){
 	    	for(auto ele: row){
 			std::cout<<ele<<", ";
 		}
 		std::cout<<"\n";
 	    }
+	    */
             preds.clear();
-            preds.push_back((double)leaf_sum);
-            preds.push_back((double)total_num_trees);
+            preds.push_back((double)maxid);
+            preds.push_back((double)1);
 #ifdef BLOCK_LOGGING 
             return blocks_accessed.size();
 #else
@@ -273,11 +303,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             std::vector<int> num_blocks;
 	    int ct=1;
             for(auto single_obs : observation){
-		for(auto ele: single_obs)
-			std::cout<<ele<<", ";
 		
 		auto start = std::chrono::steady_clock::now();
-		std::cout<<"before observation: "<<ct<<"\n";
                 if (mmap)
                     blocks = mmapAndPredict(single_obs, preds, ct);
                 else{
@@ -294,6 +321,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 		elapsed_arr.push_back(elapsed);
 #endif
 		ct+=1;
+		if(ct==-2)
+			break;
             }
 
 #ifdef BLOCK_LOGGING 
@@ -323,7 +352,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 
         inline void serialize() {
             auto bins = PacsetBaseModel<T, F>::bins;
-            int num_classes = std::stoi(Config::getValue("numclasses"));
+            int num_classes = std::stoi(Config::getValue("numclassesactual"));
             int num_bins = bins.size();
             std::vector<int> bin_sizes = PacsetBaseModel<T, F>::bin_sizes;
             std::vector<int> bin_node_sizes = PacsetBaseModel<T, F>::bin_node_sizes;

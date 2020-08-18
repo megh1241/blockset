@@ -15,7 +15,7 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
     std::string line, word, temp; 
     std::vector<float> temp_vector;
     int num_obs = 0;
-    int max_n = 50;
+    int max_n = 10000;
     while(getline(fin, line, '\n')){
         std::istringstream templine(line);
         std::string data;
@@ -96,4 +96,33 @@ double getAccuracy(const std::vector<double> &predicted, const std::vector<doubl
     }
     double mean_square = std::sqrt(sum) / (double)(siz);
     return mean_square;
+}
+
+std::vector<std::vector<float>> logit(std::vector<std::vector<float>> input_mat){
+    int num_rows = input_mat.size();
+    int num_cols = input_mat[0].size();
+    
+    std::vector<std::vector<float>> output_mat(num_rows, std::vector<float>(num_cols));
+    
+    for(int i=0; i<num_rows; ++i){
+    	for(int j=0; j<num_cols; ++j){
+	    output_mat[i][j] = 1 / (1 + exp(-1*input_mat[i][j]) );	    
+	}
+    }
+    return output_mat;
+}
+
+std::vector<float> logit(std::vector<float> input_mat){
+    int num_rows = input_mat.size();
+    
+    std::vector<float> output_mat(num_rows);
+    
+    for(int i=0; i<num_rows; ++i){
+        output_mat[i] = 1 / (1 + exp(-1*input_mat[i]) );	    
+    }
+    return output_mat;
+}
+
+float logit(float input){
+    return 1/(1+exp(-1*input));
 }
