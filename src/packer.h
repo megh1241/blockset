@@ -103,6 +103,8 @@ class Packer{
 			std::vector<int> &bin_start, 
 			std::deque<StatNode<T, F>> &bin_q) { 
 		int num_classes = std::atoi(Config::getValue("numclasses").c_str());
+		//for(auto i : bin)
+		//	i.printNode();
 		while(!bin_q.empty()){
 			std::deque<StatNode<T, F>> bin_st;
 			auto ele = bin_q.front();
@@ -129,6 +131,7 @@ class Packer{
 			}
 		}		
 	}
+
 
 	inline void packSubtreeDFSHelper(
 			std::vector<StatNode<T, F>>&bin, 

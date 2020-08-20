@@ -196,7 +196,6 @@ int main(int argc, char* argv[]) {
             	std::cout<<"Accuracy: "<<acc<<"\n";
 	    }
 	    else{
-            	std::cout<<"GBT!\n";
             	std::vector<double> preds;
             	std::vector<double> pred_d;    
 		std::vector<int> pred_i;

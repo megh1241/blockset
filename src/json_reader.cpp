@@ -305,6 +305,7 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 
 
     std::string task = Config::getValue("task");
+    std::string algorithm = Config::getValue("algorithm");
     int count;
     //Read the json from file into a string stream
     std::string model_filename = Config::getValue("modelfilename");
@@ -324,16 +325,22 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     //get and set number of classes
     int num_classes;
     
-    if (task.compare(std::string("classification")) == 0) {
+    if(algorithm.compare(std::string("randomforest")) == 0 && task.compare(std::string("classification")) == 0)
     	num_classes = d["n_classes"].GetInt();
-    } 
     else
     	num_classes = 0; 
     
-    
     Config::setConfigItem("numclasses", std::to_string(num_classes));
+
     //Get the number of trees
     int num_trees = d["n_estimators"].GetInt();
+    
+    if(algorithm.compare(std::string("gradientboost")) ==0){
+	//num_trees *= d["n_classes"].GetInt();
+        Config::setConfigItem(std::string("numclassesactual"), std::to_string(d["n_classes"].GetInt()));
+    }
+    
+    
     int num_bins = populateBinSizes(bin_sizes, num_trees);
     //reserve memory for bins
     /*bins.reserve(num_bins);
@@ -345,9 +352,11 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     std::vector<StatNode<T, F>> temp_bin;
     std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
 
-    if (task.compare(std::string("classification")) == 0) {
-        for(int i=0; i<num_classes; ++i)
-            temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
+    if(algorithm.compare(std::string("randomforest")) == 0){
+    	if (task.compare(std::string("classification")) == 0) {
+        	for(int i=0; i<num_classes; ++i)
+            		temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
+    	}
     }
     tree_offset = temp_bin.size();
     //Note: temp_ensemble contains the leaf nodes as a separate node.
@@ -405,16 +414,17 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
             tree_num_in_bin = 0;
             temp_ensemble.push_back(temp_bin); 
 	    temp_bin.clear();
-            if (task.compare(std::string("classification")) == 0) {
-                
-                for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
-                    temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
-            }
+	    if(algorithm.compare(std::string("randomforest"))==0){
+            	if (task.compare(std::string("classification")) == 0) {
+                	for(int i=0; i< std::stoi(Config::getValue("numclasses")); ++i)
+                    		temp_bin.push_back(StatNode<T, F>(-1, i, -1, -1, -1, -1, -1));
+            	}
+	    }
         }
         tree_offset = temp_bin.size();
     }
 
-    if (task.compare(std::string("classification")) == 0)
+    if (task.compare(std::string("classification")) == 0 && algorithm.compare(std::string("randomforest"))==0)
         removeClassLeafNodes(bins, temp_ensemble );
     else{
 	    for(auto bin: temp_ensemble)
@@ -456,6 +466,8 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     const char *json = contents.data();
 
     //Parse the json string using rapidjson
+    std::cout<<"ENter\n";
+    fflush(stdout);
     Document d;
     d.Parse(json);
     assert(d.IsObject());
@@ -475,6 +487,8 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     int left, right, feature, id, depth, nodeid;
     float threshold;
     int tree_end_flag = 0;
+    std::cout<<"point 2\n";
+    fflush(stdout);
     for (SizeType i=1; i< ensemble_size; ++i){
 	num_attr = ensemble_nodes[i].Size();
 	id = temp_bin.size();
@@ -514,19 +528,24 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
                 temp_ensemble.push_back(temp_bin); 
 	        temp_bin.clear();
             }
-            tree_offset = temp_bin.size();
 	    tree_end_flag = 0;
+            tree_offset = temp_bin.size();
 	}
     }
+    std::cout<<"point 3\n";
+    fflush(stdout);
 
     for(auto bin: temp_ensemble)
 	bins.push_back(bin);
     
+    std::cout<<"point 4\n";
+    fflush(stdout);
     std::vector<int> tree_starts;
     int counter = 0;
     for(auto bin: bins){
         for(auto node: bin){
 	    //root node
+	    node.printNode();
             if(node.getDepth() == 0)
                 tree_starts.push_back(counter);
 
