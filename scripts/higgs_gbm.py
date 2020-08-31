@@ -102,24 +102,33 @@ def load_csv(filename):
     return X_train, X_test, X_train, X_test
 
 
-# To apply a classifier on this data, we need to flatten the image, to
-# turn the data in a (samples, feature) matrix:
-#n_samples = len(digits.images)
-#data = digits.images.reshape((n_samples, -1))
-
-# Split data into train and test subsets
-#X_train, X_test, y_train, y_test = train_test_split(
-#    data, digits.target, test_size=0.95, shuffle=False)
-
-X_train, y_train, X_test, y_test = load_csv(data_filename)
-#X_train, y_train = load_iris(return_X_y=True)
-#X_train = np.array(X_train)
-#X_train = X_train.astype(np.float32)
-gb_clf = trainAndSave(X_train, y_train)
-write_to_json(gb_clf, json_filename)
-'''
-trees = []
-for i in range(len(rf_clf.estimators_)):
-    for j in range(3):
-        trees.append(rf_clf.estimators_[i,j])
-'''
+import numpy as np
+from sklearn.ensemble import GradientBoostingClassifier as GBC
+import math
+import pandas as pd
+''' 
+# Load training data
+data_train = np.loadtxt( '/data9/HIGGS.csv', delimiter=',', skiprows=1, converters={32: lambda x:int(x=='s'.encode('utf-8')) } )
+ 
+# Pick a random seed for reproducible results. Choose wisely!
+np.random.seed(42)
+# Random number for training/validation splitting
+r =np.random.rand(data_train.shape[0])
+ 
+# Put Y(truth), X(data), W(weight), and I(index) into their own arrays
+# First 90% are training
+Y_train = data_train[:,32][r<0.9]
+X_train = data_train[:,1:31][r<0.9]
+W_train = data_train[:,31][r<0.9]
+# Lirst 10% are validation
+Y_valid = data_train[:,32][r>=0.9]
+X_valid = data_train[:,1:31][r>=0.9]
+W_valid = data_train[:,31][r>=0.9]
+ '''
+# Train the GradientBoostingClassifier using our good features
+gbc = GBC(n_estimators=682, max_depth=12,min_samples_leaf=200,max_features=10,verbose=1)
+X_train = pd.read_csv("/data9/HIGGS.csv", nrows = (11000000 - 500000), header = None)
+Y_train = np.int8(X_train[0])
+X_train = np.asarray(X_train.drop([0], axis = 1))
+gbc.fit(X_train,Y_train) 
+write_to_json(gbc, json_filename)

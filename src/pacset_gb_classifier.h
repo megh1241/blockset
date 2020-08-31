@@ -243,7 +243,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             }
 std::vector<float>result_mat_proba(pred_mat);
 //std::vector<float>result_mat_proba;
-//	    result_mat_proba = logit(pred_mat);
+//	result_mat_proba = logit(pred_mat);
 	    int max = result_mat_proba[0];
 	    int maxid = 0;
 	    for(int i=0; i<num_classes; ++i){

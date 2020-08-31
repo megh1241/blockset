@@ -543,7 +543,7 @@ void JSONReader<T, F>::convertXG(std::vector<std::vector<StatNode<T, F>>>&bins,
     std::vector<int> tree_starts;
     int counter = 0;
     for(auto bin: bins){
-        for(auto node: bin){
+	for(auto node: bin){
 	    //root node
 	    node.printNode();
             if(node.getDepth() == 0)

@@ -4,10 +4,40 @@ from sklearn.datasets import dump_svmlight_file
 from sklearn.model_selection import train_test_split
 from sklearn import datasets
 
-import json, re, sys, operator
+import csv, json, re, sys, operator
 import numpy as np
 
-json_filename = 'final_xgb.json'
+json_filename = '/data9/cifar2048_xgb.json'
+data_filename = '/data9/cifar-10.csv'
+def load_csv(filename):
+    """
+    Loads a csv file containin the data, parses it
+    and returns numpy arrays the containing the training
+    and testing data along with their labels.
+
+    :param filename: the filename
+    :return: tuple containing train, test data np arrays and labels
+    """
+
+    X_train = []
+    X_test = []
+    num = 0
+    with open(filename,'rt') as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            print("******************************************************************************")
+            #row_new = [i.encode('utf-8').strip() for i in row]
+            row1 = [int(item) for item in row if item != '\0']
+            row_int = list(np.nan_to_num(row1))
+            last_ele = row_int.pop(-1)
+            #if num % 2:
+            X_train.append(row_int)
+            X_test.append(int(last_ele))
+            num+=1
+            print(num)
+
+    f.close()
+    return X_train, X_test
 
 
 def unpackNodes(txt_model):
@@ -67,38 +97,31 @@ def unpackNodes(txt_model):
     return sorted_final_nodes
 
 
-iris = datasets.load_iris()
-X = iris.data
-y = iris.target
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-dtrain = xgb.DMatrix(X_train, label=y_train)
-dtest = xgb.DMatrix(X_test, label=y_test)
-
-dump_svmlight_file(X_train, y_train, 'dtrain.svm', zero_based=True)
-dump_svmlight_file(X_test, y_test, 'dtest.svm', zero_based=True)
-dtrain_svm = xgb.DMatrix('dtrain.svm')
-dtest_svm = xgb.DMatrix('dtest.svm')
+X, y = load_csv(data_filename) 
+dtrain = xgb.DMatrix(X, label=y)
+dump_svmlight_file(X, y, '/data9/dtrain.svm', zero_based=True)
+dtrain_svm = xgb.DMatrix('/data9/dtrain.svm')
 
 param = {
-    'max_depth': 5,  # the maximum depth of each tree
+    'max_depth': 10,  # the maximum depth of each tree
     'eta': 0.3,  # the training step for each iteration
     'silent': 1,  # logging mode - quiet
     'objective': 'multi:softprob',  # error evaluation for multiclass training
-    'num_class': 3}  # the number of classes that exist in this datset
-num_round = 5  # the number of training iterations
+    'num_class': 10}  # the number of classes that exist in this datset
+num_round = 2048  # the number of training iterations
 
 bst = xgb.train(param, dtrain, num_round)
 preds = bst.predict(dtrain)
 wrong = 0
 for num, i in enumerate(preds):
-    if np.argmax(i) != y_train[num]:
+    if np.argmax(i) != y[num]:
             wrong+=1
 print("wrong: ")
 print(wrong)
 param['num_tree'] = num_round
-bst.dump_model('xgb_model.txt', with_stats=True)
+bst.dump_model('/data9/xgb_model.txt', with_stats=True)
 
-with open('xgb_model.txt', 'r') as f:
+with open('/data9/xgb_model.txt', 'r') as f:
     txt_model = f.read()
 
 ensemble = unpackNodes(txt_model)

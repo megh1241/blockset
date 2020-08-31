@@ -465,14 +465,15 @@ class Packer{
 
 		std::cout<<"finalbin size: "<<finalbin.size()<<"\n";
 		std::cout<<"initial queue size: "<<bin_q.size()<<"\n";	
+		std::cout<<"num classes: "<<num_classes<<"\n";
 		std::sort(bin_q.begin(), bin_q.end(), [this](auto l, auto r){return compCard(l, r);} );
 		for(int i=0; i< num_classes; ++i){
 			bin[i].setSTNum(-1);
 			class_numST_map[i] = 0;
 		}
 
-		for(int i=num_classes ; i<finalbin.size(); ++i)
-			node_to_index.insert(std::pair<int, int>(finalbin[i].getID(), i)); 
+	//	for(int i=num_classes ; i<finalbin.size(); ++i)
+	//		node_to_index.insert(std::pair<int, int>(finalbin[i].getID(), i)); 
 	
 		int subtree_count = 0;
 
@@ -550,18 +551,25 @@ class Packer{
 
 		}
 		//Populate node index map and bin starts
-		if (node_to_index.size() > 0)
-			node_to_index.clear();
+		//if (node_to_index.size() > 0)
+		//	node_to_index.clear();
 		if (bin_start.size() > 0)
 			bin_start.clear();
 		int node_count = 0;
 		for (auto node: finalbin){
-			if (node.getDepth() == 0)
+			if (node.getDepth() == 0 && node.getID()>= num_classes)
 				bin_start.push_back(node_count);
-			if ( node.getID()>= num_classes && node.getLeft() != -1 && node.getRight()!=-1)
-				node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
+			//if ( node.getID()>= num_classes && node.getLeft() != -1 && node.getRight()!=-1)
+				//node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
 			node_count++;
 		}
+		/*
+		 PacsetBaseModel<T, F>::bin_node_sizes.clear();
+		int siz =  bin_start.size();
+		for(int i=0; i<siz-1; ++i){
+			PacsetBaseModel<T, F>::bin_node_sizes.push_back(bin_start[i+1] - bin_start[i]);
+		}
+		*/
 
 		//std::sort(finalbin.begin() +  actual_pos_boundary, finalbin.end(), [this](auto l, auto r){return myCompFunctionReg7(l, r);} );
 		/*int siz = finalbin.size();
