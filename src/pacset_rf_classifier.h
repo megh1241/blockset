@@ -384,7 +384,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			//By calling predict for a single observation and 
 			//tallying the observations
 			//
-
+			double cumi_time = 0;
 			int num_classes = std::stoi(Config::getValue("numclasses"));
 			int num_bins; 
 			std::vector<double> elapsed_arr;
@@ -393,6 +393,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::string dataset = Config::getValue("datafilename");
 			std::string intertwine = Config::getValue("intertwine");
 			std::string format = Config::getValue("format");
+			int batchsize = std::stoi(Config::getValue("batchsize"));
+
 			for(int i=0; i<num_classes; ++i){
 				preds.push_back(0);
 			}
@@ -429,7 +431,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				auto end = std::chrono::steady_clock::now();
 #ifdef LAT_LOGGING
 				double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
-				elapsed_arr.push_back(elapsed);
+				cumi_time += elapsed;
+				if (ct % batchsize == 0){
+					elapsed_arr.push_back(cumi_time);
+					cumi_time = 0;
+				}
 #endif
 				ct++;
 				results.push_back(maxid); 
@@ -442,7 +448,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::fstream fout;
 			std::string filename = "logs/Blocks_" + 
 				layout + "threads_" + num_threads +
-				+ "intertwine_"  + intertwine + ".csv";
+				+ "intertwine_"  + intertwine +
+			       "batchsize_" + std::to_string(batchsize)	+ ".csv";
 			fout.open(filename, std::ios::out | std::ios::app);
 			for(auto i: num_blocks){
 				fout<<i<<",";
@@ -453,7 +460,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::fstream fout2;
 			std::string filename2 = "logs/latency_" + 
 				layout + "threads_" + num_threads +
-				+ "intertwine_"  + intertwine + ".csv";
+				"intertwine_"  + intertwine + 
+				"batchsize_ " + std::to_string(batchsize) +
+			       	".csv";
 			fout2.open(filename2, std::ios::out | std::ios::app);
 			for(auto i: elapsed_arr){
 				fout2<<i<<",";

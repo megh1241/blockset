@@ -34,13 +34,16 @@ class Packer{
 			std::vector<StatNode<T, F>>&bin, 
 			const int num_trees_in_bin, 
 			std::vector<int> &bin_start) {
-
+		std::cout<<"enter 1\n";
+		fflush(stdout);
 		int num_nodes_process = std::pow(2, depth_intertwined) - 1;
 		int num_classes = std::atoi(Config::getValue("numclasses").c_str());
 		std::deque <StatNode<T, F>> temp_q;
 		std::deque <StatNode<T, F>> bin_q;
 		std::deque <StatNode<T, F>> bin_q_left;
 		std::deque <StatNode<T, F>> bin_q_right;
+		std::cout<<"enter 2\n";
+		fflush(stdout);
 
 		for(int i=0; i<num_trees_in_bin; ++i){
 			temp_q.push_back(bin[bin_start[i]]);
@@ -48,8 +51,10 @@ class Packer{
 			//node_to_index.insert(std::pair<int, int>(bin[bin_start[i]].getID(), finalbin.size()-1));
 			//trees are interleaved so the starting nodes are adjacent
 			//but after the class nodes
-			bin_start[i] = i+num_classes;
+			bin_start[i] = num_classes + i;
 		}
+		std::cout<<"enter 3\n";
+		fflush(stdout);
 
 		// Intertwined levels
 		int curr_level = 0; 
@@ -67,6 +72,8 @@ class Packer{
 			else {
 				bin_q_left.push_back(bin[ele.getRight()]); 
 				bin_q_right.push_back(bin[ele.getRight()]); 
+				//bin_q_left.push_back(genBlankNode()); 
+				//bin_q_right.push_back(genBlankNode()); 
 			}
 
 			if(pos_in_level == num_trees_in_bin - 1){
@@ -86,7 +93,12 @@ class Packer{
 				pos_in_level++;
 
 			curr_level++;
+			if (temp_q.size() == 0)
+				break;
 		}
+
+		std::cout<<"enter 4\n";
+		fflush(stdout);
 
 		while(!temp_q.empty()){
 			auto ele = temp_q.front();
@@ -94,6 +106,8 @@ class Packer{
 				bin_q.push_back(ele);
 			temp_q.pop_front();
 		}
+		std::cout<<"enter 5\n";
+		fflush(stdout);
 		return bin_q;
 	}
 
@@ -281,6 +295,7 @@ class Packer{
 		a.setDepth(-1);
 		a.setID(-1);
 		a.setSTNum(-1);
+		a.setID(-100);
 		return a;
 	}
 
@@ -981,14 +996,22 @@ class Packer{
 				const int num_trees_in_bin, std::vector<int> &bin_start){
 
 			int num_classes = std::atoi(Config::getValue("numclasses").c_str());
-
+			
+			std::cout<<"enter 11\n";
+			fflush(stdout);
 			//Interleaved BIN
 			std::deque<StatNode<T, F>> bin_q =
 				packBinHelper(bin, num_trees_in_bin, bin_start);
+			std::cout<<"enter 12\n";
+			fflush(stdout);
 
 			// STAT per (sub)tree layout 
 			if(layout.find(std::string("bfs")) != std::string::npos){
+			std::cout<<"enter 13\n";
+			fflush(stdout);
 				packSubtreeBFSHelper(bin, num_trees_in_bin, bin_start, bin_q);
+			std::cout<<"enter 14\n";
+			fflush(stdout);
 			}
 			else if(layout.find(std::string("dfs")) != std::string::npos){
 				packSubtreeDFSHelper(bin, num_trees_in_bin, bin_start, bin_q);

@@ -43,7 +43,7 @@ static void parseArgs(int argc, char* argv[]){
     {"--help", "--mode", "--layout", "--intertwine", 
         "--packfilename", "--datafilename", "--modelfilename2", 
         "--modelfilename", "--package","--algorithm", 
-        "--task", "--numthreads", "--format",
+        "--task", "--numthreads", "--format", "--batchsize",
     	"--metadatafilename", "--blocksize" };
 
     if (argc < min_num_cmd_args){
@@ -80,6 +80,11 @@ static void parseArgs(int argc, char* argv[]){
     if(Config::getValue("format") == std::string("notfound")){
         Config::setConfigItem(std::string("format"), std::string("binary"));
     }
+
+    if(Config::getValue("batchsize") == std::string("notfound")){
+        Config::setConfigItem(std::string("batchsize"), std::string("1"));
+    }
+
 }
 
 int main(int argc, char* argv[]) {
@@ -148,7 +153,7 @@ int main(int argc, char* argv[]) {
 	fflush(stdout);
         //pack model
         obj->pack();
-
+	std::cout<<"model p[acked\n";
         //save packed model to file
         obj->serialize();
     }
