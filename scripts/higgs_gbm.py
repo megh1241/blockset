@@ -126,8 +126,8 @@ X_valid = data_train[:,1:31][r>=0.9]
 W_valid = data_train[:,31][r>=0.9]
  '''
 # Train the GradientBoostingClassifier using our good features
-gbc = GBC(n_estimators=682, max_depth=12,min_samples_leaf=200,max_features=10,verbose=1)
-X_train = pd.read_csv("/data9/HIGGS.csv", nrows = (11000000 - 500000), header = None)
+gbc = GBC(n_estimators=2480, max_depth=30, max_features=10, verbose=1)
+X_train = pd.read_csv("/data9/HIGGS.csv", nrows = (110000), header = None)
 Y_train = np.int8(X_train[0])
 X_train = np.asarray(X_train.drop([0], axis = 1))
 gbc.fit(X_train,Y_train) 

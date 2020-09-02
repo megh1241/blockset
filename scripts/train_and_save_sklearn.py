@@ -30,9 +30,9 @@ import codecs
 
 ######## GLOBALS #########
 #n_trees = 2048
-n_trees = 128
-#data_filename = '../data/cifar-10.csv'
-data_filename = '/data4/foo2.csv'
+n_trees = 682
+data_filename = '/data9/cifar-10.csv'
+#data_filename = '/data4/foo2.csv'
 #data_filename = '../data/iris.csv'
 #json_filename = "/data5/foo.json"
 #data_filename = '../data/iris.csv'
@@ -127,8 +127,6 @@ def load_csv(filename):
             X_test.append(int(last_ele))
             num+=1
             print(num)
-            if num > 9995:
-                break
    
     f.close()
     return X_train, X_test
@@ -158,9 +156,9 @@ train_size = X.shape[0]
 #Load csv
 X, y  = load_csv(data_filename)
 print('csv loaded')
-#model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
-#model1.fit(X,  y)
-#write_to_json(model1, json_filename)
+model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
+model1.fit(X,  y)
+write_to_json(model1, json_filename)
 
 '''
 #Load sklearn dataset
