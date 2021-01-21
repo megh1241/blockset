@@ -1,5 +1,4 @@
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import *
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 import pickle
@@ -20,25 +19,17 @@ from sklearn.datasets import fetch_openml
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-import json
+import json, os
+import argparse
 from sklearn.datasets import fetch_openml
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 import codecs
+from joblib import dump, load
 
 ######## GLOBALS #########
-#n_trees = 2048
-n_trees = 682
-data_filename = '/data9/cifar-10.csv'
-#data_filename = '/data4/foo2.csv'
-#data_filename = '../data/iris.csv'
-#json_filename = "/data5/foo.json"
-#data_filename = '../data/iris.csv'
-json_filename = '../models/cifarnew.json'
-#json_filename = "/data5/mnist_manual2.json"
-#json_filename = "/data5/reg.json"
 
 def save_dataset_csv(X, y, filename):
     """
@@ -100,7 +91,7 @@ def write_to_json(model1, filename, regression=False):
     print(end_time - start_time)
 
 
-def load_csv(filename):
+def load_csv(filename, label_col):
     """
     Loads a csv file containin the data, parses it
     and returns numpy arrays the containing the training
@@ -116,57 +107,80 @@ def load_csv(filename):
     with open(filename,'rt') as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
-            print(row)
-            print("******************************************************************************")
-            #row_new = [i.encode('utf-8').strip() for i in row]
-            row1 = [int(item) for item in row if item != '\0']
-            row_int = list(np.nan_to_num(row1))
-            last_ele = row_int.pop(-1)
-            #if num % 2:
-            X_train.append(row_int)
+            row1 = [float(item) for item in row if item != '\0']
+            last_ele = row1.pop(label_col)
+            X_train.append(row1)
             X_test.append(int(last_ele))
             num+=1
-            print(num)
    
     f.close()
     return X_train, X_test
 
 
-###### BEGIN SCRIPT ######
+def parseCmdArgs():
+    parser = argparse.ArgumentParser()
 
-#Load data
-'''
-iris = load_iris()
-X = iris.data
-y = iris.target
-# Load data from https://www.openml.org/d/554
-X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
-train_samples = 60000
-t0 = time.time()
-random_state = check_random_state(0)
-permutation = random_state.permutation(X.shape[0])
-X = X[permutation]
-y = y[permutation]
-X = X.reshape((X.shape[0], -1))
-train_size = X.shape[0]
-#scaler = StandardScaler()
-#X = scaler.fit_transform(X)
-'''
+    parser.add_argument('--labelcol', action='store', dest='label_column',
+                    help='Label column', type=int)
 
-#Load csv
-X, y  = load_csv(data_filename)
+    parser.add_argument('--datadir', action='store', dest='file_dir',
+                    help='Dataset location directory')
+
+    parser.add_argument('--datafilename', action='store', dest='data_filename',
+                    help='Dataset name')
+
+    parser.add_argument('--numtrees', action='store', dest='num_trees',
+                    help='Number of trees')
+
+    parser.add_argument('--numtest', action='store', dest='num_test', nargs='?',
+                    const=100, type=int, help='Number of test samples')
+
+    parser.add_argument('--algorithm', action='store', dest='algorithm',
+                    help='ALgorithm (rf/gbt)')
+    
+    parser.add_argument('--task', action='store', dest='task',
+                    help='Task (classification/regression)')
+
+    results = parser.parse_args()
+
+    return results
+
+
+
+results = parseCmdArgs()
+
+label_column = results.label_column
+file_dir = results.file_dir
+num_trees = results.num_trees
+data_filename = results.data_filename
+num_test = results.num_test
+algorithm = results.algorithm
+task = results.task
+
+data_string = data_filename.split('.')[0]
+data_path_filename = os.path.join(file_dir, data_filename)
+
+rf_model_filename = os.path.join(file_dir, 'rf_'+ num_trees + data_string + '.json')
+
+X, y  = load_csv(data_path_filename, label_column)
 print('csv loaded')
-model1 = RandomForestClassifier(n_estimators = n_trees, n_jobs=-1)
+
+if algorithm == 'rf':
+    if task == 'classification':
+        model1 = RandomForestClassifier(n_estimators = num_trees, n_jobs=-1)
+    else:
+        model1 = RandomForestRegressor(n_estimators = num_trees, n_jobs=-1)
+else:
+    if task == 'classification':
+        model1 = GradientBoostedClassifier(n_estimators = num_trees, max_depth=12, n_jobs=-1)
+    else:
+        model1 = GradientBoostedRegressor(n_estimators = num_trees, max_depth=12, n_jobs=-1)
+
+
 model1.fit(X,  y)
-write_to_json(model1, json_filename)
+#dump(model1, save_filename)
+if task == 'classification':
+    write_to_json(model1, rf_model_filename)
+else:
+    write_to_json(model1, rf_model_filename, regression=True)
 
-'''
-#Load sklearn dataset
-X, y = datasets.load_diabetes(return_X_y=True)
-print('classifier created')
-model1 = RandomForestRegressor(n_estimators = n_trees, n_jobs=-1)
-print('model fit')
-
-#Save model to json
-#skljson.to_json(model1, '../models/mnist_new3.json')
-'''
