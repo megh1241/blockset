@@ -14,7 +14,6 @@
 #include "MemoryMapped.h"
 #define NUM_FILES 10
 #define BLOCK_LOGGING 1
-#define LAT_LOGGING 1
 
 template <typename T, typename F>
 class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
