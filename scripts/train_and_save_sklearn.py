@@ -211,9 +211,9 @@ if algorithm == 'rf':
 else:
     print('entered gb')
     if task == 'classification':
-        model1 = GradientBoostingClassifier(n_estimators = num_trees, max_depth=12, random_state=1, max_features='log2')
+        model1 = GradientBoostingClassifier(n_estimators = num_trees, max_depth=12, random_state=1, max_features='log2', verbose=2)
     else:
-        model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12)
+        model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12, verbose=2)
 
 model1.fit(X,  y)
 #dump(model1, save_filename)
