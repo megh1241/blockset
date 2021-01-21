@@ -3,7 +3,6 @@ from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 import pickle
 from sklearn import datasets
-import sklearn_json as skljson
 import numpy as np
 from pprint import pprint
 from sklearn.model_selection import train_test_split
@@ -85,6 +84,43 @@ def write_to_json(model1, filename, regression=False):
     print('finish dumping')
     with open(filename, "w") as outfile: 
         outfile.write(json_obj) 
+
+    end_time = time.time()
+    print('time taken for manual json conversion: ', end='')
+    print(end_time - start_time)
+
+
+def write_to_json_gbt(model1, filename, regression=False):
+    start_time = time.time()
+    final_count = 0
+    new_dict = {'estimators': {'nodes': [], 'values': [] } }
+    final_count = 0
+    print (len(model.estimators_))
+    print (len(model.estimators_[0]))
+    for estimators in model.estimators_:
+        for count, estimator in enumerate(estimators):
+            nodes = estimator.tree_.__getstate__()['nodes'].tolist()
+            newnodes = [list((i[0], i[1], i[2], i[3], i[5])) for i in nodes]
+            length = len(nodes)
+            values = estimator.tree_.__getstate__()['values']
+            for i in range(length):
+                if newnodes[i][0] == -1:
+                    print(values[i][0])
+                    newnodes[i][3] = values[i][0][0]
+                    #newnodes[i][2] = argmax_1(list(values[i][0]))
+            final_count += 1
+            new_dict['estimators']['nodes'].append(newnodes)
+
+    if regression:
+        new_dict['n_classes'] = -1
+    else:
+        new_dict['n_classes'] = model.n_classes_
+
+    new_dict['n_estimators'] = final_count
+    json_obj = json.dumps(new_dict)
+    print('finish dumping')
+    with open(filename, "w") as outfile:
+        outfile.write(json_obj)
 
     end_time = time.time()
     print('time taken for manual json conversion: ', end='')
@@ -174,14 +210,20 @@ if algorithm == 'rf':
 else:
     print('entered gb')
     if task == 'classification':
-        model1 = GradientBoostingClassifier(n_estimators = num_trees, max_depth=12)
+        model1 = GradientBoostingClassifier(n_estimators = num_trees, max_depth=12, random_state=1, max_features='log2')
     else:
-        model1 = GradientBoostedRegressor(n_estimators = num_trees, max_depth=12)
+        model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12)
 
 model1.fit(X,  y)
 #dump(model1, save_filename)
 if task == 'classification':
-    write_to_json(model1, rf_model_filename)
+    if algorithm == 'rf':
+        write_to_json(model1, rf_model_filename)
+    else:
+        write_to_json_gbt(model1, rf_model_filename)
 else:
-    write_to_json(model1, rf_model_filename, regression=True)
+    if algorithm == 'rf':
+        write_to_json(model1, rf_model_filename, regression=True)
+    else:
+        write_to_json_gbt(model1, rf_model_filename, regression=True)
 
