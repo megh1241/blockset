@@ -3,7 +3,6 @@ from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 import pickle
 from sklearn import datasets
-import sklearn_json as skljson
 import numpy as np
 from pprint import pprint
 from sklearn.model_selection import train_test_split

@@ -152,8 +152,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::string modelfname = Config::getValue("modelfilename");
 
 #ifdef LAT_LOGGING 
-			MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-			//MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+			//MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
+			MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
 #else
 			MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
@@ -281,11 +281,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<int> num_blocks;
 			std::cout<<"observation start: "<<ct<<"\n";
 			fflush(stdout);
-			writeGarbage();
+			//writeGarbage();
 			for(auto single_obs : observation){
-				readGarbage();
-				readGarbage();
-				readGarbage();
+				//readGarbage();
+				//readGarbage();
+				//readGarbage();
 				auto start = std::chrono::steady_clock::now();
 				if (mmap)
 					blocks = mmapAndPredict(single_obs, preds, ct+1);
@@ -315,6 +315,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				std::fill(preds.begin(), preds.end(), 0);
 				max = -1;
 				maxid = -1;
+				std::cout<<"Done observation: "<<ct-1<<"\n";
+				fflush(stdout);
 			}
 
 			std::string log_dir = Config::getValue(std::string("logdir"));
