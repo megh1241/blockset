@@ -149,33 +149,34 @@ def parseCmdArgs():
 
 results = parseCmdArgs()
 
-label_column = results.label_column
+label_column = int(results.label_column)
 file_dir = results.file_dir
-num_trees = results.num_trees
+num_trees = int(results.num_trees)
 data_filename = results.data_filename
-num_test = results.num_test
+num_test = int(results.num_test)
 algorithm = results.algorithm
 task = results.task
 
 data_string = data_filename.split('.')[0]
 data_path_filename = os.path.join(file_dir, data_filename)
 
-rf_model_filename = os.path.join(file_dir, 'rf_'+ num_trees + data_string + '.json')
+rf_model_filename = os.path.join(file_dir, 'rf_'+ str(num_trees) + data_string + '.json')
 
 X, y  = load_csv(data_path_filename, label_column)
 print('csv loaded')
 
 if algorithm == 'rf':
+    print('entered rf')
     if task == 'classification':
         model1 = RandomForestClassifier(n_estimators = num_trees, n_jobs=-1)
     else:
         model1 = RandomForestRegressor(n_estimators = num_trees, n_jobs=-1)
 else:
+    print('entered gb')
     if task == 'classification':
-        model1 = GradientBoostedClassifier(n_estimators = num_trees, max_depth=12, n_jobs=-1)
+        model1 = GradientBoostingClassifier(n_estimators = num_trees, max_depth=12)
     else:
-        model1 = GradientBoostedRegressor(n_estimators = num_trees, max_depth=12, n_jobs=-1)
-
+        model1 = GradientBoostedRegressor(n_estimators = num_trees, max_depth=12)
 
 model1.fit(X,  y)
 #dump(model1, save_filename)
