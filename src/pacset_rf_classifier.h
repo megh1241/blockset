@@ -24,7 +24,7 @@
 
 #define LAT_LOGGING 2
 #define BLOCK_LOGGING 1
-#define NUM_FILES 10 
+#define NUM_FILES 30 
 #define BLOCK_SIZE 2048
 
 using std::uint32_t;

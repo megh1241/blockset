@@ -30,6 +30,7 @@ int JSONReader<T, F>::populateBinSizes(
 
     //Add remaining trees to bin_sizes
     int leftover_trees = num_trees % num_bins;
+    std::cout<<"num trees: "<<leftover_trees<<"\n";
     for(int i=0; i<leftover_trees; ++i)
         bin_sizes[i % num_bins]++;
 
@@ -226,6 +227,7 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     const Value& forest_nodes = d["estimators"]["nodes"];
     assert(num_trees == forest_nodes.Size());
     SizeType forest_size = forest_nodes.Size();   
+    std::cout<<"forest size; "<<forest_size<<"\n";
     for (SizeType i=0; i< forest_size; ++i){
 	const Value& nodes = forest_nodes[i];
         SizeType num_nodes_in_tree = nodes.Size();
@@ -239,18 +241,23 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 	    
             //Internal node
             id = temp_bin.size();
+	    if (j==0) depth = 0;
+	    else depth = 1;
+
 	    if (left > -1){	
-                if(left == 1) 
+                /*
+		if(left == 1) 
 		    depth = 0;
                 else  
 		    depth = 1;
+		*/
 		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
                     feature, threshold, cardinality, id, depth);
 	    	
 	    }
 	    else
 		temp_bin.emplace_back(left, right, 
-                    feature, threshold, cardinality, id, 1);
+                    feature, threshold, cardinality, id, depth);
 	    int siz = temp_bin.size();
 	    temp_bin[siz-1].setTreeID(i);
             ++node_counter;
@@ -260,7 +267,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
 
         //Move on to the next bin if the current bin reached full capacity
         if(tree_num_in_bin == bin_sizes[bin_number]){
-            ++bin_number;
+		std::cout<<"enter here\n";
+		++bin_number;
             tree_num_in_bin = 0;
             temp_ensemble.push_back(temp_bin); 
 	    temp_bin.clear();

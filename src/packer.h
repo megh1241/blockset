@@ -70,10 +70,10 @@ class Packer{
 				bin_q_right.push_back(bin[ele.getRight()]); 
 			}
 			else {
-				bin_q_left.push_back(bin[ele.getRight()]); 
-				bin_q_right.push_back(bin[ele.getRight()]); 
-				//bin_q_left.push_back(genBlankNode()); 
-				//bin_q_right.push_back(genBlankNode()); 
+				//bin_q_left.push_back(bin[ele.getRight()]); 
+				//bin_q_right.push_back(bin[ele.getRight()]); 
+				bin_q_left.push_back(genBlankNode()); 
+				bin_q_right.push_back(genBlankNode()); 
 			}
 
 			if(pos_in_level == num_trees_in_bin - 1){
@@ -102,7 +102,7 @@ class Packer{
 
 		while(!temp_q.empty()){
 			auto ele = temp_q.front();
-			if(ele.getID() >= 0)
+			if(ele.getID() > -5)
 				bin_q.push_back(ele);
 			temp_q.pop_front();
 		}
@@ -291,11 +291,11 @@ class Packer{
 
 
 	inline StatNode<T, F> genBlankNode(){
-		auto a =  StatNode<T, F>(-1, -1, -1, -1, -1); 
-		a.setDepth(-1);
-		a.setID(-1);
-		a.setSTNum(-1);
-		a.setID(-100);
+		auto a =  StatNode<T, F>(-5, -5, -5, -5, -5); 
+		a.setDepth(-5);
+		a.setID(-5);
+		a.setSTNum(-5);
+		a.setID(-5);
 		return a;
 	}
 

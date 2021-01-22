@@ -47,7 +47,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 	    auto bin = PacsetBaseModel<T, F>::bins[0];
             
 	    int num_bins = std::stoi(Config::getValue("numthreads"));
-            for(int i=0; i<num_bins; ++i){
+	    std::cout<<"num bins: "<<num_bins<<"\n";
+	    for(int i=0; i<num_bins; ++i){
                 Packer<T, F> packer_obj(layout);
                 if(Config::getValue("intertwine") != std::string("notfound"))
                     packer_obj.setDepthIntertwined(std::atoi(Config::getValue("intertwine").c_str()));
@@ -163,9 +164,9 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 	    std::string modelfname = Config::getValue("modelfilename");
             
 #ifdef LAT_LOGGING
-	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
+	    //MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 	    //MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-            //MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
 #else
 	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
@@ -243,7 +244,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             }
 std::vector<float>result_mat_proba(pred_mat);
 //std::vector<float>result_mat_proba;
-//	result_mat_proba = logit(pred_mat);
+	result_mat_proba = logit(pred_mat);
 	    int max = result_mat_proba[0];
 	    int maxid = 0;
 	    for(int i=0; i<num_classes; ++i){

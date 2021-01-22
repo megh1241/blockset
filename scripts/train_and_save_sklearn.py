@@ -95,9 +95,11 @@ def write_to_json_gbt(model, filename, regression=False):
     final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
     final_count = 0
-    #print (len(model.estimators_))
-    #print (len(model.estimators_[0]))
+    print('tot est: ')
+    times_add=0
+    print (len(model.estimators_))
     for estimators in model.estimators_:
+        print(len(estimators))
         for count, estimator in enumerate(estimators):
             nodes = estimator.tree_.__getstate__()['nodes'].tolist()
             newnodes = [list((i[0], i[1], i[2], i[3], i[5])) for i in nodes]
@@ -110,7 +112,10 @@ def write_to_json_gbt(model, filename, regression=False):
                     #newnodes[i][2] = argmax_1(list(values[i][0]))
             final_count += 1
             new_dict['estimators']['nodes'].append(newnodes)
+            times_add+=1
 
+    print("total total: ")
+    print(times_add)
     if regression:
         new_dict['n_classes'] = -1
     else:
