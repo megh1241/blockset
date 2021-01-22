@@ -163,9 +163,9 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 	    std::string modelfname = Config::getValue("modelfilename");
             
 #ifdef LAT_LOGGING
-	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
+	    //MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 	    //MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-            //MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
 #else
 	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
@@ -430,9 +430,13 @@ std::vector<float>result_mat_proba(pred_mat);
 
             //Number of classes
             f>>num_classes;
+	    std::cout<<"num_classes: "<<num_classes<<"\n";
+	    fflush(stdout);
             Config::setConfigItem("numclasses", std::to_string(num_classes));
 	    //Number of bins
             f>>num_bins;
+	    std::cout<<"num_bins: "<<num_bins<<"\n";
+	    fflush(stdout);
             Config::setConfigItem("numthreads", std::to_string(num_bins));
             std::vector<int> num_trees_bin;
             std::vector<int> num_nodes_bin;
@@ -442,21 +446,29 @@ std::vector<float>result_mat_proba(pred_mat);
             for(int i=0; i<num_bins; ++i){
                 f>>val;
                 num_trees_bin.push_back(val);
+		std::cout<<"num trees per bin: "<<val<<"\n";
+		fflush(stdout);
             }
 
             //Number of nodes in each bin
             for(int i=0; i<num_bins; ++i){
                 f>>val;
+		std::cout<<"num nodes per bin: "<<val<<"\n";
+	    fflush(stdout);
                 num_nodes_bin.push_back(val);
             }
 
             std::vector<int> temp;
             //start position of each bin
+	    std::cout<<"start pos\n";
+	    fflush(stdout);
             for(int i=0; i<num_bins; ++i){
                 for(int j=0; j<num_trees_bin[i]; ++j){
                     f>>val;
                     temp.push_back(val); 
-                }
+                	std::cout<<val<<"\n";
+			fflush(stdout);
+		}
                 bin_tree_start.push_back(temp);
                 temp.clear();
             }
