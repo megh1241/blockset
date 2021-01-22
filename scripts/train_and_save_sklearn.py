@@ -90,13 +90,13 @@ def write_to_json(model1, filename, regression=False):
     print(end_time - start_time)
 
 
-def write_to_json_gbt(model1, filename, regression=False):
+def write_to_json_gbt(model, filename, regression=False):
     start_time = time.time()
     final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
     final_count = 0
-    print (len(model.estimators_))
-    print (len(model.estimators_[0]))
+    #print (len(model.estimators_))
+    #print (len(model.estimators_[0]))
     for estimators in model.estimators_:
         for count, estimator in enumerate(estimators):
             nodes = estimator.tree_.__getstate__()['nodes'].tolist()
@@ -105,7 +105,7 @@ def write_to_json_gbt(model1, filename, regression=False):
             values = estimator.tree_.__getstate__()['values']
             for i in range(length):
                 if newnodes[i][0] == -1:
-                    print(values[i][0])
+                    #print(values[i][0])
                     newnodes[i][3] = values[i][0][0]
                     #newnodes[i][2] = argmax_1(list(values[i][0]))
             final_count += 1
@@ -195,11 +195,19 @@ task = results.task
 
 data_string = data_filename.split('.')[0]
 data_path_filename = os.path.join(file_dir, data_filename)
-
+save_train_data = os.path.join(file_dir ,'train_' + data_filename)
+save_test_data = os.path.join(file_dir, 'test_' + data_filename)
 rf_model_filename = os.path.join(file_dir, 'rf_'+ str(num_trees) + data_string + '.json')
 
 X, y  = load_csv(data_path_filename, label_column)
 print('csv loaded')
+X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=num_test, random_state=54)
+#concat_arr_train = np.c_[X_train, y_train]
+concat_arr_test = np.c_[X_test, y_test]
+print('concat done')
+#np.savetxt(save_train_data, concat_arr_train, delimiter=",", fmt='%1.3f')
+np.savetxt(save_test_data, concat_arr_test, delimiter=",", fmt='%1.3f')
 
 if algorithm == 'rf':
     print('entered rf')
@@ -214,7 +222,7 @@ else:
     else:
         model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12, verbose=2)
 
-model1.fit(X,  y)
+model1.fit(X_train,  y_train)
 #dump(model1, save_filename)
 if task == 'classification':
     if algorithm == 'rf':
