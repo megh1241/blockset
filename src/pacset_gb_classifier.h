@@ -225,9 +225,12 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
                             if(bin[curr_node[i]].getLeft() == -1){
+#pragma omp critical
+				    {
 				if(num_classes == 2)
 					pred_val += bin[curr_node[i]].getThreshold();
 				pred_mat[(bin_tree_offset+i) % num_classes] += bin[curr_node[i]].getThreshold();
+				    }
                                 curr_node[i] = -1;
 			    }
 			    else {
@@ -319,9 +322,10 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 		ct+=1;
             }
 
+	    std::string log_dir = Config::getValue(std::string("logdir"));
 #ifdef BLOCK_LOGGING 
             std::fstream fout;
-            std::string filename = "logs/Blocks_" + 
+            std::string filename = log_dir + "Blocks_" + 
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout.open(filename, std::ios::out | std::ios::app);
@@ -333,7 +337,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 
 #ifdef LAT_LOGGING
             std::fstream fout2;
-            std::string filename2 = "logs/latency_" +
+            std::string filename2 = log_dir + "latency_" +
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout2.open(filename2, std::ios::out | std::ios::app);
