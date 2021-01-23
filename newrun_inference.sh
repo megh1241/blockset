@@ -2,7 +2,8 @@
 DATA_FILE="/data5/HIGGS.csv"
 #DATA_FILE="/data5/test_HIGGS.csv"
 
-declare -a layoutArray=("binbfs" "bindfs" "binstatdfs" "binstatblock")
+declare -a layoutArray=("bfs" "dfs" "statdfs" "statblock")
+#declare -a layoutArray=("binbfs" "bindfs" "binstatdfs" "binstatblock")
 for val in ${layoutArray[@]}; do
         PACK_FILE="packedmodel${val}"
         META_FILE="metadata${val}.txt"

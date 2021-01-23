@@ -182,6 +182,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             int curr_offset = 0;
 	    int bin_tree_offset = 0;
             total_num_trees=0;
+	    float pred_val = 0;
 	    for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
                 offsets.push_back(curr_offset);
                 curr_offset += val;
@@ -224,6 +225,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
                             if(bin[curr_node[i]].getLeft() == -1){
+				if(num_classes == 2)
+					pred_val += bin[curr_node[i]].getThreshold();
 				pred_mat[(bin_tree_offset+i) % num_classes] += bin[curr_node[i]].getThreshold();
                                 curr_node[i] = -1;
 			    }
@@ -242,9 +245,18 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 }
 
             }
-std::vector<float>result_mat_proba(pred_mat);
+	    if(num_classes == 2){
+		//std::cout<<pred_val<<"\n";
+		preds.clear();
+		float val = logit(pred_val/628.0);
+     		if(val > 0.5)
+			preds.push_back(1.0);
+		else
+			preds.push_back(0.0);
+	    }else{
+		std::vector<float>result_mat_proba(pred_mat);
 //std::vector<float>result_mat_proba;
-	result_mat_proba = logit(pred_mat);
+		result_mat_proba = logit(pred_mat);
 	    int max = result_mat_proba[0];
 	    int maxid = 0;
 	    for(int i=0; i<num_classes; ++i){
@@ -255,7 +267,8 @@ std::vector<float>result_mat_proba(pred_mat);
             }
             preds.clear();
             preds.push_back((double)maxid);
-            preds.push_back((double)1);
+	}
+        preds.push_back((double)1);
 #ifdef BLOCK_LOGGING 
             return blocks_accessed.size();
 #else

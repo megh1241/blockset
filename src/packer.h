@@ -66,8 +66,14 @@ class Packer{
 			if(ele.getID()>= 0) {
 				finalbin.push_back(ele);
 				node_to_index.insert(std::pair<int, int>(ele.getID(), finalbin.size()-1));
+				if(ele.getLeft() > -1){
 				bin_q_left.push_back(bin[ele.getLeft()]); 
-				bin_q_right.push_back(bin[ele.getRight()]); 
+				bin_q_right.push_back(bin[ele.getRight()]);
+				}else{
+				bin_q_left.push_back(genBlankNode()); 
+				bin_q_right.push_back(genBlankNode()); 
+				}
+			      	
 			}
 			else {
 				//bin_q_left.push_back(bin[ele.getRight()]); 
@@ -88,6 +94,8 @@ class Packer{
 					bin_q_right.pop_front();
 				}
 				pos_in_level = 0;
+				std::cout<<"pos in level: "<<pos_in_level<<"\n";
+				std::cout<<"curr lvel: "<<curr_level<<"\n";
 			}
 			else
 				pos_in_level++;
@@ -106,6 +114,7 @@ class Packer{
 				bin_q.push_back(ele);
 			temp_q.pop_front();
 		}
+		std::cout<<"bin q size: "<<bin_q.size()<<"\n";
 		std::cout<<"enter 5\n";
 		fflush(stdout);
 		return bin_q;
@@ -444,8 +453,8 @@ class Packer{
 		for (auto node: finalbin){
 			if (node.getDepth() == 0)
 				bin_start.push_back(node_count);
-			if ( node.getID()>= num_classes && node.getLeft() != -1 && node.getRight()!=-1)
-				node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
+			//if ( node.getID()>= num_classes && node.getLeft() != -1 && node.getRight()!=-1)
+			node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
 			node_count++;
 		}
 
@@ -566,8 +575,8 @@ class Packer{
 
 		}
 		//Populate node index map and bin starts
-		//if (node_to_index.size() > 0)
-		//	node_to_index.clear();
+		if (node_to_index.size() > 0)
+			node_to_index.clear();
 		if (bin_start.size() > 0)
 			bin_start.clear();
 		int node_count = 0;
@@ -575,7 +584,7 @@ class Packer{
 			if (node.getDepth() == 0 && node.getID()>= num_classes)
 				bin_start.push_back(node_count);
 			//if ( node.getID()>= num_classes && node.getLeft() != -1 && node.getRight()!=-1)
-				//node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
+			node_to_index.insert(std::pair<int, int>(node.getID(), node_count));
 			node_count++;
 		}
 		/*
@@ -1023,6 +1032,7 @@ class Packer{
 				packSubtreeBlockwiseHelper3(bin, num_trees_in_bin, bin_start, bin_q, false);
 			}
 
+			std::cout<<"final bin size: "<<finalbin.size()<<"\n";
 			// set new IDs
 			int siz = finalbin.size();
 			for (auto i=num_classes; i<siz; i++){
@@ -1067,6 +1077,7 @@ class Packer{
 
 			// set new IDs
 			int siz = finalbin.size();
+			std::cout<<"final bin size: "<<finalbin.size()<<"\n";
 			for (auto i=num_classes; i<siz; i++){
 				if(finalbin[i].getLeft() >= num_classes)
 					finalbin[i].setLeft(node_to_index[bin[finalbin[i].getLeft()].getID()]);
