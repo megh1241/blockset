@@ -212,9 +212,9 @@ np.savetxt(save_test_data, concat_arr_test, delimiter=",", fmt='%1.3f')
 if algorithm == 'rf':
     print('entered rf')
     if task == 'classification':
-        model1 = RandomForestClassifier(n_estimators = num_trees, n_jobs=-1)
+        model1 = RandomForestClassifier(n_estimators = num_trees, n_jobs=-1, max_features='log2', verbose=2)
     else:
-        model1 = RandomForestRegressor(n_estimators = num_trees, n_jobs=-1)
+        model1 = RandomForestRegressor(n_estimators = num_trees, n_jobs=-1, max_features='log2', verbose=2)
 else:
     print('entered gb')
     if task == 'classification':
