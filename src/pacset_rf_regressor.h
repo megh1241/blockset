@@ -365,7 +365,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             if(format != std::string("notfound") ||
                     format == std::string("binary")){
 
-                std::string modelfname = Config::getValue("modelfilename2");
+                std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
 
                 if(modelfname != std::string("notfound"))

@@ -66,14 +66,20 @@ class Packer{
 			if(ele.getID()>= 0) {
 				finalbin.push_back(ele);
 				node_to_index.insert(std::pair<int, int>(ele.getID(), finalbin.size()-1));
+				if(ele.getLeft() > -1){
 				bin_q_left.push_back(bin[ele.getLeft()]); 
 				bin_q_right.push_back(bin[ele.getRight()]); 
+				}else{
+					bin_q_left.push_back(genBlankNode()); 
+					bin_q_right.push_back(genBlankNode()); 
+				}
 			}
 			else {
-				bin_q_left.push_back(bin[ele.getRight()]); 
-				bin_q_right.push_back(bin[ele.getRight()]); 
-				//bin_q_left.push_back(genBlankNode()); 
-				//bin_q_right.push_back(genBlankNode()); 
+				
+				//bin_q_left.push_back(bin[ele.getRight()]); 
+				//bin_q_right.push_back(bin[ele.getRight()]); 
+				bin_q_left.push_back(genBlankNode()); 
+				bin_q_right.push_back(genBlankNode()); 
 			}
 
 			if(pos_in_level == num_trees_in_bin - 1){
