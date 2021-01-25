@@ -151,17 +151,15 @@ int main(int argc, char* argv[]) {
 	    std::cout<<"before deserialize\n";
         	obj->deserialize();
 	    std::cout<<"after deserialize\n";
-
         //Load test data from file
-        std::vector<std::vector<float>> test_vec;
-
-
+       std::vector<std::vector<float>> test_vec;
         if (Config::getValue("task") == std::string("classification")){
             std::vector<int> preds;
             std::vector<int> predi;    
             std::vector<int> lab;
             //Perform prediction
 	    std::cout<<"loading test data\b";
+	    fflush(stdout);
 	    loadTestData(test_vec, lab); 
           	std::cout<<"test data loaded\n";
             obj->predict(test_vec, preds, predi, true);
@@ -188,5 +186,6 @@ int main(int argc, char* argv[]) {
             double acc = getAccuracy(predi, lab);
             std::cout<<"Accuracy: "<<acc<<"\n";
         }
+	
     }
 }

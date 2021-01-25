@@ -6,7 +6,7 @@ import matplotlib
 import os, sys
 
 save_dir = '/home/ubuntu/pacset/plots'
-head_dir = '/home/ubuntu/pacset/logs'
+head_dir = 'logs'
 layout_filepath_list = [
                         'Blocks_binwdfsthreads_1intertwine_6.csv',
                         'Blocks_binblockstatthreads_1intertwine_6.csv',
@@ -14,7 +14,7 @@ layout_filepath_list = [
 
 paths = [os.path.join(head_dir, fpath) for fpath in layout_filepath_list]
 csv_list = [np.genfromtxt(path, delimiter=',') for path in paths]
-csv_list_clean = [item[~np.isnan(item)][0:500] for item in csv_list]
+csv_list_clean = [item[~np.isnan(item)] for item in csv_list]
 layout_names = ['bin weighted\n dfs', 'bin weighted\n blockwise\n dfs']
 
 data_dict = {}

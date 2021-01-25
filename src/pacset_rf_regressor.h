@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "node.h"
 #include "MemoryMapped.h"
-#define NUM_FILES 10
+//#define NUM_FILES 10
 #define BLOCK_LOGGING 1
 #define LAT_LOGGING 1
 

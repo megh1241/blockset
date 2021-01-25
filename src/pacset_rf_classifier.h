@@ -6,6 +6,10 @@
 #include <fstream>
 #include <chrono>
 #include <random>
+#include <iostream>
+#include<sstream>
+#include <string>
+#include<cstdlib>
 #include <stdint.h>
 #include <cstdint>
 #include <sys/types.h>
@@ -28,7 +32,7 @@
 
 #define LAT_LOGGING 2
 #define BLOCK_LOGGING 1
-#define NUM_FILES 10 
+#define NUM_FILES 31 
 #define BLOCK_SIZE 2048
 
 using forest::CapNode;
@@ -81,6 +85,41 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				setBinNodeSizes(i, PacsetBaseModel<T, F>::bins[i].size());
 			}
 		}
+
+                void writeGarbage(){
+                        std::fstream fi;
+                        fi.open("/home/ubuntu/rand_file.txt", std::ios::out);
+                        for(int i=0; i<7000000; ++i)
+                                fi<<(i+1)%6<<"\n";
+                        for(int i=0; i<7000000; ++i)
+                                fi<<(float)(i) /float(i+2)<<"\n";
+                        fi.close();
+                }
+
+                void readGarbage(){
+                        std::fstream fi;
+                        int j;
+                        fi.open("/home/ubuntu/rand_file.txt");
+                        for(int i=0; i<3000000; ++i)
+                                fi>>j;
+                        for(int i=0; i<2000000; ++i)
+                                fi>>j;
+                        for(int i=0; i<2000000; ++i)
+                                fi>>j;
+                        
+			
+			/*for(int i=0; i<20000000; ++i)
+                                fi>>j;
+                        for(int i=0; i<20000000; ++i)
+                                fi>>j;
+                        float k;
+                        for(int i=0; i<30000000; ++i)
+                                fi>>k;
+                        for(int i=0; i<30000000; ++i)
+                                fi>>k;
+			*/
+                        fi.close();
+                }
 
 		inline int predict(const std::vector<T>& observation, std::vector<double>& preds) {}
 
@@ -152,15 +191,14 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			int num_threads = std::stoi(Config::getValue("numthreads"));
 			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
 			std::string modelfname = Config::getValue("modelfilename");
-
-#ifdef LAT_LOGGING 
-			MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-			//MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
-#else
-			MemoryMapped mmapped_obj(modelfname.c_str(), 0);
-#endif
+//#ifdef LAT_LOGGING 
+			//MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
+			MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+//#else
+			//MemoryMapped mmapped_obj("/datanew/packedmodel.bin", 0);
+			//MemoryMapped mmapped_obj(modelfname.c_str(), 0);
+//#endif
 			Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
-
 			std::unordered_set<int> blocks_accessed;
 			int block_offset = 0;
 			int offset = 0;
@@ -231,16 +269,18 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         	 	
 			FILE *f;
 			f = fopen(modelfname.c_str(), "r");
+			std::cout<<"Point 1\n";
+			fflush(stdout);
 			int fd = fileno(f);
 			//Get file size
-        		struct stat64 statInfo;
-        		if (fstat64(fd, &statInfo) < 0){
+        		struct stat statInfo;
+        		if (fstat(fd, &statInfo) < 0){
                 		std::cout<<"File error\n";
                 		return 0;
         		}
 			size_t filesize = statInfo.st_size;
 
-        		void* mmapped_ptr = (kj::byte*)mmap64(NULL, filesize, PROT_READ, MAP_SHARED, fd, 0);
+        		void* mmapped_ptr = (kj::byte*)mmap(NULL, filesize, PROT_READ, MAP_SHARED, fd, 0);
 
         		kj::byte* mmapped_ptr_byte_beg = (kj::byte*)mmapped_ptr;
         		kj::byte* mmapped_ptr_byte_end = (kj::byte*)(mmapped_ptr)+filesize;
@@ -249,21 +289,29 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
         		::capnp::word* byte_ptr_end = reinterpret_cast<::capnp::word*>(mmapped_ptr_byte_end);
 
         		kj::ArrayPtr<::capnp::word> bufferPtr = kj::ArrayPtr<::capnp::word>(byte_ptr_beg, byte_ptr_end);
+                        ::capnp::ReaderOptions options;
+                        options.traversalLimitInWords = 98446744073709551  ;
+                        options.nestingLimit = 640;
 
-        		::capnp::FlatArrayMessageReader message(bufferPtr);
+        		::capnp::FlatArrayMessageReader message(bufferPtr, options);
         		Forest::Reader forestReader = message.getRoot<Forest>();
         		auto node_list = forestReader.getNodeList();
 
+			std::cout<<"Point 2\n";
+			fflush(stdout);
 			std::unordered_set<int> blocks_accessed;
 			int offset = 0;
 			std::vector<int> offsets;
 			int curr_offset = 0;
+			for(int i=0; i<10; ++i){
+				std::cout<<node_list[i].getLeft()<<"\n";
+			}
 			for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
 				offsets.push_back(curr_offset);
 				curr_offset += val;
 			}
 			int temp_pos;
-#pragma omp parallel for num_threads(num_threads)
+//#pragma omp parallel for num_threads(num_threads)
 			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
 				int block_number = 0;
 				int bin_start_index = offsets[bin_counter];
@@ -275,10 +323,12 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 
 				for(i=0; i<siz; ++i){
 					curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
+					
 					//__builtin_prefetch(&node_list[curr_node[i] +  offsets[bin_counter]], 0, 3);
 #ifdef BLOCK_LOGGING 
 					block_number = (curr_node[i] + bin_start_index) / BLOCK_SIZE;
-#pragma omp critical
+				
+//#pragma omp critical
 					blocks_accessed.insert(block_number);
 #endif
 				}
@@ -288,7 +338,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 						if(node_list[curr_node[i] + bin_start_index].getLeft() > -1){
 #ifdef BLOCK_LOGGING 
 							block_number = (curr_node[i] + bin_start_index)/ BLOCK_SIZE;
-#pragma omp critical
+//#pragma omp critical
 							blocks_accessed.insert(block_number);
 #endif
 							feature_num = node_list[curr_node[i] + bin_start_index].getFeature();
@@ -300,13 +350,15 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 						}
 					}
 				}while(number_not_in_leaf);
-
+			std::cout<<"Point 4\n";
+			fflush(stdout);
 				for(i=0; i<siz; ++i){
-#pragma omp atomic update
+//#pragma omp atomic update
 					++preds[node_list[curr_node[i] +  offsets[bin_counter]].getRight()];
 				}
 
 			}
+			fclose(f);
 #ifdef BLOCK_LOGGING 
 			return blocks_accessed.size();
 #else
@@ -343,7 +395,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<int> num_blocks;
 			std::cout<<"observation start: "<<ct<<"\n";
 			fflush(stdout);
+			//writeGarbage();
 			for(auto single_obs : observation){
+				readGarbage();
+                                //readGarbage();
+                                //readGarbage();
 				auto start = std::chrono::steady_clock::now();
 				if (format == "capnp")
 					blocks = CapnpPredict(single_obs, preds, ct+1);
@@ -352,6 +408,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				else
 					blocks = predict(single_obs, preds);
 
+				std::cout<<"Done observation: "<<ct<<"\n";
+				fflush(stdout);
 				num_blocks.push_back(blocks);
 				//TODO: change
 				for(int i=0; i<num_classes; ++i){
@@ -450,7 +508,56 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			fout.close();
 
 		}
-
+		inline void convertTextToBin(){
+			std::string filename = Config::getValue("modelfilename");	
+			std::fstream fin;
+			fin.open(filename, std::ios::in);
+		    	std::vector<std::string> row;
+    			std::string line, word, temp;
+			std::vector<Node<T, F>> nodes_vec;
+			int num=0;
+        		int32_t left=0, right=0;
+			float feature=0, threshold=0;
+			while(getline(fin, line, '\n')){
+        			std::istringstream templine(line);
+        			std::string data;
+				num = 0;
+				while(getline(templine, data, ',')){
+					switch(num){
+						case 0:{
+							left = (int32_t)std::atoi(data.c_str());
+						      	break; 
+						}
+						case 1:{
+							right = (int32_t)std::atoi(data.c_str());
+							break;
+						}
+						case 2:{
+							feature = (float)std::atof(data.c_str());
+							break;
+						}	       
+						case 3:
+							threshold = (float)std::atof(data.c_str());
+					}
+					num+=1;
+				}
+							
+				Node<T, F> newnode(left, right, feature, threshold);
+				nodes_vec.push_back(newnode);
+			}
+			fin.close();
+			std::cout<<"closed:\n";
+			fflush(stdout);
+			fin.open("/home/ubuntu/pm.bin", std::ios::binary | std::ios::out);
+			Node<T, F> node_to_write;
+			for(auto i: nodes_vec){
+				node_to_write = i;
+				fin.write((char*)&node_to_write, sizeof(node_to_write));;
+			}
+			fin.close();
+		}
+		
+		
 		inline void serializeModelBinary() {
 			auto bins = PacsetBaseModel<T, F>::bins;
 			std::string modelfname = Config::getValue("packfilename");
@@ -594,7 +701,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			}
 			f.close();
 			setMembers(num_trees_bin, num_nodes_bin, bin_tree_start);
-
+			//convertTextToBin();
 		}
 
 		/*

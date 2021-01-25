@@ -8,8 +8,8 @@ template <typename T, typename F>
 class alignas(32) Node
 {
     protected:
-        int left;
-        int right;
+        int32_t left;
+        int32_t right;
         F feature;
         T threshold;
 

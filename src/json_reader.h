@@ -5,10 +5,10 @@
 #include "stat_node.h"
 
 #include <vector>
-#include <nlohmann/json.hpp>
+//#include <nlohmann/json.hpp>
 
 // for convenience
-using json = nlohmann::json;
+//using json = nlohmann::json;
 
 template<typename T, typename F>
 class JSONReader{
@@ -24,10 +24,10 @@ class JSONReader{
         JSONReader(): filename(Config::getValue("modelfilename")), 
             package_name(Config::getValue("package")){}
 
-        void convertSklToBins(std::vector<std::vector<StatNode<T, F>>>&bins, 
-                std::vector<int>&bin_sizes, 
-                std::vector<std::vector<int>>&bin_start,
-                std::vector<int>&bin_node_sizes); 
+       // void convertSklToBins(std::vector<std::vector<StatNode<T, F>>>&bins, 
+         //       std::vector<int>&bin_sizes, 
+           //     std::vector<std::vector<int>>&bin_start,
+             //   std::vector<int>&bin_node_sizes); 
 
         void convertSklToBinsRapidJson(std::vector<std::vector<StatNode<T, F>>>&bins, 
                 std::vector<int>&bin_sizes, 

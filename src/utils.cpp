@@ -15,7 +15,7 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
     std::string line, word, temp; 
     std::vector<float> temp_vector;
     int num_obs = 0;
-    int max_n = 50;
+    int max_n = 100;
     while(getline(fin, line, '\n')){
         std::istringstream templine(line);
         std::string data;
@@ -23,11 +23,11 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
             temp_vector.push_back(std::atof(data.c_str()));
         }
         int siz = temp_vector.size();
-        int last_ele = (int)(temp_vector.at(siz-1));
         //int last_ele = (int)(temp_vector.at(0));
+        int last_ele = (int)(temp_vector.at(siz-1));
         labels.push_back(last_ele);
-        temp_vector.pop_back();
 	//temp_vector.erase(temp_vector.begin());
+        temp_vector.pop_back();
         test_data.push_back(temp_vector);
         temp_vector.clear();
         num_obs++;

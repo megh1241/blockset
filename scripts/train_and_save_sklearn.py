@@ -30,13 +30,13 @@ import codecs
 
 ######## GLOBALS #########
 #n_trees = 2048
-n_trees = 128
+n_trees = 64
 #data_filename = '../data/cifar-10.csv'
-data_filename = '/data4/foo2.csv'
+#data_filename = '/data4/foo2.csv'
 #data_filename = '../data/iris.csv'
 #json_filename = "/data5/foo.json"
-#data_filename = '../data/iris.csv'
-json_filename = '../models/cifarnew.json'
+data_filename = '../data/iris.csv'
+json_filename = '../models/iris.json'
 #json_filename = "/data5/mnist_manual2.json"
 #json_filename = "/data5/reg.json"
 
@@ -121,7 +121,7 @@ def load_csv(filename):
             #row_new = [i.encode('utf-8').strip() for i in row]
             row1 = [int(item) for item in row if item != '\0']
             row_int = list(np.nan_to_num(row1))
-            last_ele = row_int.pop(-1)
+            last_ele = row_int.pop(0)
             #if num % 2:
             X_train.append(row_int)
             X_test.append(int(last_ele))
