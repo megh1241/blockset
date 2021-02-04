@@ -337,7 +337,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::string filename2 = log_dir + "latency_" + 
 				layout + "threads_" + num_threads +
 				"intertwine_"  + intertwine + 
-				"batchsize_ " + std::to_string(batchsize) +
+				"batchsize_" + std::to_string(batchsize) +
 			       	".csv";
 			fout2.open(filename2, std::ios::out | std::ios::app);
 			for(auto i: elapsed_arr){

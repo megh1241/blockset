@@ -42,15 +42,9 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
         }
 
         inline void pack(){
-		std::cout<<"checkpoint0\n";
-		fflush(stdout);
             std::string layout = Config::getValue("layout");
-		std::cout<<"checkpoint0.1\n";
-		fflush(stdout);
 
             auto bin = PacsetBaseModel<T, F>::bins[0];
-		std::cout<<"checkpoint0.2\n";
-		fflush(stdout);
             int num_bins = std::stoi(Config::getValue("numthreads"));
             for(int i=0; i<num_bins; ++i){
                 Packer<T, F> packer_obj(layout);
@@ -59,16 +53,12 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 if(Config::getValue("intertwine") != std::string("notfound"))
                     packer_obj.setDepthIntertwined(std::atoi(Config::getValue("intertwine").c_str()));
                
-		std::cout<<"checkpoint2\n";
-		fflush(stdout);
                 //should pack in place
                 packer_obj.pack(PacsetBaseModel<T, F>::bins[i], 
                         PacsetBaseModel<T, F>::bin_sizes[i],
                         PacsetBaseModel<T, F>::bin_start[i] 
                         );
 		 setBinNodeSizes(i, PacsetBaseModel<T, F>::bins[i].size());
-		std::cout<<"checkpoint3\n";
-		fflush(stdout);
             }
         }
 
@@ -84,9 +74,6 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             int block_offset = 0;
             int block_number = 0;
             int next_node = 0;
-	    fflush(stdout);
-	    std::cout<<"enter predict\n";
-	    fflush(stdout);
 #pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 auto bin = PacsetBaseModel<T, F>::bins[bin_counter];
@@ -164,8 +151,8 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
             std::string modelfname = Config::getValue("modelfilename");
             
 #ifdef LAT_LOGGING
-	    MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-            //MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+	    //MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
+            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
 #else
 	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
@@ -292,10 +279,10 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 #endif
 		ct+=1;
             }
-
+	    std::string log_dir = Config::getValue("logdir");
 #ifdef BLOCK_LOGGING 
             std::fstream fout;
-            std::string filename = "logs/Blocks_" + 
+            std::string filename = log_dir + "Blocks_" + 
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout.open(filename, std::ios::out | std::ios::app);
@@ -307,7 +294,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
 
 #ifdef LAT_LOGGING
             std::fstream fout2;
-            std::string filename2 = "logs/latency_" +
+            std::string filename2 = log_dir + "latency_" +
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout2.open(filename2, std::ios::out | std::ios::app);

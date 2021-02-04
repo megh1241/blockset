@@ -298,11 +298,13 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             std::string num_threads = Config::getValue("numthreads");
             std::string dataset = Config::getValue("datafilename");
             std::string intertwine = Config::getValue("intertwine");
-            
+            int batchsize = std::stoi(Config::getValue("batchsize"));
+
 	    std::vector<double> elapsed_arr;
             int blocks;
             std::vector<int> num_blocks;
 	    int ct=1;
+	    float cumi_time = 0;
             for(auto single_obs : observation){
 		
 		auto start = std::chrono::steady_clock::now();
@@ -317,7 +319,12 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 		auto end = std::chrono::steady_clock::now();
 #ifdef LAT_LOGGING
 		double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
-		elapsed_arr.push_back(elapsed);
+	        cumi_time += elapsed;
+                if (ct % batchsize == 0){
+                    elapsed_arr.push_back(cumi_time);
+                    cumi_time = 0;
+                }	
+		
 #endif
 		ct+=1;
             }
