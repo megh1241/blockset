@@ -47,7 +47,8 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 	    auto bin = PacsetBaseModel<T, F>::bins[0];
             
 	    int num_bins = std::stoi(Config::getValue("numthreads"));
-            for(int i=0; i<num_bins; ++i){
+	    std::cout<<"num bins: "<<num_bins<<"\n";
+	    for(int i=0; i<num_bins; ++i){
                 Packer<T, F> packer_obj(layout);
                 if(Config::getValue("intertwine") != std::string("notfound"))
                     packer_obj.setDepthIntertwined(std::atoi(Config::getValue("intertwine").c_str()));
@@ -163,9 +164,9 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 	    std::string modelfname = Config::getValue("modelfilename");
             
 #ifdef LAT_LOGGING
-	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
+	    //MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 	    //MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-            //MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
 #else
 	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
@@ -181,6 +182,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             int curr_offset = 0;
 	    int bin_tree_offset = 0;
             total_num_trees=0;
+	    float pred_val = 0;
 	    for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
                 offsets.push_back(curr_offset);
                 curr_offset += val;
@@ -223,7 +225,12 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
                             if(bin[curr_node[i]].getLeft() == -1){
+#pragma omp critical
+				    {
+				if(num_classes == 2)
+					pred_val += bin[curr_node[i]].getThreshold();
 				pred_mat[(bin_tree_offset+i) % num_classes] += bin[curr_node[i]].getThreshold();
+				    }
                                 curr_node[i] = -1;
 			    }
 			    else {
@@ -241,9 +248,18 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
                 }
 
             }
-std::vector<float>result_mat_proba(pred_mat);
+	    if(num_classes == 2){
+		//std::cout<<pred_val<<"\n";
+		preds.clear();
+		float val = logit(pred_val/628.0);
+     		if(val > 0.5)
+			preds.push_back(1.0);
+		else
+			preds.push_back(0.0);
+	    }else{
+		std::vector<float>result_mat_proba(pred_mat);
 //std::vector<float>result_mat_proba;
-//	result_mat_proba = logit(pred_mat);
+		result_mat_proba = logit(pred_mat);
 	    int max = result_mat_proba[0];
 	    int maxid = 0;
 	    for(int i=0; i<num_classes; ++i){
@@ -254,7 +270,8 @@ std::vector<float>result_mat_proba(pred_mat);
             }
             preds.clear();
             preds.push_back((double)maxid);
-            preds.push_back((double)1);
+	}
+        preds.push_back((double)1);
 #ifdef BLOCK_LOGGING 
             return blocks_accessed.size();
 #else
@@ -305,9 +322,10 @@ std::vector<float>result_mat_proba(pred_mat);
 		ct+=1;
             }
 
+	    std::string log_dir = Config::getValue(std::string("logdir"));
 #ifdef BLOCK_LOGGING 
             std::fstream fout;
-            std::string filename = "logs/Blocks_" + 
+            std::string filename = log_dir + "Blocks_" + 
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout.open(filename, std::ios::out | std::ios::app);
@@ -319,7 +337,7 @@ std::vector<float>result_mat_proba(pred_mat);
 
 #ifdef LAT_LOGGING
             std::fstream fout2;
-            std::string filename2 = "logs/latency_" +
+            std::string filename2 = log_dir + "latency_" +
                 layout + "threads_" + num_threads +
                 + "intertwine_"  + intertwine + ".csv";
             fout2.open(filename2, std::ios::out | std::ios::app);
@@ -374,8 +392,7 @@ std::vector<float>result_mat_proba(pred_mat);
             }
             fout.close();
             
-            if(format != std::string("notfound") ||
-                    format == std::string("binary")){
+            if(format == std::string("binary")){
 
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
@@ -398,6 +415,7 @@ std::vector<float>result_mat_proba(pred_mat);
 
             }
             else{
+		    std::cout<<"ELSE!!\n";
                 //Write the nodes
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
