@@ -236,21 +236,23 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
             feature = nodes[j][2].GetInt();
             threshold = (float)nodes[j][3].GetDouble();
             cardinality = nodes[j][4].GetInt();
-	    
+	    if (j==0) depth = 0;
+	    else depth = 1;
             //Internal node
             id = temp_bin.size();
 	    if (left > -1){	
-                if(left == 1) 
+                /*if(left == 1) 
 		    depth = 0;
                 else  
 		    depth = 1;
+		*/
 		temp_bin.emplace_back(left + tree_offset , right + tree_offset, 
                     feature, threshold, cardinality, id, depth);
 	    	
 	    }
 	    else
 		temp_bin.emplace_back(left, right, 
-                    feature, threshold, cardinality, id, 1);
+                    feature, threshold, cardinality, id, depth);
 	    int siz = temp_bin.size();
 	    temp_bin[siz-1].setTreeID(i);
             ++node_counter;
