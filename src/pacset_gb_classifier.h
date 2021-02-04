@@ -392,8 +392,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             }
             fout.close();
             
-            if(format != std::string("notfound") ||
-                    format == std::string("binary")){
+            if(format == std::string("binary")){
 
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
@@ -416,6 +415,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 
             }
             else{
+		    std::cout<<"ELSE!!\n";
                 //Write the nodes
                 std::string modelfname = Config::getValue("packfilename");
                 std::string filename;
