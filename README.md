@@ -1,6 +1,7 @@
-# Project Title
+# PACSET
 
-One Paragraph of project description goes here
+This repository contains the source code and experimental workflow accompanying our KDD 2021 manuscript. 
+Detailed instructions are given below.
 
 ## Getting Started
 
@@ -35,7 +36,7 @@ make #This will generate the exe executable
 
 ### Running
 
-For embedded PACSET and larger than RAM PACSET, the workflow is as follows.
+#### For embedded PACSET and larger than RAM PACSET, the workflow is as follows.
 1) Run train\_sklearn.sh to train and save a random forest/gradient boosted tree model in scikitlearn (or xgboost). Refer to train\_sklearn.sh for specific
 instruction for how to run it and parameter explanations. Specifically, look for lines with #TODO that contain instructions for the user to modify parameters. 
 2) Run pack.sh to pack the model using PACSET's packing layout. This script will read the sklearn trained model, pack the nodes and finally save the model in 
@@ -43,10 +44,12 @@ a custom binary format.
 3) Run cold\_start\_inference.sh to perform RF/GBT inference on the test data and run the latency benchmarks. In order to ensure a cold-start latency in our benchmarks, 
 we create identical copies of the model. We then perform inference on a different copy of the model per data point in a cyclical manner. That way, caching effects are eliminated.
 
-For PACSET-as-service, the workflow is as follows.
-1)
-2)
+#### For PACSET-as-service, the workflow is as follows.
+1) Run train\_sklearn.sh to train and save a random forest/gradient boosted tree model in scikitlearn (or xgboost). Refer to train\_sklearn.sh for specific
+instruction for how to run it and parameter explanations. Specifically, look for lines with #TODO that contain instructions for the user to modify parameters.
+2) Run pack.sh to pack the model using PACSET's packing layout. This script will read the sklearn trained model, pack the nodes and save the model. Make sure to change
+format to "text" in the script to ensure that the model is saved in a text format.
 3)
 4)
 
-For the baseline experiments(comparison with xgboost and sklearn), the workflow is as follows.
+#### For the baseline experiments(comparison with xgboost and sklearn), the workflow is as follows.
