@@ -19,7 +19,7 @@ model_dir="/data4/gbt_higgs_2048"
 #TODO: Replace with the column containing the label
 labelcol=0
 
-#TODO: replace with your redis dns endpoint
+#TODO: Create an elasticache node on AWS. replace with your redis dns endpoint
 aws_dns_endpoint = "Your-redis-dns-endpoint"
 
 #TODO: Replace with the blocksize used to train 
