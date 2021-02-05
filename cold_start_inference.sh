@@ -18,21 +18,22 @@ BLOCKSIZE=128
 
 #TODO: Replace with batchsize, i.e number of inference sample per batch (for benchmark purposes)
 BATCHSIZE=1
+
+#TODO: Change to "gradientboost" for gradient boosted trees
 ALGORITHM="randomforest"
+
+#TODO: Change to "regression" for regression
 TASK="classification"
 
-python3 scripts/delete_files_new.py $NUM_FILES
 declare -a layoutArray=("bindfs" "binstatdfs" "binbfs" "binstatblock")
 for val in ${layoutArray[@]}; do
         #TODO: You can replace this with the full absolute path of the packed model and metadata
-        PACK_FILE="packedmodel${val}.bin"
+        PACK_FILE="packedmodel${val}"
         META_FILE="metadata${val}.txt"
-        python3 scripts/copy_files_new.py $NUM_FILES $ORIG_PACK_DIR $PACK_FILE $META_FILE
+        python3 scripts/copy_files_single_dir.py $NUM_FILES $ORIG_PACK_DIR $PACK_FILE
         sudo echo 3 > sudo /proc/sys/vm/drop_caches
         sudo echo 2 > sudo /proc/sys/vm/drop_caches
         sudo echo 1 > sudo /proc/sys/vm/drop_caches
         ./exe  --batchsize $BATCHSIZE --blocksize $BLOCKSIZE --mode inference --logdir $LOG_DIR --format binary --metadatafilename "${ORIG_PACK_DIR}/${META_FILE}" --labelcol $LAB_COL --layout ${layoutArray[${ARR_COUNT}]} --intertwine 4 --modelfilename $PACK_FILE --datafilename $DATA_FILE --numthreads 1 --package sklearn --algorithm $ALGORITHM --task $TASK
         ARR_COUNT=$((ARR_COUNT+1))
-        #python3 scripts/delete_files_new.py $NUM_FILES
 done
-

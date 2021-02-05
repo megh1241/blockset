@@ -1,15 +1,19 @@
-
 #Example
 #TODO: Replace with name of dataset
 DATA_FILENAME='cifar-10.csv'
+
 #TODO: Replace with path to directory containing the dataset. The model will be saved in this directory as well.
 DATA_DIR='/data3/'
+
 #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column)
 LAB_COL=-1
+
 #TODO: Replace with number of trees
 NUM_TREES=682
+
 #TODO: Algorithm: rf: random forest, gbt: gradient boosted tree
 ALGORITHM='rf'
+
 #TODO: Task: Classification or regression
 TASK='classification'
 
