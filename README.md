@@ -14,12 +14,13 @@ python package.
 
 1)You will need to install Build tools, openMP and make sure your compiler supports C++14. 
 2)You will also need to install sklearn, numpy, matplotlib and joypy(for plotting).
-3)PACSET utilizes a third-party library( rapidjson ) and must be downloaded and installed.
+3)You will need to install redis for the PACSET-as-a-service experiments.
+4)PACSET utilizes a third-party library( rapidjson ) and must be downloaded and installed.
 
 ```
 sudo apt-get update
 sudo apt-get install build-essential
-pip3 install numpy sklearn matplotlib
+pip install numpy sklearn matplotlib redis
 pip install joypy
 ```
 
@@ -49,7 +50,11 @@ we create identical copies of the model. We then perform inference on a differen
 instruction for how to run it and parameter explanations. Specifically, look for lines with #TODO that contain instructions for the user to modify parameters.
 2) Run pack.sh to pack the model using PACSET's packing layout. This script will read the sklearn trained model, pack the nodes and save the model. Make sure to change
 format to "text" in the script to ensure that the model is saved in a text format.
-3)
-4)
+3) Run lambda\_exp/write\_redis.py. This script will write the model to a Redis KV store.  Before, running make sure to open the python script and change filepaths and parameters as explained in the inline #TODO comments.
+4) unzip lambda\_exp / my_function. Go to runscript.sh and follow the instructions marked by #TODO. Then, perform inferece by running the script. ./runscript.sh <desired lambda name> . 
 
 #### For the baseline experiments(comparison with xgboost and sklearn), the workflow is as follows.
+1) XGBoost baseline: Check #TODOss in scripts/xgb\_train\_baseline.py and run to train an xgboost model. Check #TODOss in scripts/xgb\_predict\_baseline.py and run to perform inference on  xgboost model.  
+2) SKlearn baseline: Check #TODOss in scripts/skl\_train\_baseline.py and run to train an xgboost model. Check #TODOss in scripts/skl\_predict\_baseline.py and run to perform inference on  xgboost model.  
+
+### Generating the Paper Plots/Figures
