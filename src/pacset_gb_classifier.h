@@ -12,7 +12,6 @@
 #include "utils.h"
 #include "node.h"
 #include "MemoryMapped.h"
-#define NUM_FILES 10
 #define BLOCK_LOGGING 1
 #define LAT_LOGGING 1
 
@@ -148,7 +147,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
             int num_threads = std::stoi(Config::getValue("numthreads"));
             int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
 	    int total_num_trees = 0;
-	    
+	    int num_files = std::stoi(Config::getValue("numfiles"));    
 	    std::for_each( PacsetBaseModel<T, F>::bin_sizes.begin(), 
 			    PacsetBaseModel<T, F>::bin_sizes.end(), [&] (int n) {
     				total_num_trees += n;
@@ -166,7 +165,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 #ifdef LAT_LOGGING
 	    //MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 	    //MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+            MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % num_files) + ".bin").c_str(), 0);
 #else
 	    MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
