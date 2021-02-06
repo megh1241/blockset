@@ -13,14 +13,14 @@ Operating Systems with minor changes. In the near future, we plan to construct p
 python package.
 
 1)You will need to install Build tools, openMP and make sure your compiler supports C++14. 
-2)You will also need to install sklearn, numpy, matplotlib and joypy(for plotting).
+2)You will also need to install sklearn, numpy, argparse, joblib matplotlib and joypy(for plotting).
 3)You will need to install redis for the PACSET-as-a-service experiments.
 4)PACSET utilizes a third-party library( rapidjson ) and must be downloaded and installed.
 
 ```
 sudo apt-get update
 sudo apt-get install build-essential
-pip install numpy sklearn matplotlib redis
+pip install numpy sklearn matplotlib redis argparse joblib
 pip install joypy
 ```
 

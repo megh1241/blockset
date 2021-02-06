@@ -34,6 +34,6 @@ for val in ${layoutArray[@]}; do
         sudo echo 3 > sudo /proc/sys/vm/drop_caches
         sudo echo 2 > sudo /proc/sys/vm/drop_caches
         sudo echo 1 > sudo /proc/sys/vm/drop_caches
-        ./exe  --batchsize $BATCHSIZE --blocksize $BLOCKSIZE --mode inference --logdir $LOG_DIR --format binary --metadatafilename "${ORIG_PACK_DIR}/${META_FILE}" --labelcol $LAB_COL --layout ${layoutArray[${ARR_COUNT}]} --intertwine 4 --modelfilename "${ORIG_PACK_DIR}/${PACK_FILE}" --datafilename $DATA_FILE --numthreads 1 --package sklearn --algorithm $ALGORITHM --task $TASK
+        ./exe  --batchsize $BATCHSIZE --blocksize $BLOCKSIZE --mode inference --logdir $LOG_DIR --format binary --metadatafilename "${ORIG_PACK_DIR}/${META_FILE}" --labelcol $LAB_COL --layout ${layoutArray[${ARR_COUNT}]} --intertwine 4 --modelfilename "${ORIG_PACK_DIR}/${PACK_FILE}" --numfiles $NUM_FILES --datafilename $DATA_FILE --numthreads 1 --package sklearn --algorithm $ALGORITHM --task $TASK
         ARR_COUNT=$((ARR_COUNT+1))
 done
