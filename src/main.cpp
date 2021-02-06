@@ -76,6 +76,9 @@ static void parseArgs(int argc, char* argv[]){
     if(Config::getValue("blocksize") == std::string("notfound")){
         Config::setConfigItem(std::string("blocksize"), std::string("2048"));
     }
+    if(Config::getValue("numfiles") == std::string("notfound")){
+        Config::setConfigItem(std::string("numfiles"), std::string("1"));
+    }
     
     if(Config::getValue("format") == std::string("notfound")){
         Config::setConfigItem(std::string("format"), std::string("binary"));
