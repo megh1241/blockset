@@ -40,7 +40,7 @@ static void showUsage(){
 static void parseArgs(int argc, char* argv[]){
     //TODO: check legality of the combination of args
     const std::unordered_set<std::string> cmdline_args =
-    {"--help", "--mode", "--layout", "--intertwine", "--labelcol", "--logdir", 
+    {"--help", "--mode", "--layout", "--intertwine", "--labelcol", "--logdir", "--numfiles", 
         "--packfilename", "--datafilename", "--modelfilename2", 
         "--modelfilename", "--package","--algorithm", 
         "--task", "--numthreads", "--format", "--batchsize",
