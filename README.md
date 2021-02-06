@@ -33,7 +33,7 @@ make #This will generate the exe executable
 
 ### Running
 
-#### For embedded BLOCKSET and larger than RAM PACSET, the workflow is as follows.
+#### For embedded BLOCKSET and larger than RAM BLOCKSET, the workflow is as follows.
 1) Run train\_sklearn.sh to train and save a random forest/gradient boosted tree model in scikitlearn (or xgboost). Refer to train\_sklearn.sh for specific
 instruction for how to run it and parameter explanations. Specifically, look for lines with #TODO that contain instructions for the user to modify parameters. 
 2) Run pack.sh to pack the model using BLOCKSET's packing layout. This script will read the sklearn trained model, pack the nodes and finally save the model in 
