@@ -51,10 +51,17 @@ instruction for how to run it and parameter explanations. Specifically, look for
 2) Run pack.sh to pack the model using PACSET's packing layout. This script will read the sklearn trained model, pack the nodes and save the model. Make sure to change
 format to "text" in the script to ensure that the model is saved in a text format.
 3) Run lambda\_exp/write\_redis.py. This script will write the model to a Redis KV store.  Before, running make sure to open the python script and change filepaths and parameters as explained in the inline #TODO comments.
-4) unzip lambda\_exp / my_function. Go to runscript.sh and follow the instructions marked by #TODO. Then, perform inferece by running the script. ./runscript.sh <desired lambda name> . 
+4) unzip lambda\_exp / my\_function. Go to runscript.sh and follow the instructions marked by #TODO. Then, perform inferece by running the script. ./runscript.sh <desired lambda name> . 
 
 #### For the baseline experiments(comparison with xgboost and sklearn), the workflow is as follows.
-1) XGBoost baseline: Check #TODOss in scripts/xgb\_train\_baseline.py and run to train an xgboost model. Check #TODOss in scripts/xgb\_predict\_baseline.py and run to perform inference on  xgboost model.  
-2) SKlearn baseline: Check #TODOss in scripts/skl\_train\_baseline.py and run to train an xgboost model. Check #TODOss in scripts/skl\_predict\_baseline.py and run to perform inference on  xgboost model.  
+1) XGBoost baseline: Check #TODOs in scripts/xgb\_train\_baseline.py and run to train an xgboost model. Check #TODOss in scripts/xgb\_predict\_baseline.py and run to perform inference on  xgboost model.  
+2) SKlearn baseline: Run ./train\_sklearn.sh with --saveformat joblib to train and save an sklearn model. Run scripts/skl\_predict\_baseline.py to perform inference on sklearn model.Note: Run python3 scripts/skl\_predict\_baseline.py --help for a list and description of required commandline arguments.  
 
 ### Generating the Paper Plots/Figures
+```
+cd scripts/kdd\_plot\_scripts
+python boxplot\_layout\_rf\_classification.py <block/latency> joy bin
+python boxplot\_layout\_rf\_regression.py <block/latency> joy bin
+python boxplot\_layout\_gbt\_classification.py <block/latency> joy bin
+python boxplot\_layout\_gbt\_regression.py <block/latency> joy bin
+```
