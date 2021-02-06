@@ -24,7 +24,6 @@
 
 #define LAT_LOGGING 2
 #define BLOCK_LOGGING 1
-#define NUM_FILES 5 
 #define BLOCK_SIZE 2048
 
 using std::uint32_t;
@@ -150,10 +149,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			int num_threads = std::stoi(Config::getValue("numthreads"));
 			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
 			std::string modelfname = Config::getValue("modelfilename");
-
+			int num_files = std::stoi(Config::getValue("numfiles"));
 #ifdef LAT_LOGGING 
 			//MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-			MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % NUM_FILES) + ".bin").c_str(), 0);
+			MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % num_files) + ".bin").c_str(), 0);
 #else
 			MemoryMapped mmapped_obj(modelfname.c_str(), 0);
 #endif
