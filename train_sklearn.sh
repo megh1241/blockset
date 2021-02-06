@@ -3,14 +3,14 @@
 DATA_FILENAME='cifar-10.csv'
 
 #TODO: Replace with path to directory containing the dataset. The model will be saved in this directory as well.
-DATA_DIR='/data3/'
+DATA_DIR='/data/'
 
 #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column). Note the data should be in a csv file with columns representing features (and one of the columns holding the labels), and rows representing observations.
 
 LAB_COL=-1
 
 #TODO: Replace with number of trees
-NUM_TREES=682
+NUM_TREES=128
 
 #TODO: Algorithm: rf: random forest, gbt: gradient boosted tree
 ALGORITHM='rf'

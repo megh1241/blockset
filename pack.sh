@@ -2,10 +2,10 @@
 declare -a layoutArray=("bfs" "dfs" "statdfs" "dfs" "binbfs" "bindfs" "binstatdfs" "binstatblock")
 
 #TODO: Replace with absolute path of the model stored from the train_sklearn.sh script
-MODEL_FILE="/data4/rf_682cifar-10.json"
+MODEL_FILE="/data/rf128cifar-10.json"
 
 #TODO: Replace with absolute path of the data. #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column). Note the data should be in a csv file with columns representing features (and one of the columns holding the labels), and rows representing observations.
-DATA_FILE="/data4/cifar-10.csv"
+DATA_FILE="/data/cifar-10.csv"
 
 #TODO: Change to "text" for PACSET-as-a-service
 FORMAT="binary"
@@ -24,8 +24,8 @@ BLOCKSIZE=128
 
 for val in ${layoutArray[@]}; do
 	#TODO: Replace with the absolute path of the packed model file where you would like to save the model 
-	PACK_FILE="/data4/packedmodel${val}.bin"
+	PACK_FILE="/data/packedmodel${val}.bin"
 	#TODO: Replace with the absolute path of the packed model file where you would like to save the metadata 
-	META_FILE="/data4/metadata${val}.txt"
+	META_FILE="/data/metadata${val}.txt"
 	./exe  --mode pack --format $FORMAT --blocksize $BLOCKSIZE --metadatafilename $META_FILE --layout ${val} --intertwine $INTERTWINE --packfilename $PACK_FILE --modelfilename $MODEL_FILE --datafilename $DATA_FILE --numthreads 1 --package sklearn --algorithm $ALGORITHM --task $TASK 
 	done
