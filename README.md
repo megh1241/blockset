@@ -22,8 +22,8 @@ pip install joypy
 
 ### Installing
 ```
-
-cd pacset
+git clone https://github.com/megh1241/blockset.git
+cd blockset 
 git clone https://github.com/Tencent/rapidjson.git
 mkdir build
 cd build
