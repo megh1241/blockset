@@ -1,0 +1,9 @@
+,Number of KV pairs read from Redis,Average cold start inference latency(ms)
+BFS ,933,1.359
+DFS,580,1.101
+WDFS,494,0.717
+Blockwise WDFS,416,0.605
+BIN+BFS,856,0.942
+BIN+DFS,570,0.937
+BIN+WDFS ,488,0.676
+BIN+Blockwise WDFS,413,0.567

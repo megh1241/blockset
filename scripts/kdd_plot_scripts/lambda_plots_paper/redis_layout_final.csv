@@ -1,0 +1,7 @@
+Number of KV pairs read from Redis,Average cold start inference latency(s)
+1.359,0.933
+1.101,0.8836
+0.942,0.7954388142
+0.936,0.6158627748
+0.676,0.372
+0.567,0.2637241602

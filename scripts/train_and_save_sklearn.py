@@ -177,6 +177,7 @@ def parseCmdArgs():
     parser.add_argument('--task', action='store', dest='task',
                     help='Task (classification/regression)')
 
+    parser.add_argument('--saveformat', action='store', dest='save_format', help='Format json/joblib')
     results = parser.parse_args()
 
     return results
@@ -192,13 +193,16 @@ data_filename = results.data_filename
 num_test = int(results.num_test)
 algorithm = results.algorithm
 task = results.task
+save_format = results.save_format
 
 data_string = data_filename.split('.')[0]
 data_path_filename = os.path.join(file_dir, data_filename)
 save_train_data = os.path.join(file_dir ,'train_' + data_filename)
 save_test_data = os.path.join(file_dir, 'test_' + data_filename)
-rf_model_filename = os.path.join(file_dir, 'rf_'+ str(num_trees) + data_string + '.json')
-
+if save_format == 'json':
+    rf_model_filename = os.path.join(file_dir, algorithm + str(num_trees) + data_string + '.json')
+else:
+    rf_model_filename = os.path.join(file_dir, algorithm + str(num_trees) + data_string + '.joblib')
 X, y  = load_csv(data_path_filename, label_column)
 print('csv loaded')
 X_train, X_test, y_train, y_test = train_test_split(
@@ -223,15 +227,16 @@ else:
         model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12, verbose=2)
 
 model1.fit(X_train,  y_train)
-#dump(model1, save_filename)
-if task == 'classification':
-    if algorithm == 'rf':
-        write_to_json(model1, rf_model_filename)
+if save_format == 'json':
+    if task == 'classification':
+        if algorithm == 'rf':
+            write_to_json(model1, rf_model_filename)
+        else:
+            write_to_json_gbt(model1, rf_model_filename)
     else:
-        write_to_json_gbt(model1, rf_model_filename)
+        if algorithm == 'rf':
+            write_to_json(model1, rf_model_filename, regression=True)
+        else:
+            write_to_json_gbt(model1, rf_model_filename, regression=True)
 else:
-    if algorithm == 'rf':
-        write_to_json(model1, rf_model_filename, regression=True)
-    else:
-        write_to_json_gbt(model1, rf_model_filename, regression=True)
-
+    dump(model1, rf_model_filename)
