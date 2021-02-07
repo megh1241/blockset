@@ -7,7 +7,7 @@ MODEL_FILE="/data/rf128cifar-10.json"
 #TODO: Replace with absolute path of the data. #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column). Note the data should be in a csv file with columns representing features (and one of the columns holding the labels), and rows representing observations.
 DATA_FILE="/data/cifar-10.csv"
 
-#TODO: Change to "text" for PACSET-as-a-service
+#TODO: Change to "text" for BLOCKSET-as-a-service
 FORMAT="binary"
 
 #TODO: Change to "gradientboost" for gradient boosted trees
@@ -16,10 +16,11 @@ ALGORITHM="randomforest"
 #TODO: Change to "regression" for regression 
 TASK="classification"
 
+
 #TODO: Change to the bin depth , i.e number of levels intertwined. It is a tuneable hyperparameter. 
 INTERTWINE=4
 
-#TODO: Change to the blocksize. For the PACSET-as-a-service experiments, the blocksize should be 8 or 16.
+#TODO: Change to the blocksize. For the BLOCKSET-as-a-service experiments, the blocksize should be 8 or 16.
 BLOCKSIZE=128
 
 for val in ${layoutArray[@]}; do
