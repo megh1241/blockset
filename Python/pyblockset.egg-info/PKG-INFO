@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: pyblockset
+Version: 0.0.1
+Summary: Blockset
+Home-page: https://github.com/megh1241/blockset
+Author: Meghana Madhyastha
+Author-email: meghana.madhyastha@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Provides-Extra: test

@@ -135,3 +135,6 @@ std::vector<float> logit(std::vector<float> input_mat){
 float logit(float input){
     return 1/(1+exp(-1*input));
 }
+float logit2(float input){
+    return 1/(1+exp(-1*input));
+}

@@ -21,7 +21,7 @@ int JSONReader<T, F>::populateBinSizes(
         std::vector<int> &bin_sizes, int num_trees){
 
     //Calculate Bin sizes from number of trees
-    int num_bins = std::stoi(Config::getValue("numthreads")); 
+    int num_bins = std::stoi(Config::getValue("numbins")); 
     int num_trees_per_bin = num_trees / num_bins;
 
     //populate bin_sizes
@@ -154,6 +154,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
         std::vector<int> &bin_node_sizes){
 
 
+    std::cout<<"json 1\n";
+    fflush(stdout);
     std::string task = Config::getValue("task");
     std::string algorithm = Config::getValue("algorithm");
     int count;
@@ -170,6 +172,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
     d.Parse(json);
     assert(d.IsObject());
     assert(d.HasMember("estimators"));
+    std::cout<<"json 2\n";
+    fflush(stdout);
     
     //Parse the metadata
     //get and set number of classes
@@ -198,6 +202,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
         bins[i].reserve(bin_sizes[i]);
     */
     //Recursively walk through the json model until we get the nodes per estimator
+    std::cout<<"json 3\n";
+    fflush(stdout);
     int tree_offset = 0, bin_number = 0, tree_num_in_bin = 0;
     std::vector<StatNode<T, F>> temp_bin;
     std::vector<std::vector<StatNode<T, F>>> temp_ensemble;
@@ -275,6 +281,8 @@ void JSONReader<T, F>::convertSklToBinsRapidJson(std::vector<std::vector<StatNod
         }
         tree_offset = temp_bin.size();
     }
+    std::cout<<"json 4\n";
+    fflush(stdout);
 
     if (task.compare(std::string("classification")) == 0 && algorithm.compare(std::string("randomforest"))==0)
         removeClassLeafNodes(bins, temp_ensemble );

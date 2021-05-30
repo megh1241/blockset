@@ -1,0 +1,1 @@
+python3 example.py --mode "inference" --layout "binstatblock" --intertwine 2 --numtrees 128 --packfilename "/data2/packsusy.bin" --datafilename "/data2/test_SUSY.csv" --modelfilename "/data2/packsusydfs" --algorithm "randomforest" --task "classification" --metadatafilename "/data2/packsusymetadfs.txt" --labelcol "50"

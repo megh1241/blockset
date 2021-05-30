@@ -1,13 +1,13 @@
 #Example
 #TODO: Replace with name of dataset
-DATA_FILENAME='cifar-10.csv'
+DATA_FILENAME='SUSY.csv'
 
 #TODO: Replace with path to directory containing the dataset. The model will be saved in this directory as well.
-DATA_DIR='/data/'
+DATA_DIR='/data2/'
 
 #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column). Note the data should be in a csv file with columns representing features (and one of the columns holding the labels), and rows representing observations.
 
-LAB_COL=-1
+LAB_COL=0
 
 #TODO: Replace with number of trees
 NUM_TREES=128

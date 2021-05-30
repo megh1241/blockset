@@ -17,7 +17,7 @@
 #define LAT_LOGGING 1
 
 template <typename T, typename F>
-class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
+class PacsetGradientBoostedRegressor: public PacsetBaseModel<T, F> {
     public:
 
         inline void setMembers(const std::vector<int> &bin_sizes,
@@ -231,7 +231,7 @@ class PacsetGradientBoostedClassifier: public PacsetBaseModel<T, F> {
 		}
 
             }
-std::vector<float>result_mat_proba(pred_mat);
+//std::vector<float>result_mat_proba(pred_mat);
 //std::vector<float>result_mat_proba;
 //	result_mat_proba = logit(pred_mat);
             preds.clear();

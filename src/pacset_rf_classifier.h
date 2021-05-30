@@ -19,7 +19,7 @@
 #include "config.h"
 #include "json_reader.h"
 #include "utils.h"
-#include "node.h"
+//#include "node.h"
 #include "MemoryMapped.h"
 
 #define LAT_LOGGING 2
@@ -52,6 +52,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 		inline void loadModel() {
 			JSONReader<T, F> J;
 			//J.convertSklToBins(PacsetBaseModel<T, F>::bins, 
+			std::cout<<"enter here\n";
+			fflush(stdout);
 			J.convertSklToBinsRapidJson(PacsetBaseModel<T, F>::bins, 
 					PacsetBaseModel<T, F>::bin_sizes, 
 					PacsetBaseModel<T, F>::bin_start,
