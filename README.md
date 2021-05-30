@@ -99,3 +99,24 @@ python boxplot_layout_embedded_rf.py latency joy bin
 cd scripts/kdd_plot_scripts
 python boxplot_layout_embedded_gbt.py latency joy bin
 ```
+
+### Python Bindings
+```
+The scripts can also be run in python via the python bindings.
+```
+
+#### Installation of Python Bindings
+```
+cd blockset/Python
+pip3 install -e .
+```
+
+#### Running the scripts in Python
+```
+cd blockset/Python
+python3 example.py <cmdlineargs>
+```
+The commandline arguments to be provided in the python version are 
+identical to the commandline args provided to the C++ version.
+See example.py for a detailed description of the commandline arguments, 
+pack.sh and inference.sh for example scripts to run example.py.
