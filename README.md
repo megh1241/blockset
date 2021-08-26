@@ -1,6 +1,6 @@
 # BLOCKSET
 
-This repository contains the source code and experimental workflow accompanying our KDD 2021 manuscript (Preprint: https://arxiv.org/abs/2011.05383). For the corresponding python package, visit: https://github.com/megh1241/python-blockset
+This repository contains the source code and experimental workflow accompanying our KDD 2021 manuscript (https://dl.acm.org/doi/10.1145/3447548.3467368). For the corresponding python package, visit: https://github.com/megh1241/python-blockset
 Detailed instructions are given below.
 
 ### Prerequisites
