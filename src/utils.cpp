@@ -37,6 +37,8 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
 	}
         temp_vector.clear();
         num_obs++;
+	if(num_obs > 1000)
+		break;
     }
     fin.close();
 }
@@ -69,6 +71,8 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<double
             temp_vector.pop_back();
             test_data.push_back(temp_vector);
         }
+	if(num_obs > 1000)
+		break;
 	
 	temp_vector.clear();
         num_obs++;

@@ -65,7 +65,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::string layout = Config::getValue("layout");
 
 			auto bin = PacsetBaseModel<T, F>::bins[0];
-			int num_bins = std::stoi(Config::getValue("numthreads"));
+			int num_bins = std::stoi(Config::getValue("numbins"));
 			std::cout<<"Before pack\n";
 			for(int i=0; i<num_bins; ++i){
 				Packer<T, F> packer_obj(layout);
@@ -103,22 +103,22 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				for(i=0; i<siz; ++i){
 					curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
 					__builtin_prefetch(&bin[curr_node[i]], 0, 3);
-#ifdef BLOCK_LOGGING 
+//#ifdef BLOCK_LOGGING 
 					block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
-#pragma omp critical
+//#pragma omp critical
 					blocks_accessed.insert(block_number);
-#endif
+//#endif
 				}
 
 				do{
 					number_not_in_leaf = 0;
 					for( i=0; i<siz; ++i){
 						if(bin[curr_node[i]].isInternalNodeFront()){
-#ifdef BLOCK_LOGGING 
+//#ifdef BLOCK_LOGGING 
 							block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
-#pragma omp critical
+//#pragma omp critical
 							blocks_accessed.insert(block_number);
-#endif
+//#endif
 							feature_num = bin[curr_node[i]].getFeature();
 							feature_val = observation[feature_num];
 							curr_node[i] = bin[curr_node[i]].nextNode(feature_val);
@@ -129,37 +129,59 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}while(number_not_in_leaf);
 
 				for(i=0; i<siz; ++i){
-#pragma omp atomic update
+//#pragma omp atomic update
 					++preds[bin[curr_node[i]].getClass()];
 				}
 
-#pragma omp critical
+//#pragma omp critical
 				block_offset += bin.size();
 			}
-#ifdef BLOCK_LOGGING 
+//#ifdef BLOCK_LOGGING 
 			return blocks_accessed.size();
-#else
+//#else
 			return 0;
-#endif
+//#endif
 		}
 
 		void predict(const std::vector<std::vector<T>> &observations,
 				std::vector<double> &preds, std::vector<double> &result, bool mmap) {}
 
-		inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum) {
+		inline std::vector<Node<T, F>> readNodeData(){
+			std::fstream fin;
+			char comma;
+			char endlin;
+			fin.open("/data/packedmodel.bin",  std::ios::in| std::ios::binary );
+			std::vector<Node<T, F>> nodes;
+			int left;
+			int right;
+			T feature;
+			F threshold;
+			while(!fin.eof()){
+			    if(fin.eof())
+				    break;
+			    Node<T, F> h;
+			    fin.read((char*)&h, sizeof(h));
+			    nodes.push_back(h);
+			    if(fin.eof())
+				    break;
+			}
+			fin.close();
+			return nodes;
+		}
+		inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum, Node<T, F>*data) {
 			int num_classes = std::stoi(Config::getValue("numclasses"));
 			int num_threads = std::stoi(Config::getValue("numthreads"));
-			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
+			//int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
+			int num_bins = 8;
 			std::string modelfname = Config::getValue("modelfilename");
 			int num_files = std::stoi(Config::getValue("numfiles"));
-#ifdef LAT_LOGGING 
 			//MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-			MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % num_files) + ".bin").c_str(), 0);
-#else
-			MemoryMapped mmapped_obj(modelfname.c_str(), 0);
-#endif
-			Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
+			//MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % num_files) + ".bin").c_str(), 0);
+			//MemoryMapped mmapped_obj(std::string("/data/packedmodel.bin").c_str(), 0);
+			
+			//Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
 
+			
 			std::unordered_set<int> blocks_accessed;
 			int block_offset = 0;
 			int offset = 0;
@@ -169,34 +191,30 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				offsets.push_back(curr_offset);
 				curr_offset += val;
 			}
-#pragma omp parallel for num_threads(num_threads)
+			int max_num =0;
+			for(auto nums : PacsetBaseModel<T, F>::bin_node_sizes){
+				max_num += nums;
+			}
+
+#pragma omp parallel for num_threads(1)
 			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
 				int block_number = 0;
 				Node<T, F> *bin  = data + offsets[bin_counter];
-
-				std::vector<int> curr_node(PacsetBaseModel<T, F>::bin_node_sizes[bin_counter]);
-				int i, feature_num=0, number_not_in_leaf=0;
+				int i;
+				int  feature_num=0;
+			       	int number_not_in_leaf=0;
 				T feature_val;
 				int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
+				std::vector<int> curr_node(siz, 0);
 
 				for(i=0; i<siz; ++i){
 					curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
 					__builtin_prefetch(&bin[curr_node[i]], 0, 3);
-#ifdef BLOCK_LOGGING 
-					block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
-#pragma omp critical
-					blocks_accessed.insert(block_number);
-#endif
 				}
 				do{
 					number_not_in_leaf = 0;
-					for( i=0; i<siz; ++i){
+					for(i=0; i<siz; ++i){
 						if(bin[curr_node[i]].isInternalNodeFront()){
-#ifdef BLOCK_LOGGING 
-							block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
-#pragma omp critical
-							blocks_accessed.insert(block_number);
-#endif
 							feature_num = bin[curr_node[i]].getFeature();
 							feature_val = observation[feature_num];
 							curr_node[i] = bin[curr_node[i]].nextNode(feature_val);
@@ -206,20 +224,14 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 					}
 				}while(number_not_in_leaf);
 
-				for(i=0; i<siz; ++i){
+				for(int q=0; q<siz; ++q){
 #pragma omp atomic update
-					++preds[bin[curr_node[i]].getClass()];
+					++preds[bin[curr_node[q]].getClass()];
 				}
 
-#pragma omp critical
-				block_offset += PacsetBaseModel<T, F>::bin_node_sizes[bin_counter];
 			}
-			mmapped_obj.close();
-#ifdef BLOCK_LOGGING 
-			return blocks_accessed.size();
-#else
+			//mmapped_obj.close();
 			return 0;
-#endif
 		}
 		std::pair<int, int> transformIndex(int node_number, int bin_start_list, int bin_number){
 			return std::make_pair(bin_start_list + node_number/blob_size, node_number % blob_size);
@@ -283,16 +295,21 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::cout<<"observation start: "<<ct<<"\n";
 			fflush(stdout);
 			//writeGarbage();
+			std::vector<Node<T, F>>data_vector = readNodeData();
+			std::cout<<"finished reading node data!!!\n";
+			fflush(stdout);
 			for(auto single_obs : observation){
 				//readGarbage();
 				//readGarbage();
 				//readGarbage();
 				auto start = std::chrono::steady_clock::now();
-				if (mmap)
-					blocks = mmapAndPredict(single_obs, preds, ct+1);
-				else
+				if (mmap){
+					blocks = mmapAndPredict(single_obs, preds, ct+1, data_vector.data());
+				}
+				else{
+					std::cout<<"ELSE!!\n";
 					blocks = predict(single_obs, preds);
-
+				}
 				num_blocks.push_back(blocks);
 				//TODO: change
 				for(int i=0; i<num_classes; ++i){
@@ -301,16 +318,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 						max = preds[i];
 					}
 				}
-				int count = std::count(std::begin(preds), std::end(preds), max);
-				auto end = std::chrono::steady_clock::now();
-#ifdef LAT_LOGGING
-				double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
-				cumi_time += elapsed;
-				if (ct % batchsize == 0){
-					elapsed_arr.push_back(cumi_time);
-					cumi_time = 0;
-				}
-#endif
+					auto end = std::chrono::steady_clock::now();
+					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+					elapsed_arr.push_back(elapsed);
 				ct++;
 				results.push_back(maxid); 
 				std::fill(preds.begin(), preds.end(), 0);
