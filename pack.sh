@@ -2,10 +2,10 @@
 declare -a layoutArray=("binstatdfs")
 
 #TODO: Replace with absolute path of the model stored from the train_sklearn.sh script
-MODEL_FILE="/data/rf100SUSY.json"
+MODEL_FILE="/data/rf100HIGGS.json"
 
 #TODO: Replace with absolute path of the data. #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column). Note the data should be in a csv file with columns representing features (and one of the columns holding the labels), and rows representing observations.
-DATA_FILE="/data/SUSY.csv"
+DATA_FILE="/data/HIGGS.csv"
 
 #TODO: Change to "text" for BLOCKSET-as-a-service
 FORMAT="binary"

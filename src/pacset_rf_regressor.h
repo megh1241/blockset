@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_set>
 #include <fstream>
-
+#include <chrono>
 #include "pacset_base_model.h"
 #include "packer.h"
 #include "config.h"
@@ -13,7 +13,6 @@
 #include "node.h"
 #include "MemoryMapped.h"
 #define NUM_FILES 10
-#define BLOCK_LOGGING 1
 
 template <typename T, typename F>
 class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
@@ -185,22 +184,12 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                     curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
                     //bin[curr_node[i]].printNode();
 		    __builtin_prefetch(&bin[curr_node[i]], 0, 3);
-#ifdef BLOCK_LOGGING 
-                    block_number = (curr_node[i] + block_offset) / BLOCK_SIZE;
-#pragma omp critical
-                    blocks_accessed.insert(block_number);
-#endif
                 }
                 do{
                     number_not_in_leaf = 0;
                     for( i=0; i<siz; ++i){
 			//std::cout<<curr_node[i]<<"\n";
 		        if(curr_node[i] > 0){
-#ifdef BLOCK_LOGGING 
-                    	    block_number = (curr_node[i] + block_offset)/ BLOCK_SIZE;
-#pragma omp critical
-                            blocks_accessed.insert(block_number);
-#endif
                             feature_num = bin[curr_node[i]].getFeature();
                             feature_val = observation[feature_num];
                             if(bin[curr_node[i]].getLeft() == -1){

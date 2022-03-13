@@ -1,5 +1,5 @@
 #TODO: Replace with the full path of the dataset
-DATA_FILE="/data/SUSY.csv"
+DATA_FILE="/data/test_HIGGS.csv"
 
 #TODO: Replace this with the absolute path of the directory in which the packed model is located. 
 ORIG_PACK_DIR="/data/"
@@ -8,10 +8,10 @@ ORIG_PACK_DIR="/data/"
 NUM_FILES=1
 
 #TODO: Replace with desired location of the logs(inference latency and block sizes). Note: You have to create the log directory.
-LOG_DIR='/data/logs_cifar_eightthread/'
+LOG_DIR='/data/'
 
 #TODO: Replace it with the column containing the label in the test data
-LAB_COL='0'
+LAB_COL='4'
 
 #TODO: Replace it with the block size
 BLOCKSIZE=128
@@ -26,11 +26,14 @@ ALGORITHM="randomforest"
 TASK="classification"
 
 declare -a layoutArray=("binstatdfs")
-for val in ${layoutArray[@]}; do
+#for val in ${layoutArray[@]}; do
+max=100
+for iter12 in `seq 0 $max`
+do
         #TODO: You can replace this with the full absolute path of the packed model and metadata
-        PACK_FILE="packedmodel${val}"
-        META_FILE="metadata${val}.txt"
+        PACK_FILE="packedmodelbinstatdfs.bin"
+        META_FILE="metadatabinstatdfs.txt"
         #python3 scripts/copy_files_single_dir.py $NUM_FILES $ORIG_PACK_DIR $PACK_FILE
-        ./exe  --batchsize $BATCHSIZE --blocksize $BLOCKSIZE --mode inference --logdir $LOG_DIR --format binary --metadatafilename "${ORIG_PACK_DIR}/${META_FILE}" --labelcol $LAB_COL --layout ${layoutArray[${ARR_COUNT}]} --intertwine 4 --modelfilename "${ORIG_PACK_DIR}/${PACK_FILE}" --numfiles $NUM_FILES --datafilename $DATA_FILE --numthreads 1 --package sklearn --algorithm $ALGORITHM --task $TASK
-        ARR_COUNT=$((ARR_COUNT+1))
+        ./exe --obsnum "$iter12" --batchsize $BATCHSIZE --blocksize $BLOCKSIZE --mode inference --logdir $LOG_DIR --format binary --metadatafilename "${ORIG_PACK_DIR}/${META_FILE}" --labelcol $LAB_COL --layout binstatdfs --intertwine 4 --modelfilename "${ORIG_PACK_DIR}/${PACK_FILE}" --numfiles $NUM_FILES --datafilename $DATA_FILE --numthreads 1 --package sklearn --algorithm $ALGORITHM --task $TASK
+        #ARR_COUNT=$((ARR_COUNT+1))
 done

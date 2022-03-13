@@ -9,6 +9,7 @@
 
 void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& labels){
     std::string filename = Config::getValue("datafilename");
+    int obs_num = std::atoi(Config::getValue(std::string("obsnum")).c_str());
     std::fstream fin;
     fin.open(filename, std::ios::in);
     std::vector<std::string> row; 
@@ -22,23 +23,28 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<int>& 
         while(getline(templine, data, ',')){
             temp_vector.push_back(std::atof(data.c_str()));
         }
-
-	if(label_col==0){
-            int last_ele = (int)(temp_vector.at(0));
-            labels.push_back(last_ele);
-	    temp_vector.erase(temp_vector.begin());
-            test_data.push_back(temp_vector);
-	}else{
-            int siz = temp_vector.size();
-            int last_ele = (int)(temp_vector.at(siz-1));
-            labels.push_back(last_ele);
-            temp_vector.pop_back();
-            test_data.push_back(temp_vector);
+	if(num_obs == obs_num){
+		if(label_col==0){
+            		int last_ele = (int)(temp_vector.at(0));
+            		labels.push_back(last_ele);
+	    		temp_vector.erase(temp_vector.begin());
+           		test_data.push_back(temp_vector);
+		}
+		else{
+            		int siz = temp_vector.size();
+            		int last_ele = (int)(temp_vector.at(siz-1));
+            		labels.push_back(last_ele);
+            		temp_vector.pop_back();
+            		test_data.push_back(temp_vector);
+		}
+		break;
+	
 	}
         temp_vector.clear();
+
         num_obs++;
-	if(num_obs > 1000)
-		break;
+//	if(num_obs > 400)
+//		break;
     }
     fin.close();
 }
@@ -71,7 +77,7 @@ void loadTestData(std::vector<std::vector<float>>& test_data, std::vector<double
             temp_vector.pop_back();
             test_data.push_back(temp_vector);
         }
-	if(num_obs > 1000)
+	if(num_obs > 100)
 		break;
 	
 	temp_vector.clear();

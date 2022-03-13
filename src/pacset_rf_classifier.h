@@ -34,6 +34,7 @@ template <typename T, typename F>
 class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 	public:
 
+		std::vector<double> elapsed_arr;
 		inline void setMembers(const std::vector<int> &bin_sizes,
 				const std::vector<int> &bin_node_sizes,
 				const std::vector<std::vector<int>> &bin_start){
@@ -147,42 +148,53 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				std::vector<double> &preds, std::vector<double> &result, bool mmap) {}
 
 		inline std::vector<Node<T, F>> readNodeData(){
+		//inline Node<T, F>* readNodeData(){
 			std::fstream fin;
+			//Node<T, F> *data = new Node<T, F>[100000000];
+			
 			char comma;
 			char endlin;
-			fin.open("/data/packedmodel.bin",  std::ios::in| std::ios::binary );
+			fin.open("/data/packedmodelbinstatdfs.bin",  std::ios::in| std::ios::binary );
 			std::vector<Node<T, F>> nodes;
 			int left;
 			int right;
 			T feature;
 			F threshold;
+			int iter=0;
 			while(!fin.eof()){
 			    if(fin.eof())
 				    break;
 			    Node<T, F> h;
+			    
+			    auto start1 = std::chrono::steady_clock::now();
 			    fin.read((char*)&h, sizeof(h));
+			    auto end1 = std::chrono::steady_clock::now();
+			    /*if(iter < 10){
+					double elapsed = std::chrono::duration<double, std::milli>(end1 - start1).count();
+			    		std::cout<<elapsed<<",";
+					fflush(stdout);
+			    } */
+			    //data[iter] = h;
+			    iter++;
 			    nodes.push_back(h);
 			    if(fin.eof())
 				    break;
 			}
 			fin.close();
+			std::cout<<"NUM: "<<iter<<"\n";
+			fflush(stdout);
 			return nodes;
 		}
 		inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum, Node<T, F>*data) {
+		//inline int mmapAndPredict(const std::vector<T>& observation, std::vector<int>& preds, int obsnum) {
 			int num_classes = std::stoi(Config::getValue("numclasses"));
 			int num_threads = std::stoi(Config::getValue("numthreads"));
-			//int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
-			int num_bins = 8;
+			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
 			std::string modelfname = Config::getValue("modelfilename");
 			int num_files = std::stoi(Config::getValue("numfiles"));
-			//MemoryMapped mmapped_obj(("/dat" + std::to_string(obsnum % NUM_FILES) + "/" + modelfname).c_str(), 0);
-			//MemoryMapped mmapped_obj((modelfname + std::to_string(obsnum % num_files) + ".bin").c_str(), 0);
-			//MemoryMapped mmapped_obj(std::string("/data/packedmodel.bin").c_str(), 0);
-			
-			//Node<T, F> *data = (Node<T, F>*)mmapped_obj.getData();
 
+			auto start = std::chrono::steady_clock::now();
 			
-			std::unordered_set<int> blocks_accessed;
 			int block_offset = 0;
 			int offset = 0;
 			std::vector<int> offsets;
@@ -196,7 +208,6 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				max_num += nums;
 			}
 
-#pragma omp parallel for num_threads(1)
 			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
 				int block_number = 0;
 				Node<T, F> *bin  = data + offsets[bin_counter];
@@ -205,8 +216,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			       	int number_not_in_leaf=0;
 				T feature_val;
 				int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
-				std::vector<int> curr_node(siz, 0);
-
+				int curr_node[siz] = {0};
 				for(i=0; i<siz; ++i){
 					curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
 					__builtin_prefetch(&bin[curr_node[i]], 0, 3);
@@ -225,12 +235,15 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}while(number_not_in_leaf);
 
 				for(int q=0; q<siz; ++q){
-#pragma omp atomic update
 					++preds[bin[curr_node[q]].getClass()];
 				}
 
 			}
-			//mmapped_obj.close();
+					auto end = std::chrono::steady_clock::now();
+					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+			
+					std::cout<<"elapsed; "<<elapsed<<"\n";
+					fflush(stdout);
 			return 0;
 		}
 		std::pair<int, int> transformIndex(int node_number, int bin_start_list, int bin_number){
@@ -239,10 +252,10 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 		
 		void writeGarbage(){
 			std::fstream fi; 
-                	fi.open("/data_new/rand_file.txt", std::ios::out);
+                	fi.open("/data/rand_file.txt", std::ios::out);
                 	for(int i=0; i<900000000; ++i)
                     		fi<<(i+1)%6<<"\n";
-                	for(int i=0; i<900000000; ++i)
+                	for(int i=0; i<90000000; ++i)
                     		fi<<(float)(i) /float(i+2)<<"\n";
                 	fi.close();
 		}
@@ -250,22 +263,32 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 		void readGarbage(){
                 	std::fstream fi;
                 	int j;
-                	fi.open("/data_new/rand_file.txt");
-                	for(int i=0; i<300000000; ++i)
+                	fi.open("/data/rand_file.txt");
+                	for(int i=0; i<30000000; ++i){
+                    		if(i%4385789 == 0){
+					std::cout<<j;
+					fflush(stdout);
+				}
+				fi>>j;
+			}
+                	for(int i=0; i<3000000; ++i){
                     		fi>>j;
-                	for(int i=0; i<300000000; ++i)
+                    		if(i%4385789 == 0){
+					std::cout<<j;
+					fflush(stdout);
+				}
+			}
+                	for(int i=0; i<3000000; ++i){
                     		fi>>j;
-                	for(int i=0; i<300000000; ++i)
-                    		fi>>j;
-                	float k;
-			for(int i=0; i<400000000; ++i)
-                    		fi>>k;
-			for(int i=0; i<500000000; ++i)
-                    		fi>>k;
+                    		if(i%4385789 == 0){
+					std::cout<<j;
+					fflush(stdout);
+				}
+			}
                 	fi.close();
 		}
 
-		inline void predict(const std::vector<std::vector<T>>& observation, 
+		inline void predict(const std::vector<std::vector<T>>& observations, 
 				std::vector<int>& preds, std::vector<int>&results, bool mmap) {
 
 			//Predicts the class for a vector of observations
@@ -275,7 +298,6 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			double cumi_time = 0;
 			int num_classes = std::stoi(Config::getValue("numclasses"));
 			int num_bins; 
-			std::vector<double> elapsed_arr;
 			std::string layout = Config::getValue("layout");
 			std::string num_threads = Config::getValue("numthreads");
 			std::string dataset = Config::getValue("datafilename");
@@ -294,22 +316,89 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<int> num_blocks;
 			std::cout<<"observation start: "<<ct<<"\n";
 			fflush(stdout);
-			//writeGarbage();
 			std::vector<Node<T, F>>data_vector = readNodeData();
+			//Node<T, F> *data_vector = readNodeData();
+			//writeGarbage();
+			readGarbage();
+			//exit(0);
 			std::cout<<"finished reading node data!!!\n";
 			fflush(stdout);
-			for(auto single_obs : observation){
+			
+			
+			for(auto observation : observations){
 				//readGarbage();
 				//readGarbage();
+			//readGarbage();
 				//readGarbage();
-				auto start = std::chrono::steady_clock::now();
-				if (mmap){
+		
+			int num_classes = std::stoi(Config::getValue("numclasses"));
+			int num_threads = std::stoi(Config::getValue("numthreads"));
+			int num_bins = PacsetBaseModel<T, F>::bin_sizes.size();
+			std::string modelfname = Config::getValue("modelfilename");
+			int num_files = std::stoi(Config::getValue("numfiles"));
+
+			auto start = std::chrono::steady_clock::now();
+			
+			int block_offset = 0;
+			int offset = 0;
+			std::vector<int> offsets;
+			int curr_offset = 0;
+			Node<T, F>*data = data_vector.data();
+			for (auto val: PacsetBaseModel<T, F>::bin_node_sizes){
+				offsets.push_back(curr_offset);
+				curr_offset += val;
+			}
+			int max_num =0;
+			for(auto nums : PacsetBaseModel<T, F>::bin_node_sizes){
+				max_num += nums;
+			}
+
+			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
+				int block_number = 0;
+				Node<T, F> *bin  = data + offsets[bin_counter];
+				int i;
+				int  feature_num=0;
+			       	int number_not_in_leaf=0;
+				T feature_val;
+				int siz = PacsetBaseModel<T, F>::bin_sizes[bin_counter];
+				int curr_node[siz] = {0};
+				for(i=0; i<siz; ++i){
+					curr_node[i] = PacsetBaseModel<T, F>::bin_start[bin_counter][i];
+					__builtin_prefetch(&bin[curr_node[i]], 0, 3);
+				}
+				do{
+					number_not_in_leaf = 0;
+					for(i=0; i<siz; ++i){
+						if(bin[curr_node[i]].isInternalNodeFront()){
+							feature_num = bin[curr_node[i]].getFeature();
+							feature_val = observation[feature_num];
+							curr_node[i] = bin[curr_node[i]].nextNode(feature_val);
+							__builtin_prefetch(&bin[curr_node[i]], 0, 3);
+							++number_not_in_leaf;
+						}
+					}
+				}while(number_not_in_leaf);
+
+				for(int q=0; q<siz; ++q){
+					++preds[bin[curr_node[q]].getClass()];
+				}
+
+			}
+					auto end = std::chrono::steady_clock::now();
+					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+			
+					std::cout<<"elapsed; "<<elapsed<<"\n";
+			
+					fflush(stdout);
+			
+			/*	if (mmap){
+					//blocks = mmapAndPredict(single_obs, preds, ct+1);
 					blocks = mmapAndPredict(single_obs, preds, ct+1, data_vector.data());
 				}
 				else{
 					std::cout<<"ELSE!!\n";
 					blocks = predict(single_obs, preds);
-				}
+				}*/
 				num_blocks.push_back(blocks);
 				//TODO: change
 				for(int i=0; i<num_classes; ++i){
@@ -318,16 +407,19 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 						max = preds[i];
 					}
 				}
-					auto end = std::chrono::steady_clock::now();
-					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
-					elapsed_arr.push_back(elapsed);
-				ct++;
+					//auto end = std::chrono::steady_clock::now();
+					//double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+					//elapsed_arr.push_back(elapsed);
+					//std::cout<<"elapsed: "<<elapsed<<"\n";
+					ct++;
 				results.push_back(maxid); 
 				std::fill(preds.begin(), preds.end(), 0);
 				max = -1;
 				maxid = -1;
 				std::cout<<"Done observation: "<<ct-1<<"\n";
 				fflush(stdout);
+				if(ct >= 50)
+					break;
 			}
 
 			std::string log_dir = Config::getValue(std::string("logdir"));

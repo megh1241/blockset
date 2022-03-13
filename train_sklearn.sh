@@ -1,6 +1,6 @@
 #Example
 #TODO: Replace with name of dataset
-DATA_FILENAME='SUSY.csv'
+DATA_FILENAME='HIGGS.csv'
 
 #TODO: Replace with path to directory containing the dataset. The model will be saved in this directory as well.
 DATA_DIR='/data/'

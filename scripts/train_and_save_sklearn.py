@@ -16,7 +16,6 @@ from csv import *
 import csv
 from sklearn.datasets import fetch_openml
 import time
-import matplotlib.pyplot as plt
 import numpy as np
 import json, os
 import argparse
@@ -26,6 +25,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 import codecs
+import joblib
 from joblib import dump, load
 
 ######## GLOBALS #########
@@ -203,6 +203,7 @@ if save_format == 'json':
     rf_model_filename = os.path.join(file_dir, algorithm + str(num_trees) + data_string + '.json')
 else:
     rf_model_filename = os.path.join(file_dir, algorithm + str(num_trees) + data_string + '.joblib')
+'''
 X, y  = load_csv(data_path_filename, label_column)
 print('csv loaded')
 X_train, X_test, y_train, y_test = train_test_split(
@@ -227,6 +228,9 @@ else:
         model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12, verbose=2)
 
 model1.fit(X_train,  y_train)
+'''
+pkl_filename = "/data/rf_100HIGGS.joblib"
+model1 = joblib.load(pkl_filename)
 if save_format == 'json':
     if task == 'classification':
         if algorithm == 'rf':
