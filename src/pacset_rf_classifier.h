@@ -154,7 +154,9 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			
 			char comma;
 			char endlin;
-			fin.open("/data/packedmodelbinstatdfs.bin",  std::ios::in| std::ios::binary );
+			std::string modelfname = Config::getValue("modelfilename");
+
+			fin.open(modelfname.c_str(),  std::ios::in| std::ios::binary );
 			std::vector<Node<T, F>> nodes;
 			int left;
 			int right;
@@ -207,7 +209,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			for(auto nums : PacsetBaseModel<T, F>::bin_node_sizes){
 				max_num += nums;
 			}
-
+			int num_times = 0;
 			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
 				int block_number = 0;
 				Node<T, F> *bin  = data + offsets[bin_counter];
@@ -228,6 +230,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 							feature_num = bin[curr_node[i]].getFeature();
 							feature_val = observation[feature_num];
 							curr_node[i] = bin[curr_node[i]].nextNode(feature_val);
+							num_times++;
 							__builtin_prefetch(&bin[curr_node[i]], 0, 3);
 							++number_not_in_leaf;
 						}
@@ -265,7 +268,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
                 	int j;
                 	fi.open("/data/rand_file.txt");
                 	for(int i=0; i<30000000; ++i){
-                    		if(i%4385789 == 0){
+                    		if(i%438579 == 0){
 					std::cout<<j;
 					fflush(stdout);
 				}
@@ -273,7 +276,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			}
                 	for(int i=0; i<3000000; ++i){
                     		fi>>j;
-                    		if(i%4385789 == 0){
+                    		if(i%438589 == 0){
 					std::cout<<j;
 					fflush(stdout);
 				}
@@ -352,6 +355,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			for(auto nums : PacsetBaseModel<T, F>::bin_node_sizes){
 				max_num += nums;
 			}
+				int num_times = 0;
 
 			for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
 				int block_number = 0;
@@ -370,6 +374,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 					number_not_in_leaf = 0;
 					for(i=0; i<siz; ++i){
 						if(bin[curr_node[i]].isInternalNodeFront()){
+							num_times++;
 							feature_num = bin[curr_node[i]].getFeature();
 							feature_val = observation[feature_num];
 							curr_node[i] = bin[curr_node[i]].nextNode(feature_val);
@@ -384,12 +389,14 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}
 
 			}
+					std::cout<<"Num times : "<<num_times<<"\n";
 					auto end = std::chrono::steady_clock::now();
 					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
 			
-					std::cout<<"elapsed; "<<elapsed<<"\n";
+					elapsed_arr.push_back(elapsed);
+					//std::cout<<"elapsed; "<<elapsed<<"\n";
 			
-					fflush(stdout);
+					//fflush(stdout);
 			
 			/*	if (mmap){
 					//blocks = mmapAndPredict(single_obs, preds, ct+1);
@@ -409,7 +416,6 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}
 					//auto end = std::chrono::steady_clock::now();
 					//double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
-					//elapsed_arr.push_back(elapsed);
 					//std::cout<<"elapsed: "<<elapsed<<"\n";
 					ct++;
 				results.push_back(maxid); 
@@ -418,24 +424,11 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				maxid = -1;
 				std::cout<<"Done observation: "<<ct-1<<"\n";
 				fflush(stdout);
-				if(ct >= 50)
+				if(ct >= 1)
 					break;
 			}
 
 			std::string log_dir = Config::getValue(std::string("logdir"));
-#ifdef BLOCK_LOGGING 
-			std::fstream fout;
-			std::string filename = log_dir + "Blocks_" + 
-				layout + "threads_" + num_threads +
-				+ "intertwine_"  + intertwine +
-			       "batchsize_" + std::to_string(batchsize)	+ ".csv";
-			fout.open(filename, std::ios::out | std::ios::app);
-			for(auto i: num_blocks){
-				fout<<i<<",";
-			}
-			fout.close();
-#endif
-#ifdef LAT_LOGGING
 			std::fstream fout2;
 			std::string filename2 = log_dir + "latency_" + 
 				layout + "threads_" + num_threads +
@@ -447,7 +440,6 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				fout2<<i<<",";
 			}
 			fout2.close();
-#endif
 		}
 
 

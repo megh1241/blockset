@@ -68,8 +68,8 @@ static void parseArgs(int argc, char* argv[]){
 
     //Set number of threads openmp
     if(Config::getValue("numthreads") != std::string("notfound")){
-        omp_set_dynamic(0);
-        omp_set_num_threads(std::atoi(Config::getValue("numthreads").c_str()));
+//        omp_set_dynamic(0);
+ //       omp_set_num_threads(std::atoi(Config::getValue("numthreads").c_str()));
     }
 
     //set default block size
