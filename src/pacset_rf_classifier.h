@@ -322,8 +322,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<Node<T, F>>data_vector = readNodeData();
 			//Node<T, F> *data_vector = readNodeData();
 			//writeGarbage();
-			readGarbage();
 			//exit(0);
+			readGarbage();
 			std::cout<<"finished reading node data!!!\n";
 			fflush(stdout);
 			
@@ -389,7 +389,6 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}
 
 			}
-					std::cout<<"Num times : "<<num_times<<"\n";
 					auto end = std::chrono::steady_clock::now();
 					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
 			
