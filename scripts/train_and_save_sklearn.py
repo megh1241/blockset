@@ -203,9 +203,12 @@ if save_format == 'json':
     rf_model_filename = os.path.join(file_dir, algorithm + str(num_trees) + data_string + '.json')
 else:
     rf_model_filename = os.path.join(file_dir, algorithm + str(num_trees) + data_string + '.joblib')
-'''
-X, y  = load_csv(data_path_filename, label_column)
+
+
+X_train, y_train  = load_csv(data_path_filename, label_column)
 print('csv loaded')
+
+'''
 X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=num_test, random_state=54)
 #concat_arr_train = np.c_[X_train, y_train]
@@ -213,7 +216,7 @@ concat_arr_test = np.c_[X_test, y_test]
 print('concat done')
 #np.savetxt(save_train_data, concat_arr_train, delimiter=",", fmt='%1.3f')
 np.savetxt(save_test_data, concat_arr_test, delimiter=",", fmt='%1.3f')
-
+'''
 if algorithm == 'rf':
     print('entered rf')
     if task == 'classification':
@@ -228,9 +231,8 @@ else:
         model1 = GradientBoostedRegressor(n_estimators = num_trees, random_state=1, max_features='log2', max_depth=12, verbose=2)
 
 model1.fit(X_train,  y_train)
-'''
-pkl_filename = "/data/rf_100HIGGS.joblib"
-model1 = joblib.load(pkl_filename)
+#pkl_filename = "/data/rf_100HIGGS.joblib"
+#model1 = joblib.load(pkl_filename)
 if save_format == 'json':
     if task == 'classification':
         if algorithm == 'rf':

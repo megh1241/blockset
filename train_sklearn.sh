@@ -1,13 +1,13 @@
 #Example
 #TODO: Replace with name of dataset
-DATA_FILENAME='HIGGS.csv'
+DATA_FILENAME='train_sgemm.csv'
 
 #TODO: Replace with path to directory containing the dataset. The model will be saved in this directory as well.
-DATA_DIR='/data/'
+DATA_DIR='/data2/sgemm/'
 
 #TODO: Replace with label column (-1 indicates last column, 0 would indicate first column). Note the data should be in a csv file with columns representing features (and one of the columns holding the labels), and rows representing observations.
 
-LAB_COL=0
+LAB_COL=-1
 
 #TODO: Replace with number of trees
 NUM_TREES=100
@@ -16,7 +16,7 @@ NUM_TREES=100
 ALGORITHM='rf'
 
 #TODO: Task: Classification or regression
-TASK='classification'
+TASK='regression'
 
 #TODO: Change to joblib ONLY for the baseline experiments. Otherwise it should be json.
 FORMAT='json'

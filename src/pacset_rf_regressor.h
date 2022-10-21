@@ -170,7 +170,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 offsets.push_back(curr_offset);
                 curr_offset += val;
             }
-#pragma omp parallel for num_threads(num_threads)
+//#pragma omp parallel for num_threads(num_threads)
             for(int bin_counter=0; bin_counter<num_bins; ++bin_counter){
                 int block_number = 0;
 		Node<T, F> *bin  = data + offsets[bin_counter];
@@ -209,7 +209,7 @@ class PacsetRandomForestRegressor: public PacsetBaseModel<T, F> {
                 for(i=0; i<siz; ++i){
                     sum += last_node[i];
                 }
-#pragma omp critical
+//#pragma omp critical
                 {
                 leaf_sum +=sum;
                 block_offset += PacsetBaseModel<T, F>::bin_node_sizes[bin_counter];
