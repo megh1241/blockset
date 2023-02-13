@@ -58,37 +58,22 @@ def argmax_1(a):
     return max(range(len(a)), key=lambda x: a[x])
 
 
-def write_to_json(model1, filename, perc=100, regression=False):
+def write_to_json(model1, filename, regression=False):
     start_time = time.time()
     final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
-    all_nodes = []
-    leaf_n=0
     for count, estimator in enumerate(model1.estimators_):
         nodes = estimator.tree_.__getstate__()['nodes'].tolist()
-        for id1, i in enumerate(nodes):
-            all_nodes.append([i[0], i[1], i[2], i[3], i[5], count, id1])
-        #newnodes = [[i[0], i[1], i[2], i[3], i[5], tree_num, count] for i in nodes]
+        newnodes = [list((i[0], i[1], i[2], i[3], i[5])) for i in nodes]
         length = len(nodes)
         values = estimator.tree_.__getstate__()['values']
         for i in range(length):
             if newnodes[i][0] == -1:
-                leaf_n+=1
                 newnodes[i][2] = argmax_1(list(values[i][0]))
     
+        new_dict['estimators']['nodes'].append(newnodes)
         final_count = count
-        #new_dict['estimators']['nodes'].append(newnodes)
-    all_nodes.sort(key=lambda x:(x[0],x[4]))
-    num_n = int(float(perc)/100.0*float(leaf_n))
-    for i in range(num_n):
-        all_nodes[i][2] = -2
-    
-    all_nodes.sort(key=lambda x:(x[-2],x[-1]))
-    new_dict['estimators']['nodes'] = [[] for i in range(final_count)]
 
-    for node in all_nodes:
-        new_dict['estimators']['nodes'][node[-2]].append(node)
-    #TODO create new_dict and initialize with n_estimator keys. Iterate through all_nides abd add ibe by one 
     if regression:
         new_dict['n_classes'] = -1
     else:
@@ -112,10 +97,10 @@ def write_to_json_gbt(model, filename, regression=False):
     final_count = 0
     #print (len(model.estimators_))
     #print (len(model.estimators_[0]))
-    for tree_num, estimators in enumerate(model.estimators_):
+    for estimators in model.estimators_:
         for count, estimator in enumerate(estimators):
             nodes = estimator.tree_.__getstate__()['nodes'].tolist()
-            newnodes = [list((i[0], i[1], i[2], i[3], i[5], tree_num, count)) for i in nodes]
+            newnodes = [list((i[0], i[1], i[2], i[3], i[5])) for i in nodes]
             length = len(nodes)
             values = estimator.tree_.__getstate__()['values']
             for i in range(length):
@@ -174,9 +159,6 @@ def parseCmdArgs():
     parser.add_argument('--labelcol', action='store', dest='label_column',
                     help='Label column', type=int)
 
-    parser.add_argument('--perc', action='store', dest='perc',
-                    help='Label column', type=int)
-    
     parser.add_argument('--datadir', action='store', dest='file_dir',
                     help='Dataset location directory')
 
@@ -209,11 +191,10 @@ file_dir = results.file_dir
 num_trees = int(results.num_trees)
 data_filename = results.data_filename
 num_test = int(results.num_test)
-perc = int(results.perc)
 algorithm = results.algorithm
 task = results.task
 save_format = results.save_format
-perc = args.percent
+
 data_string = data_filename.split('.')[0]
 data_path_filename = os.path.join(file_dir, data_filename)
 save_train_data = os.path.join(file_dir ,'train_' + data_filename)
@@ -249,12 +230,12 @@ model1.fit(X_train,  y_train)
 if save_format == 'json':
     if task == 'classification':
         if algorithm == 'rf':
-            write_to_json(model1, rf_model_filename, perc)
+            write_to_json(model1, rf_model_filename)
         else:
             write_to_json_gbt(model1, rf_model_filename)
     else:
         if algorithm == 'rf':
-            write_to_json(model1, rf_model_filename, perc, regression=True)
+            write_to_json(model1, rf_model_filename, regression=True)
         else:
             write_to_json_gbt(model1, rf_model_filename, regression=True)
 else:
