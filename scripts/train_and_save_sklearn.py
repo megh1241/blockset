@@ -58,47 +58,55 @@ def argmax_1(a):
     return max(range(len(a)), key=lambda x: a[x])
 
 
-def write_to_json(model1, filename, perc=100, regression=False):
+def write_to_json(model1, filename, regression=False):
     start_time = time.time()
     final_count = 0
-    new_dict = {'estimators': {'nodes': [], 'values': [] } }
-    all_nodes = []
+    all_nodes_orig = []
     leaf_n=0
     for count, estimator in enumerate(model1.estimators_):
         nodes = estimator.tree_.__getstate__()['nodes'].tolist()
+        newnodes = []
         for id1, i in enumerate(nodes):
-            all_nodes.append([i[0], i[1], i[2], i[3], i[5], count, id1])
-        #newnodes = [[i[0], i[1], i[2], i[3], i[5], tree_num, count] for i in nodes]
+             newnodes.append([i[0], i[1], i[2], i[3], i[5], count, id1])
         length = len(nodes)
         values = estimator.tree_.__getstate__()['values']
         for i in range(length):
             if newnodes[i][0] == -1:
                 leaf_n+=1
                 newnodes[i][2] = argmax_1(list(values[i][0]))
+        all_nodes_orig.extend(newnodes)
     
         final_count = count
-        #new_dict['estimators']['nodes'].append(newnodes)
-    all_nodes.sort(key=lambda x:(x[0],x[4]))
-    num_n = int(float(perc)/100.0*float(leaf_n))
-    for i in range(num_n):
-        all_nodes[i][2] = -2
     
-    all_nodes.sort(key=lambda x:(x[-2],x[-1]))
-    new_dict['estimators']['nodes'] = [[] for i in range(final_count)]
 
-    for node in all_nodes:
-        new_dict['estimators']['nodes'][node[-2]].append(node)
-    #TODO create new_dict and initialize with n_estimator keys. Iterate through all_nides abd add ibe by one 
-    if regression:
-        new_dict['n_classes'] = -1
-    else:
-        new_dict['n_classes'] = model1.n_classes_
+    
+    all_nodes_orig.sort(key=lambda x:(x[0],x[4]))
+    perc_arr = [1,5,10,25,50,75]
+    for perc in perc_arr: 
+        all_nodes = [i for i in all_nodes_orig]
+        new_dict = {'estimators': {'nodes': [], 'values': [] } }
+        num_n = int(float(100-perc)/100.0*float(leaf_n))
+        for i in range(num_n):
+            all_nodes[i][2] = -2
+    
+        all_nodes.sort(key=lambda x:(x[-2],x[-1]))
+        for i in range(len(model1.estimators_)):
+            new_dict['estimators']['nodes'].append([])
 
-    new_dict['n_estimators'] = final_count+1 
-    json_obj = json.dumps(new_dict)
-    print('finish dumping')
-    with open(filename, "w") as outfile: 
-        outfile.write(json_obj) 
+        for node in all_nodes:
+            new_dict['estimators']['nodes'][node[-2]].append(node)
+        if regression:
+            new_dict['n_classes'] = -1
+        else:
+            new_dict['n_classes'] = model1.n_classes_
+
+        new_dict['n_estimators'] = len(model1.estimators_) 
+        json_obj = json.dumps(new_dict)
+        print('finish dumping')
+        fname = os.path.splitext(filename)[0]
+        ext = os.path.splitext(filename)[1]
+        with open(fname + 'perc_'+str(perc) + ext, "w") as outfile: 
+            outfile.write(json_obj) 
 
     end_time = time.time()
     print('time taken for manual json conversion: ', end='')
@@ -107,7 +115,6 @@ def write_to_json(model1, filename, perc=100, regression=False):
 
 def write_to_json_gbt(model, filename, regression=False):
     start_time = time.time()
-    final_count = 0
     new_dict = {'estimators': {'nodes': [], 'values': [] } }
     final_count = 0
     #print (len(model.estimators_))
@@ -209,11 +216,9 @@ file_dir = results.file_dir
 num_trees = int(results.num_trees)
 data_filename = results.data_filename
 num_test = int(results.num_test)
-perc = int(results.perc)
 algorithm = results.algorithm
 task = results.task
 save_format = results.save_format
-perc = args.percent
 data_string = data_filename.split('.')[0]
 data_path_filename = os.path.join(file_dir, data_filename)
 save_train_data = os.path.join(file_dir ,'train_' + data_filename)
@@ -225,7 +230,7 @@ else:
 X, y  = load_csv(data_path_filename, label_column)
 print('csv loaded')
 X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=num_test, random_state=54)
+            X, y, test_size=num_test, random_state=42)
 #concat_arr_train = np.c_[X_train, y_train]
 concat_arr_test = np.c_[X_test, y_test]
 print('concat done')
@@ -249,12 +254,12 @@ model1.fit(X_train,  y_train)
 if save_format == 'json':
     if task == 'classification':
         if algorithm == 'rf':
-            write_to_json(model1, rf_model_filename, perc)
+            write_to_json(model1, rf_model_filename)
         else:
             write_to_json_gbt(model1, rf_model_filename)
     else:
         if algorithm == 'rf':
-            write_to_json(model1, rf_model_filename, perc, regression=True)
+            write_to_json(model1, rf_model_filename, regression=True)
         else:
             write_to_json_gbt(model1, rf_model_filename, regression=True)
 else:

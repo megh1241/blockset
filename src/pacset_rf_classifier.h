@@ -322,7 +322,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 			std::vector<Node<T, F>>data_vector = readNodeData();
 			//Node<T, F> *data_vector = readNodeData();
 			//writeGarbage();
-			readGarbage();
+			//readGarbage();
 			//exit(0);
 			std::cout<<"finished reading node data!!!\n";
 			fflush(stdout);
@@ -373,6 +373,7 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				do{
 					number_not_in_leaf = 0;
 					for(i=0; i<siz; ++i){
+						if(curr_node[i] >= 0){
 						if(bin[curr_node[i]].isInternalNodeFront()){
 							num_times++;
 							feature_num = bin[curr_node[i]].getFeature();
@@ -381,12 +382,16 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 							__builtin_prefetch(&bin[curr_node[i]], 0, 3);
 							++number_not_in_leaf;
 						}
+						}
 					}
 				}while(number_not_in_leaf);
 
 				for(int q=0; q<siz; ++q){
-					if (curr_node[q]].getClass())
-						++preds[bin[curr_node[q]].getClass()];
+					if (curr_node[q]>=0){
+						if (bin[curr_node[q]].getClass() >= 0 && bin[curr_node[q]].getClass() < num_classes){
+							++preds[bin[curr_node[q]].getClass()];
+						}
+					}
 				}
 
 			}
@@ -395,9 +400,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 					double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
 			
 					elapsed_arr.push_back(elapsed);
-					//std::cout<<"elapsed; "<<elapsed<<"\n";
-			
-					//fflush(stdout);
+					std::cout<<"elapsed; "<<elapsed<<"\n";
+					fflush(stdout);
 			
 			/*	if (mmap){
 					//blocks = mmapAndPredict(single_obs, preds, ct+1);
