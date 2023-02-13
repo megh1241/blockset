@@ -385,7 +385,8 @@ class PacsetRandomForestClassifier: public PacsetBaseModel<T, F> {
 				}while(number_not_in_leaf);
 
 				for(int q=0; q<siz; ++q){
-					++preds[bin[curr_node[q]].getClass()];
+					if (curr_node[q]].getClass())
+						++preds[bin[curr_node[q]].getClass()];
 				}
 
 			}
